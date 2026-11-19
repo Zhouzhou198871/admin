@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1220">
+  <title>晴天账号铺 · 管理后台</title>
+  <link rel="stylesheet" href="./assets/admin.css">
+  <script src="./assets/admin.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="./" aria-label="晴天账号铺管理后台">
+        <span class="brand-mark">晴</span>
+        <span><b>晴天账号铺</b><small>ADMIN CONSOLE</small></span>
+      </a>
+      <div class="nav-label">工作台</div>
+      <nav class="nav">
+        <button class="nav-item active" data-page="overview"><span class="nav-icon">▦</span>总览</button>
+        <button class="nav-item" data-page="orders"><span class="nav-icon">▤</span>订单管理<span class="nav-soon">待接入</span></button>
+        <button class="nav-item" data-page="users"><span class="nav-icon">♙</span>用户管理<span class="nav-soon">待接入</span></button>
+        <button class="nav-item" data-page="products"><span class="nav-icon">◇</span>商品与库存<span class="nav-soon">待接入</span></button>
+        <button class="nav-item" data-page="recharge"><span class="nav-icon">＋</span>余额充值</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="secure-note"><span class="secure-dot"></span><span><b>独立管理端</b><small>与商城前台分离</small></span></div>
+        <a class="front-link" href="https://shop.lynli.me" target="_blank" rel="noreferrer">打开商城前台 ↗</a>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="mobile-menu" id="menuToggle" aria-label="打开菜单">☰</button>
+        <div class="breadcrumbs"><span>管理后台</span><i>/</i><b id="pageCrumb">总览</b></div>
+        <div class="top-actions">
+          <span class="system-status"><i id="apiDot"></i><span id="apiStatus">正在检查 API</span></span>
+          <span class="avatar">晴</span>
+        </div>
+      </header>
+
+      <section class="page active" id="page-overview">
+        <div class="page-heading">
+          <div><p class="eyebrow">OVERVIEW</p><h1>运营总览</h1><p class="subheading">账号铺业务运行情况与管理入口</p></div>
+          <button class="btn btn-secondary" id="refreshBtn">↻ 刷新状态</button>
+        </div>
+        <div class="welcome-card">
+          <div><span class="welcome-kicker">CONTROL CENTER</span><h2>欢迎回来</h2><p>管理端已独立部署框架，正在连接商城 API。</p></div>
+          <div class="welcome-art"><span>晴</span><i></i><b></b></div>
+        </div>
+        <div class="section-title"><div><h2>业务概况</h2><p>当前 API 已开放的数据能力</p></div><span class="live-label"><i></i>实时检测</span></div>
+        <div class="metric-grid">
+          <article class="metric-card"><div class="metric-top"><span>API 服务</span><span class="metric-icon purple">⌁</span></div><strong id="metricApi">检测中</strong><small id="metricApiHint">正在请求健康检查</small></article>
+          <article class="metric-card"><div class="metric-top"><span>订单数据</span><span class="metric-icon blue">▤</span></div><strong class="muted-value">待接入</strong><small>后台订单查询接口尚未开放</small></article>
+          <article class="metric-card"><div class="metric-top"><span>用户数据</span><span class="metric-icon green">♙</span></div><strong class="muted-value">待接入</strong><small>后台用户列表接口尚未开放</small></article>
+          <article class="metric-card"><div class="metric-top"><span>商品库存</span><span class="metric-icon orange">◇</span></div><strong class="muted-value">待接入</strong><small>管理端商品接口尚未开放</small></article>
+        </div>
+        <div class="content-grid">
+          <article class="panel">
+            <div class="panel-heading"><div><h2>快捷操作</h2><p>已接通的管理功能</p></div></div>
+            <button class="action-row" data-go="recharge"><span class="action-icon green">＋</span><span><b>用户余额充值</b><small>按用户邮箱增加 USDT 余额</small></span><span class="arrow">→</span></button>
+            <div class="action-row disabled"><span class="action-icon blue">▤</span><span><b>订单查询</b><small>等待安全的后台查询接口</small></span><span class="tag">开发中</span></div>
+            <div class="action-row disabled"><span class="action-icon purple">♙</span><span><b>用户管理</b><small>等待管理员专用数据接口</small></span><span class="tag">开发中</span></div>
+          </article>
+          <article class="panel integration-panel">
+            <div class="panel-heading"><div><h2>系统连接</h2><p>当前项目基础配置</p></div></div>
+            <div class="info-line"><span>前台商城</span><b>shop.lynli.me</b></div>
+            <div class="info-line"><span>API 服务</span><b id="apiHost">qingtian-shop-api</b></div>
+            <div class="info-line"><span>部署方式</span><b>GitHub Actions</b></div>
+            <div class="info-line"><span>数据源</span><b>现有商城 API / D1</b></div>
+            <p class="integration-tip">管理端不会直接连接数据库，也不会在网页代码中保存管理密钥。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="page" id="page-recharge">
+        <div class="page-heading"><div><p class="eyebrow">BALANCE MANAGEMENT</p><h1>余额充值</h1><p class="subheading">通过现有管理 API 为指定用户增加 USDT 余额</p></div></div>
+        <div class="notice"><b>安全提示</b><span>管理密钥只在本次页面会话中使用，不写入仓库，也不会自动保存。请勿在公共设备操作。</span></div>
+        <div class="form-layout">
+          <article class="panel form-panel">
+            <div class="panel-heading"><div><h2>发起充值</h2><p>请核对用户邮箱和充值金额</p></div><span class="tag tag-green">API 已有</span></div>
+            <form id="creditForm">
+              <label for="adminKey">管理员 API 密钥</label>
+              <input id="adminKey" type="password" autocomplete="off" placeholder="输入 ADMIN_API_KEY" required>
+              <p class="field-help">密钥通过 HTTPS 请求头发送，不会保存在网页或 GitHub。</p>
+              <label for="creditEmail">用户邮箱</label>
+              <input id="creditEmail" type="email" placeholder="customer@example.com" required>
+              <label for="creditAmount">充值金额 <span>USDT</span></label>
+              <div class="amount-input"><input id="creditAmount" inputmode="decimal" placeholder="例如 10.0000" required><b>USDT</b></div>
+              <div class="quick-amounts"><button type="button" data-amount="5">5</button><button type="button" data-amount="10">10</button><button type="button" data-amount="20">20</button><button type="button" data-amount="50">50</button><button type="button" data-amount="100">100</button></div>
+              <button class="btn btn-primary submit-btn" id="creditSubmit" type="submit">确认充值 <span>→</span></button>
+              <div class="form-result" id="creditResult" role="status" aria-live="polite"></div>
+            </form>
+          </article>
+          <aside class="panel side-info"><div class="panel-heading"><div><h2>操作说明</h2><p>当前已存在的接口</p></div></div>
+            <div class="endpoint"><small>POST</small><code>/api/admin/credit</code></div>
+            <ul><li>使用 <code>X-Admin-Key</code> 请求头鉴权</li><li>按邮箱定位已注册用户</li><li>金额精确到 4 位小数</li><li>充值完成后由服务端写入余额账本</li></ul>
+            <div class="warning-box">充值是实际余额变更。提交前请确认邮箱与金额无误。</div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="page" id="page-orders"><div class="page-heading"><div><p class="eyebrow">ORDER CENTER</p><h1>订单管理</h1><p class="subheading">订单列表、状态筛选与交付记录</p></div></div><div class="empty-state"><span>▤</span><h2>订单管理接口待接入</h2><p>当前 Worker 只开放用户自己的订单查询，没有管理员订单列表接口。为避免越权读取，不会伪造数据或调用用户端接口代替。</p></div></section>
+      <section class="page" id="page-users"><div class="page-heading"><div><p class="eyebrow">CUSTOMER CENTER</p><h1>用户管理</h1><p class="subheading">用户资料、账户状态与余额管理</p></div></div><div class="empty-state"><span>♙</span><h2>用户管理接口待接入</h2><p>现有 API 没有管理员用户列表与详情接口。余额充值已单独接通，其他用户数据等后端鉴权接口完成后再开放。</p></div></section>
+      <section class="page" id="page-products"><div class="page-heading"><div><p class="eyebrow">CATALOG CENTER</p><h1>商品与库存</h1><p class="subheading">商品目录、库存与上游采购状态</p></div></div><div class="empty-state"><span>◇</span><h2>商品管理接口待接入</h2><p>现有商品接口面向已登录用户，只返回可购买商品。后台编辑和库存操作接口尚未开放。</p></div></section>
+
+      <footer class="footer"><span>晴天账号铺 · 独立管理后台</span><span>Build by GitHub Actions</span></footer>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
