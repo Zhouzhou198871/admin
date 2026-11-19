@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0b1220">
+  <meta name="theme-color" content="#f5f7fb">
   <title>晴天账号铺 · 管理后台</title>
   <link rel="stylesheet" href="./assets/admin.css">
   <script src="./assets/admin.js" defer></script>
@@ -12,7 +12,7 @@
   <div class="app-shell">
     <aside class="sidebar" id="sidebar">
       <a class="brand" href="./" aria-label="晴天账号铺管理后台">
-        <span class="brand-mark">晴</span>
+        <img class="brand-mark" src="https://shop.lynli.me/logo.jpg" alt="晴天号铺图标">
         <span><b>晴天账号铺</b><small>ADMIN CONSOLE</small></span>
       </a>
       <div class="nav-label">工作台</div>
@@ -35,7 +35,7 @@
         <div class="breadcrumbs"><span>管理后台</span><i>/</i><b id="pageCrumb">总览</b></div>
         <div class="top-actions">
           <span class="system-status"><i id="apiDot"></i><span id="apiStatus">正在检查 API</span></span>
-          <span class="avatar">晴</span>
+          <span class="avatar" id="adminAvatar">晴</span><button class="btn btn-secondary" id="logoutBtn" type="button">退出登录</button>
         </div>
       </header>
 
@@ -75,14 +75,11 @@
 
       <section class="page" id="page-recharge">
         <div class="page-heading"><div><p class="eyebrow">BALANCE MANAGEMENT</p><h1>余额充值</h1><p class="subheading">通过现有管理 API 为指定用户增加 USDT 余额</p></div></div>
-        <div class="notice"><b>安全提示</b><span>管理密钥只在本次页面会话中使用，不写入仓库，也不会自动保存。请勿在公共设备操作。</span></div>
+        <div class="notice"><b>安全提示</b><span>此操作使用已登录的管理员身份进行授权，服务端会再次校验管理员邮箱。</span></div>
         <div class="form-layout">
           <article class="panel form-panel">
             <div class="panel-heading"><div><h2>发起充值</h2><p>请核对用户邮箱和充值金额</p></div><span class="tag tag-green">API 已有</span></div>
             <form id="creditForm">
-              <label for="adminKey">管理员 API 密钥</label>
-              <input id="adminKey" type="password" autocomplete="off" placeholder="输入 ADMIN_API_KEY" required>
-              <p class="field-help">密钥通过 HTTPS 请求头发送，不会保存在网页或 GitHub。</p>
               <label for="creditEmail">用户邮箱</label>
               <input id="creditEmail" type="email" placeholder="customer@example.com" required>
               <label for="creditAmount">充值金额 <span>USDT</span></label>
@@ -107,6 +104,7 @@
       <footer class="footer"><span>晴天账号铺 · 独立管理后台</span><span>Build by GitHub Actions</span></footer>
     </main>
   </div>
+  <section class="login-screen" id="loginScreen" aria-label="管理员登录"><form class="login-card" id="adminLoginForm"><img src="https://shop.lynli.me/logo.jpg" alt="晴天号铺" class="login-logo"><p class="eyebrow">QINGTIAN ADMIN</p><h1>管理后台登录</h1><p class="login-subtitle">使用晴天号铺原有账号密码登录</p><label for="loginEmail">管理员邮箱</label><input id="loginEmail" type="email" autocomplete="username" value="chulingli1988@outlook.com" required><label for="loginPassword">登录密码</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="输入晴天号铺登录密码" required><button class="btn btn-primary submit-btn" id="loginSubmit" type="submit">登录管理后台 →</button><p class="login-error" id="loginError" role="status"></p></form></section>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </body>
 </html>
