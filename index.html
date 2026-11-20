@@ -128,12 +128,12 @@
         <div class="login-brand-foot"><i></i> 专属管理入口 · 安全身份校验</div>
         <div class="login-decoration login-decoration-one"></div><div class="login-decoration login-decoration-two"></div>
       </div>
-      <form class="login-card" id="adminLoginForm">
+      <form class="login-card" id="adminLoginForm" method="post">
         <div class="login-mobile-brand"><img src="https://shop.lynli.me/logo.jpg" alt="晴天号铺"></div>
         <p class="eyebrow">ADMIN CONSOLE</p><h1>欢迎登录</h1>
         <p class="login-subtitle">请使用晴天号铺原有账号密码进入管理后台。</p>
-        <label for="loginEmail">管理员邮箱</label><input id="loginEmail" type="email" autocomplete="username" value="chulingli1988@outlook.com" required>
-        <label for="loginPassword">登录密码</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="请输入登录密码" required>
+        <label for="loginEmail">管理员邮箱</label><input id="loginEmail" name="username" type="email" autocomplete="username" placeholder="请输入账号邮箱" required>
+        <label for="loginPassword">登录密码</label><input id="loginPassword" name="password" type="password" autocomplete="current-password" placeholder="请输入登录密码" required>
         <button class="btn btn-primary submit-btn" id="loginSubmit" type="submit">登录管理后台</button>
         <p class="login-error" id="loginError" role="status" aria-live="polite"></p>
         <div class="login-security"><span>⌑</span><div><b>安全登录</b><small>账号验证通过后，将确认管理员访问权限</small></div></div>
