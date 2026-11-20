@@ -79,7 +79,7 @@ async function loadOverview(){
  const shop=val(0)||{},stats=val(1)||{},accounts=val(2)||{},tickets=val(3)||{},nodes=dataList(val(4)),plans=dataList(val(5)),ordersData=val(6)||{},productsData=val(7)||{};
  const orders=dataList(ordersData),products=dataList(productsData),notices=dataList(val(8)),mail=val(9)||{},bots=val(10)?.bots||[];
  const userTotal=Number(stats.users_total??0);
- const orderTotal=Number(stats.orders_total??ordersData.total??orders.length);
+ const orderTotal=Number(shop.orders_pending||0)+Number(shop.orders_toship||0)+Number(shop.orders_shipped||0)+Number(shop.orders_done||0);
  const productTotal=Number(shop.products_online??shop.products_total??productsData.total??products.length);
  const stockTotal=Number(shop.stock_total??shop.total_stock??products.reduce((n,p)=>n+Number(p.stock||0),0));
  const revenue=Number(stats.income_total??shop.today_amount??0);
@@ -89,6 +89,7 @@ async function loadOverview(){
  const lowStock=products.filter(p=>Number(p.stock||0)<=5&&Number(p.status??p.is_active??1)!==0).length;
  $("#metricRevenue").textContent=formatCny(revenue);
  $("#metricOrders").textContent=orderTotal.toLocaleString("zh-CN");
+ $("#metricNodeOrders").textContent=Number(stats.orders_total??0).toLocaleString("zh-CN");
  $("#metricPendingOrders").textContent="待处理 "+pendingOrders.toLocaleString("zh-CN");
  $("#metricUsers").textContent=userTotal.toLocaleString("zh-CN");
  $("#metricProducts").textContent=productTotal.toLocaleString("zh-CN");
@@ -209,7 +210,7 @@ function switchProductTab(tab){
 function switchNodeTab(tab){
  document.querySelectorAll("[data-node-tab]").forEach(b=>b.classList.toggle("active",b.dataset.nodeTab===tab));
  document.querySelectorAll(".node-view").forEach(v=>v.classList.toggle("active",v.id==="nodeView-"+tab));
- if(tab==="servers")loadNodeServers();else loadPlans();
+ if(tab==="servers")loadNodeServers();else if(tab==="orders")loadNodeOrders();else loadPlans();
 }
 document.querySelectorAll("[data-product-tab]").forEach(b=>b.addEventListener("click",()=>switchProductTab(b.dataset.productTab)));
 document.querySelectorAll("[data-node-tab]").forEach(b=>b.addEventListener("click",()=>switchNodeTab(b.dataset.nodeTab)));
@@ -272,7 +273,24 @@ async function loadNodeServers(){
 function editNode(n){$("#nodeId").value=n.id||"";$("#nodeName").value=n.name||"";$("#nodeIp").value=n.ip||"";$("#nodeDomain").value=n.domain||"";$("#nodeRegion").value=n.region||"";$("#nodeRegionName").value=n.region_name||"";$("#nodeApiPort").value=n.api_port||54323;$("#nodeAdminPort").value=n.admin_port||54324;$("#nodeSort").value=n.sort||0;$("#nodeEnabled").value=String(n.enabled??1);$("#nodeFormTitle").textContent=n.id?"编辑节点服务器":"新增节点服务器";$("#nodeFormPanel").hidden=false;$("#nodeFormPanel").scrollIntoView({behavior:"smooth",block:"start"})}
 $("#nodeAddBtn")?.addEventListener("click",()=>editNode({}));$("#nodeFormClose")?.addEventListener("click",()=>$("#nodeFormPanel").hidden=true);
 $("#nodeForm")?.addEventListener("submit",async e=>{e.preventDefault();const res=$("#nodeFormResult"),btn=$("#nodeSaveBtn");btn.disabled=true;try{await legacyAdmin("/servers/save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number($("#nodeId").value)||undefined,name:$("#nodeName").value.trim(),ip:$("#nodeIp").value.trim(),domain:$("#nodeDomain").value.trim(),region:$("#nodeRegion").value.trim(),region_name:$("#nodeRegionName").value.trim(),api_port:Number($("#nodeApiPort").value),admin_port:Number($("#nodeAdminPort").value),sort:Number($("#nodeSort").value||0),enabled:Number($("#nodeEnabled").value)})});res.className="form-result success";res.textContent="节点服务器配置已保存";toast("节点服务器已保存");$("#nodeFormPanel").hidden=true;loadNodeServers()}catch(e){res.className="form-result error";res.textContent=e.message||"保存失败"}finally{btn.disabled=false}});
-async function loadNodes(){await Promise.allSettled([loadPlans(),loadNodeServers()])}
+async function loadNodeOrders(){
+ const body=$("#nodeAdminOrdersBody");if(!body)return;
+ body.innerHTML='<tr><td colspan="6" class="table-empty">正在读取全站节点订单…</td></tr>';
+ try{
+  const d=await legacyAdmin("/orders"),orders=dataList(d);
+  body.innerHTML=orders.length?orders.slice(0,200).map(o=>{
+   const amount=Number(o.total_amount??o.amount??0)/100;
+   const status=Number(o.status)===0?"待支付":Number(o.status)===1?"已支付":Number(o.refunded)===1?"已退款":String(o.status??"未知");
+   return '<tr><td class="mono">'+escapeHtml(o.trade_no||o.order_no||o.id||"—")+'</td><td>'+escapeHtml(o.user_email||o.email||o.user_id||"—")+'</td><td>'+escapeHtml(o.plan_name||("套餐 #"+(o.plan_id||"—")))+'</td><td class="money">'+formatCny(amount)+'</td><td>'+statusPill(status)+'</td><td>'+escapeHtml(formatAdminDate(o.created_at))+'</td></tr>';
+  }).join(""):'<tr><td colspan="6" class="table-empty">暂无节点服务订单</td></tr>';
+  $("#nodeAdminOrdersCount").textContent="共 "+orders.length.toLocaleString("zh-CN")+" 条节点订单";
+ }catch(e){
+  body.innerHTML='<tr><td colspan="6" class="table-empty error-text">节点订单读取失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';
+  $("#nodeAdminOrdersCount").textContent="读取失败";
+ }
+}
+$("#nodeOrdersRefresh")?.addEventListener("click",loadNodeOrders);
+async function loadNodes(){await Promise.allSettled([loadPlans(),loadNodeServers(),loadNodeOrders()])}
 async function loadSupport(){
  const users=$("#chatUsersList"),ticketsBody=$("#ticketsBody");if(users)users.innerHTML='<div class="table-empty">正在读取客户会话…</div>';if(ticketsBody)ticketsBody.innerHTML='<tr><td colspan="7" class="table-empty">正在读取工单…</td></tr>';
  const [cr,tr]=await Promise.allSettled([legacyAdmin("/chat/users"),legacyAdmin("/tickets?status="+encodeURIComponent($("#ticketStatus")?.value||"")+"&page=1&size=50")]);
