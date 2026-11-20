@@ -145,7 +145,40 @@ button:disabled{cursor:wait;opacity:.62;transform:none!important;filter:none!imp
 .password-toggle:hover{background:#f0efff;color:#5e50b9}
 .password-toggle:focus-visible{outline:3px solid rgba(111,94,220,.22);outline-offset:1px}
 .remember-option{display:flex!important;align-items:center;gap:9px;margin:16px 0 0!important;min-height:22px;font-size:12px!important;color:#46536b!important}
-.remember-option input{flex:0 0 16px;width:16px!important;height:16px!important;accent-color:#6c5bd2}
+/* Custom checkbox: consistent shape across mobile and desktop browsers */
+.remember-option input{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  flex:0 0 17px!important;
+  width:17px!important;
+  height:17px!important;
+  min-width:17px!important;
+  min-height:17px!important;
+  margin:0!important;
+  padding:0!important;
+  border:1.5px solid #c8d1df!important;
+  border-radius:5px!important;
+  background:#fff!important;
+  box-shadow:none!important;
+  display:inline-grid!important;
+  place-content:center!important;
+  cursor:pointer;
+  transition:background-color .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+.remember-option input:checked{
+  border-color:#6c5bd2!important;
+  background-color:#6c5bd2!important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m3.2 8.2 3.1 3.1 6.5-6.6' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")!important;
+  background-position:center!important;
+  background-repeat:no-repeat!important;
+  background-size:12px 12px!important;
+}
+.remember-option input:focus-visible{
+  outline:3px solid rgba(108,91,210,.2)!important;
+  outline-offset:2px;
+}
+.remember-option input:active{transform:scale(.94)}
+
 .remember-option span{font-weight:600}
 .remember-option small{font-size:10px;color:#9aa4b4;margin-left:2px}
 .login-card .submit-btn{width:100%;height:49px;margin-top:25px;border-radius:11px;font-size:13px;font-weight:650}
