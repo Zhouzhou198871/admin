@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f7fb">
   <title>晴天账号铺 · 管理后台</title>
-  <link rel="stylesheet" href="./assets/admin.css?v=20261121-6">
-  <script src="./assets/admin.js?v=20261121-6" defer></script>
+  <link rel="stylesheet" href="./assets/admin.css?v=20261121-7">
+  <script src="./assets/admin.js?v=20261121-7" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -21,6 +21,9 @@
         <button class="nav-item" data-page="orders"><span class="nav-icon">▤</span>订单管理</button>
         <button class="nav-item" data-page="users"><span class="nav-icon">♙</span>用户管理</button>
         <button class="nav-item" data-page="products"><span class="nav-icon">◇</span>商品与库存</button>
+        <button class="nav-item" data-page="support"><span class="nav-icon">◉</span>在线客服</button>
+        <button class="nav-item" data-page="email"><span class="nav-icon">✉</span>邮件系统</button>
+        <button class="nav-item" data-page="notices"><span class="nav-icon">▣</span>公告管理</button>
         <button class="nav-item" data-page="nodes"><span class="nav-icon">⌁</span>节点服务</button>
         <button class="nav-item" data-page="upstream"><span class="nav-icon">⇄</span>上游采购中心</button>
         <button class="nav-item" data-page="recharge"><span class="nav-icon">＋</span>余额充值</button>
@@ -43,39 +46,41 @@
       </header>
 
       <section class="page active" id="page-overview">
-        <div class="page-heading">
-          <div><p class="eyebrow">OVERVIEW</p><h1>运营总览</h1><p class="subheading">账号铺业务运行情况与管理入口</p></div>
-          <button class="btn btn-secondary" id="refreshBtn">↻ 刷新状态</button>
+        <div class="page-heading"><div><p class="eyebrow">BUSINESS INTELLIGENCE</p><h1>经营驾驶舱</h1><p class="subheading">销售、订单、库存、节点与客服待办，一屏掌握</p></div><button class="btn btn-secondary" id="refreshBtn">↻ 刷新全部数据</button></div>
+        <div class="section-title"><div><h2>核心经营指标</h2><p>点击任一指标进入对应管理明细</p></div><span class="live-label"><i></i>实时数据</span></div>
+        <div class="metric-grid overview-metrics">
+          <button type="button" class="metric-card metric-action" data-go="orders"><div class="metric-top"><span>累计销售额</span><span class="metric-icon green">¥</span></div><strong id="metricRevenue">¥—</strong><small>已完成订单金额</small><span class="metric-detail">查看销售明细 →</span></button>
+          <button type="button" class="metric-card metric-action" data-go="orders"><div class="metric-top"><span>商城订单</span><span class="metric-icon blue">▤</span></div><strong id="metricOrders">—</strong><small id="metricPendingOrders">待处理 —</small><span class="metric-detail">进入订单中心 →</span></button>
+          <button type="button" class="metric-card metric-action" data-go="users"><div class="metric-top"><span>注册用户</span><span class="metric-icon purple">♙</span></div><strong id="metricUsers">—</strong><small>全站用户账户</small><span class="metric-detail">查看用户明细 →</span></button>
+          <button type="button" class="metric-card metric-action" data-go="products"><div class="metric-top"><span>在售商品</span><span class="metric-icon orange">◇</span></div><strong id="metricProducts">—</strong><small id="metricStock">商品库存 —</small><span class="metric-detail">管理商品与价格 →</span></button>
+          <button type="button" class="metric-card metric-action" data-go="products" data-product-tab="accounts"><div class="metric-top"><span>可售账号库存</span><span class="metric-icon green">▣</span></div><strong id="metricInventory">—</strong><small id="metricSoldInventory">已售 —</small><span class="metric-detail">上传账号/卡密 →</span></button>
+          <button type="button" class="metric-card metric-action" data-go="support"><div class="metric-top"><span>待处理客服</span><span class="metric-icon purple">◉</span></div><strong id="metricTickets">—</strong><small>等待人工回复</small><span class="metric-detail">进入客服工作台 →</span></button>
         </div>
-        <div class="welcome-card">
-          <div><span class="welcome-kicker">CONTROL CENTER</span><h2>欢迎回来</h2><p>管理端已连接晴天号铺 API，可查看业务数据并管理指定服务。</p></div>
-          <div class="welcome-art"><img src="https://shop.lynli.me/logo.jpg" alt="晴天号铺图标"><i></i><b></b></div>
-        </div>
-        <div class="section-title"><div><h2>业务概况</h2><p>从晴天号铺生产数据库实时读取</p></div><span class="live-label"><i></i>实时检测</span></div>
-        <div class="metric-grid">
-          <button type="button" class="metric-card metric-action" data-go="upstream"><div class="metric-top"><span>API 服务</span><span class="metric-icon purple">⌁</span></div><strong id="metricApi">检测中</strong><small id="metricApiHint">点击查看连接详情</small><span class="metric-detail">查看详情 →</span></button>
-          <button type="button" class="metric-card metric-action" data-go="orders"><div class="metric-top"><span>订单数据</span><span class="metric-icon blue">▤</span></div><strong id="metricOrders">—</strong><small>进入订单中心查看明细</small><span class="metric-detail">查看详情 →</span></button>
-          <button type="button" class="metric-card metric-action" data-go="users"><div class="metric-top"><span>用户数据</span><span class="metric-icon green">♙</span></div><strong id="metricUsers">—</strong><small>进入用户中心查看账户</small><span class="metric-detail">查看详情 →</span></button>
-          <button type="button" class="metric-card metric-action" data-go="products"><div class="metric-top"><span>商品库存</span><span class="metric-icon orange">◇</span></div><strong id="metricProducts">—</strong><small>进入商品中心查看目录</small><span class="metric-detail">查看详情 →</span></button>
-        </div>
-        <div class="content-grid">
+        <div class="overview-columns">
           <article class="panel">
-            <div class="panel-heading"><div><h2>快捷操作</h2><p>已接通的管理功能</p></div></div>
-            <button class="action-row" data-go="recharge"><span class="action-icon green">＋</span><span><b>用户余额充值</b><small>按用户邮箱增加人民币等值余额</small></span></button>
-            <div class="action-row" data-go="orders"><span class="action-icon blue">▤</span><span><b>订单查询</b><small>查看商城与节点订单</small></span></div>
-            <div class="action-row" data-go="users"><span class="action-icon purple">♙</span><span><b>用户管理</b><small>查看注册用户与余额</small></span></div>
+            <div class="panel-heading"><div><h2>待办事项</h2><p>需要优先处理的业务</p></div><span class="tag tag-orange">运营提醒</span></div>
+            <button class="todo-row" data-go="orders"><span class="todo-icon orange">▤</span><span><b>待处理订单</b><small>检查付款、交付与订单状态</small></span><strong id="todoOrders">—</strong></button>
+            <button class="todo-row" data-go="support"><span class="todo-icon purple">◉</span><span><b>待回复客服</b><small>查看客户消息并接管 AI 会话</small></span><strong id="todoSupport">—</strong></button>
+            <button class="todo-row" data-go="products"><span class="todo-icon blue">◇</span><span><b>低库存商品</b><small>检查库存不足或已售罄商品</small></span><strong id="todoLowStock">—</strong></button>
+            <button class="todo-row" data-go="nodes"><span class="todo-icon green">⌁</span><span><b>节点与套餐</b><small>维护节点线路和套餐价格</small></span><strong id="todoNodes">—</strong></button>
           </article>
-          <article class="panel integration-panel">
-            <div class="panel-heading"><div><h2>系统连接</h2><p>当前项目基础配置</p></div></div>
-            <div class="info-line"><span>前台商城</span><b>shop.lynli.me</b></div>
-            <div class="info-line"><span>API 服务</span><b id="apiHost">qingtian-shop-api</b></div>
-            <div class="info-line"><span>部署方式</span><b>GitHub + Vercel</b></div>
-            <div class="info-line"><span>数据源</span><b>Vercel API / Neon PostgreSQL</b></div>
-            <p class="integration-tip">管理端不会直接连接数据库，也不会在网页代码中保存管理密钥。</p>
+          <article class="panel">
+            <div class="panel-heading"><div><h2>快捷操作</h2><p>常用运营动作，直接进入工作区</p></div></div>
+            <div class="quick-action-grid">
+              <button class="quick-action" data-go="products" data-product-tab="catalog"><span class="action-icon blue">＋</span><b>新增商品</b><small>名称、价格、库存</small></button>
+              <button class="quick-action" data-go="products" data-product-tab="accounts"><span class="action-icon green">⇧</span><b>上传账号卡密</b><small>批量导入库存</small></button>
+              <button class="quick-action" data-go="nodes"><span class="action-icon purple">⌁</span><b>维护节点套餐</b><small>线路、流量、价格</small></button>
+              <button class="quick-action" data-go="email"><span class="action-icon orange">✉</span><b>发送邮件</b><small>模板与群发</small></button>
+              <button class="quick-action" data-go="notices"><span class="action-icon blue">▣</span><b>发布公告</b><small>站内通知管理</small></button>
+              <button class="quick-action" data-go="support"><span class="action-icon purple">◉</span><b>回复客户</b><small>在线客服工作台</small></button>
+            </div>
           </article>
         </div>
+        <article class="panel data-panel overview-recent">
+          <div class="panel-heading"><div><h2>最近订单</h2><p>最新业务订单，点击查看完整订单列表</p></div><button class="btn btn-secondary" data-go="orders">全部订单 →</button></div>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>订单号</th><th>客户</th><th>商品</th><th>金额</th><th>状态</th><th>创建时间</th></tr></thead><tbody id="overviewOrdersBody"><tr><td colspan="6" class="table-empty">正在读取业务数据…</td></tr></tbody></table></div>
+        </article>
       </section>
-
       <section class="page" id="page-recharge">
         <div class="page-heading"><div><p class="eyebrow">BALANCE MANAGEMENT</p><h1>余额充值</h1><p class="subheading">通过现有管理 API 为指定用户增加人民币等值余额</p></div></div>
         <div class="notice"><b>安全提示</b><span>此操作使用已登录的管理员身份进行授权，服务端会再次校验管理员邮箱。</span></div>
@@ -117,26 +122,140 @@
         </article>
       </section>
       <section class="page" id="page-products">
-        <div class="page-heading"><div><p class="eyebrow">CATALOG CENTER</p><h1>商品与库存</h1><p class="subheading">读取当前商城商品目录与库存状态；采购仍由现有供应商 API 负责</p></div><button class="btn btn-secondary" id="productsRefresh">↻ 刷新</button></div>
-        <div class="notice"><b>数据边界</b><span>此页只读展示商城同步目录，不直接修改上游商品、采购系统或库存，避免影响现有自动同步。</span></div>
-        <article class="panel data-panel">
-          <div class="table-toolbar"><input id="productSearch" type="search" placeholder="搜索商品名称、商品 ID 或分类"><button class="btn btn-primary" id="productSearchBtn">查询</button></div>
-          <div class="table-wrap"><table class="data-table"><thead><tr><th>商品名称</th><th>分类</th><th>商品 ID</th><th>售价（人民币）</th><th>库存</th><th>状态</th><th>同步时间</th></tr></thead><tbody id="productsBody"><tr><td colspan="7" class="table-empty">登录后加载商品目录</td></tr></tbody></table></div>
-          <div class="table-foot"><span id="productsCount">—</span><span>最多显示最近 50 条</span></div>
-        </article>
+        <div class="page-heading"><div><p class="eyebrow">PRODUCT & INVENTORY</p><h1>商品与库存</h1><p class="subheading">商品上架、价格库存、账号卡密批量导入与库存状态</p></div><button class="btn btn-secondary" id="productsRefresh">↻ 刷新数据</button></div>
+        <div class="tab-bar" id="productTabs"><button class="tab-button active" data-product-tab="catalog">商品管理</button><button class="tab-button" data-product-tab="accounts">账号 / 卡密库存</button></div>
+        <div class="product-view active" id="productView-catalog">
+          <div class="toolbar-row"><div class="table-toolbar"><input id="productSearch" type="search" placeholder="搜索商品名称、分类或商品 ID"><button class="btn btn-primary" id="productSearchBtn">查询</button></div><button class="btn btn-primary" id="productAddBtn">＋ 新增商品</button></div>
+          <article class="panel form-panel compact-form" id="productFormPanel" hidden>
+            <div class="panel-heading"><div><h2 id="productFormTitle">新增商品</h2><p>保存后同步到商城商品目录</p></div><button type="button" class="btn btn-secondary" id="productFormClose">关闭</button></div>
+            <form id="productForm" class="admin-form-grid">
+              <input id="productId" type="hidden">
+              <label>商品名称<input id="productTitle" required maxlength="200" placeholder="例如：Telegram 账号"></label>
+              <label>商品分类<input id="productCategory" required maxlength="60" placeholder="账号 / 软件 / 服务"></label>
+              <label>售价（CNY）<input id="productPrice" type="number" min="0" step="0.01" required placeholder="0.00"></label>
+              <label>采购成本（CNY）<input id="productCost" type="number" min="0" step="0.01" placeholder="0.00"></label>
+              <label>库存数量<input id="productStock" type="number" min="0" step="1" required value="0"></label>
+              <label>排序权重<input id="productSort" type="number" step="1" value="0"></label>
+              <label class="span-two">商品图片 URL<input id="productImage" type="url" placeholder="https://..."></label>
+              <label class="span-two">副标题<input id="productSubtitle" maxlength="255" placeholder="商品简短说明"></label>
+              <label class="span-two">商品详情<textarea id="productDetail" rows="3" placeholder="填写商品介绍、交付说明和注意事项"></textarea></label>
+              <label>上架状态<select id="productStatus"><option value="1">上架</option><option value="0">下架</option></select></label>
+              <div class="form-actions span-two"><button class="btn btn-primary" id="productSaveBtn" type="submit">保存商品</button><span id="productFormResult" class="form-result" role="status"></span></div>
+            </form>
+          </article>
+          <article class="panel data-panel">
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>商品</th><th>分类</th><th>售价</th><th>成本</th><th>库存</th><th>状态</th><th>操作</th></tr></thead><tbody id="productsBody"><tr><td colspan="7" class="table-empty">登录后加载商品数据</td></tr></tbody></table></div>
+            <div class="table-foot"><span id="productsCount">—</span><span>商品改价/上下架会同步到商城</span></div>
+          </article>
+        </div>
+        <div class="product-view" id="productView-accounts">
+          <div class="metric-grid inventory-metrics">
+            <article class="metric-card"><div class="metric-top"><span>可售账号</span><span class="metric-icon green">▣</span></div><strong id="accountAvailableCount">—</strong><small>等待销售</small></article>
+            <article class="metric-card"><div class="metric-top"><span>已售账号</span><span class="metric-icon blue">✓</span></div><strong id="accountSoldCount">—</strong><small>已关联订单</small></article>
+            <article class="metric-card"><div class="metric-top"><span>库存总量</span><span class="metric-icon purple">▤</span></div><strong id="accountTotalCount">—</strong><small>全部账号记录</small></article>
+          </div>
+          <div class="content-grid inventory-layout">
+            <article class="panel form-panel">
+              <div class="panel-heading"><div><h2>批量上传账号 / 卡密</h2><p>支持 TXT / CSV，多行导入，重复邮箱自动跳过</p></div><span class="tag tag-green">批量导入</span></div>
+              <form id="accountImportForm">
+                <label for="accountImportFile">选择本地文件（TXT / CSV）</label><input id="accountImportFile" type="file" accept=".txt,.csv,text/plain,text/csv">
+                <label for="accountImportText">或直接粘贴数据</label>
+                <textarea id="accountImportText" rows="9" placeholder="每行一条：邮箱----密码----2FA密钥----恢复邮箱----手机号&#10;也支持 CSV：email,password,twofa_secret,recovery_email,phone"></textarea>
+                <p class="field-hint">数据仅提交到服务端库存表。密码、2FA 密钥不会在库存列表中显示。</p>
+                <button class="btn btn-primary" id="accountImportSubmit" type="submit">批量导入库存</button><div class="form-result" id="accountImportResult" role="status"></div>
+              </form>
+            </article>
+            <article class="panel side-info">
+              <div class="panel-heading"><div><h2>导入格式</h2><p>一行一条记录</p></div></div>
+              <div class="endpoint"><small>推荐</small><code>邮箱----密码----2FA----恢复邮箱----手机号</code></div>
+              <ul><li>邮箱必填，作为库存唯一标识</li><li>密码、2FA、恢复邮箱、手机号可选</li><li>重复邮箱自动跳过，不覆盖原记录</li><li>导入后进入「可售」状态</li></ul>
+              <div class="warning-box">请只上传你有权销售或交付的账号资料。已售库存不要重复导入。</div>
+            </article>
+          </div>
+          <article class="panel data-panel">
+            <div class="panel-heading"><div><h2>账号库存明细</h2><p>只展示识别信息，不回显密码与 2FA 密钥</p></div><div class="table-toolbar"><select id="accountPoolStatus"><option value="">全部状态</option><option value="available">可售</option><option value="sold">已售</option></select><button class="btn btn-secondary" id="accountPoolRefresh">刷新库存</button></div></div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>邮箱 / 账号</th><th>手机号</th><th>状态</th><th>关联订单</th><th>入库时间</th><th>操作</th></tr></thead><tbody id="accountPoolBody"><tr><td colspan="6" class="table-empty">等待加载账号库存</td></tr></tbody></table></div>
+            <div class="table-foot"><span id="accountPoolCount">—</span><span>单条记录支持恢复可售或删除</span></div>
+          </article>
+        </div>
       </section>
-
       <section class="page" id="page-nodes">
-        <div class="page-heading"><div><p class="eyebrow">NODE SERVICE CENTER</p><h1>节点服务</h1><p class="subheading">节点产品、套餐价格与节点订单状态</p></div><button class="btn btn-secondary" id="nodesRefresh">↻ 刷新数据</button></div>
-        <div class="metric-grid"><article class="metric-card"><div class="metric-top"><span>节点产品</span><span class="metric-icon purple">⌁</span></div><strong id="nodeProductCount">—</strong><small>已启用节点产品</small></article><article class="metric-card"><div class="metric-top"><span>可售套餐</span><span class="metric-icon green">◇</span></div><strong id="nodePackageCount">—</strong><small>当前可购买套餐</small></article><article class="metric-card"><div class="metric-top"><span>节点订单</span><span class="metric-icon blue">▤</span></div><strong id="nodeOrderCount">—</strong><small>当前管理员账号可见订单</small></article><article class="metric-card"><div class="metric-top"><span>计价货币</span><span class="metric-icon orange">¥</span></div><strong>CNY</strong><small>统一人民币显示</small></article></div>
-        <article class="panel data-panel node-data-panel"><div class="panel-heading"><div><h2>节点产品与套餐</h2><p>从生产节点服务目录读取</p></div><span class="tag tag-green">实时目录</span></div><div class="table-wrap"><table class="data-table"><thead><tr><th>节点产品</th><th>协议</th><th>套餐</th><th>价格</th><th>时长</th><th>设备数</th><th>开通能力</th></tr></thead><tbody id="nodeProductsBody"><tr><td colspan="7" class="table-empty">等待加载节点产品</td></tr></tbody></table></div></article>
-        <article class="panel data-panel node-data-panel"><div class="panel-heading"><div><h2>节点订单</h2><p>现有接口仅返回当前管理员账号订单，不冒充全站订单</p></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>订单号</th><th>节点产品</th><th>套餐</th><th>金额</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead><tbody id="nodeOrdersBody"><tr><td colspan="7" class="table-empty">等待加载节点订单</td></tr></tbody></table></div></article>
+        <div class="page-heading"><div><p class="eyebrow">NODE OPERATIONS</p><h1>节点服务</h1><p class="subheading">节点线路、协议、套餐、流量与人民币定价统一管理</p></div><button class="btn btn-secondary" id="nodesRefresh">↻ 刷新</button></div>
+        <div class="tab-bar" id="nodeTabs"><button class="tab-button active" data-node-tab="plans">套餐与价格</button><button class="tab-button" data-node-tab="servers">节点线路</button></div>
+        <div class="node-view active" id="nodeView-plans">
+          <div class="toolbar-row"><p class="field-hint">套餐价格统一以人民币展示；保存时按服务端分单位换算。</p><button class="btn btn-primary" id="planAddBtn">＋ 新增套餐</button></div>
+          <article class="panel form-panel compact-form" id="planFormPanel" hidden>
+            <div class="panel-heading"><div><h2 id="planFormTitle">新增节点套餐</h2><p>配置套餐周期、流量和销售状态</p></div><button type="button" class="btn btn-secondary" id="planFormClose">关闭</button></div>
+            <form id="planForm" class="admin-form-grid">
+              <input id="planId" type="hidden">
+              <label>套餐名称<input id="planName" required placeholder="例如：香港高速节点"></label>
+              <label>套餐类型<input id="planType" placeholder="例如：node"></label>
+              <label>月付价格（CNY）<input id="planMonthPrice" type="number" min="0" step="0.01" required></label>
+              <label>季付价格（CNY）<input id="planQuarterPrice" type="number" min="0" step="0.01"></label>
+              <label>半年价格（CNY）<input id="planHalfPrice" type="number" min="0" step="0.01"></label>
+              <label>年付价格（CNY）<input id="planYearPrice" type="number" min="0" step="0.01"></label>
+              <label>流量（GB）<input id="planTraffic" type="number" min="0" step="1" value="0"></label>
+              <label>速度说明<input id="planSpeed" placeholder="例如：不限速"></label>
+              <label>地区代码<input id="planRegion" placeholder="HK / US / JP"></label>
+              <label>地区名称<input id="planRegionName" placeholder="香港 / 美国 / 日本"></label>
+              <label class="span-two">套餐说明<textarea id="planContent" rows="3"></textarea></label>
+              <label>上架状态<select id="planShow"><option value="1">上架</option><option value="0">下架</option></select></label>
+              <label>热门推荐<select id="planHot"><option value="0">普通</option><option value="1">推荐</option></select></label>
+              <div class="form-actions span-two"><button class="btn btn-primary" type="submit" id="planSaveBtn">保存套餐</button><span id="planFormResult" class="form-result"></span></div>
+            </form>
+          </article>
+          <article class="panel data-panel"><div class="table-wrap"><table class="data-table"><thead><tr><th>套餐</th><th>地区</th><th>月付</th><th>季付</th><th>半年</th><th>年付</th><th>流量</th><th>状态</th><th>操作</th></tr></thead><tbody id="plansBody"><tr><td colspan="9" class="table-empty">等待加载套餐</td></tr></tbody></table></div><div class="table-foot"><span id="plansCount">—</span><span>套餐变更会影响前台新订单价格</span></div></article>
+        </div>
+        <div class="node-view" id="nodeView-servers">
+          <div class="toolbar-row"><p class="field-hint">节点线路管理。配置 JSON 仅在编辑时加载，不在列表中暴露密钥。</p><button class="btn btn-primary" id="nodeAddBtn">＋ 新增节点</button></div>
+          <article class="panel form-panel compact-form" id="nodeFormPanel" hidden>
+            <div class="panel-heading"><div><h2 id="nodeFormTitle">新增节点线路</h2><p>设置节点名称、协议、端口与高级参数</p></div><button type="button" class="btn btn-secondary" id="nodeFormClose">关闭</button></div>
+            <form id="nodeForm" class="admin-form-grid">
+              <input id="nodeId" type="hidden">
+              <label>节点名称<input id="nodeName" required></label>
+              <label>协议<select id="nodeProtocol"><option>vless</option><option>vmess</option><option>trojan</option><option>hysteria2</option><option>ss</option></select></label>
+              <label>端口<input id="nodePort" type="number" min="1" max="65535" required></label>
+              <label>排序<input id="nodeSort" type="number" value="0"></label>
+              <label>启用状态<select id="nodeEnabled"><option value="1">启用</option><option value="0">停用</option></select></label>
+              <label class="span-two">高级配置 JSON<textarea id="nodeConfig" rows="5" placeholder="{}"></textarea></label>
+              <div class="form-actions span-two"><button class="btn btn-primary" type="submit" id="nodeSaveBtn">保存节点</button><span id="nodeFormResult" class="form-result"></span></div>
+            </form>
+          </article>
+          <article class="panel data-panel"><div class="table-wrap"><table class="data-table"><thead><tr><th>节点名称</th><th>协议</th><th>端口</th><th>状态</th><th>排序</th><th>操作</th></tr></thead><tbody id="nodesBody"><tr><td colspan="6" class="table-empty">等待加载节点线路</td></tr></tbody></table></div><div class="table-foot"><span id="nodesCount">—</span><span>删除节点前请确认没有依赖中的用户配置</span></div></article>
+        </div>
       </section>
       <section class="page" id="page-upstream">
         <div class="page-heading"><div><p class="eyebrow">SUPPLIER OPERATIONS</p><h1>上游采购中心</h1><p class="subheading">供应商余额、采购订单与 API 连接</p></div><button class="btn btn-secondary" id="upstreamRefresh">↻ 检查连接</button></div>
         <div class="notice"><b>真实数据状态</b><span>账号铺继续复用既有大号商 API。当前管理端尚未部署上游余额与订单只读代理，因此不会用旧余额或模拟订单填充。</span></div>
         <div class="content-grid upstream-grid"><article class="panel"><div class="panel-heading"><div><h2>上游账户余额</h2><p>供应商实时可用余额</p></div><span class="tag" id="upstreamBalanceStatus">接口待接通</span></div><div class="upstream-balance-value" id="upstreamBalance">暂不可读取</div><p class="integration-tip" id="upstreamBalanceHint">通过服务端安全代理读取，不在浏览器暴露供应商密钥。</p></article><article class="panel"><div class="panel-heading"><div><h2>上游 API 连接</h2><p>复用现有采购服务，不新建采购系统</p></div><span class="tag" id="upstreamApiStatus">未验证</span></div><div class="info-line"><span>采购方式</span><b>现有大号商 API</b></div><div class="info-line"><span>密钥管理</span><b>仅服务端保存</b></div><div class="info-line"><span>币种</span><b>CNY 人民币</b></div></article></div>
         <article class="panel data-panel node-data-panel"><div class="panel-heading"><div><h2>上游订单</h2><p>真实供应商订单号、成本与同步时间</p></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>上游订单号</th><th>关联商城订单</th><th>商品</th><th>采购金额</th><th>状态</th><th>下单时间</th></tr></thead><tbody id="upstreamOrdersBody"><tr><td colspan="6" class="table-empty">查询接口尚未接通，不显示模拟数据</td></tr></tbody></table></div></article>
+      </section>
+      <section class="page" id="page-support">
+        <div class="page-heading"><div><p class="eyebrow">CUSTOMER SUPPORT</p><h1>在线客服</h1><p class="subheading">查看客户会话、人工接管 AI、回复消息与处理售后工单</p></div><button class="btn btn-secondary" id="supportRefresh">↻ 刷新会话</button></div>
+        <div class="support-layout">
+          <article class="panel support-list-panel"><div class="panel-heading"><div><h2>客户会话</h2><p>按最近消息排序</p></div><span class="tag" id="supportChatCount">—</span></div><div id="chatUsersList" class="chat-users-list"><div class="table-empty">正在加载会话</div></div></article>
+          <article class="panel support-chat-panel"><div class="panel-heading"><div><h2 id="chatRoomTitle">选择一个会话</h2><p id="chatRoomMeta">客户消息会显示在这里</p></div><button class="btn btn-secondary" id="chatHandoffBtn" disabled>接管会话</button></div><div id="chatMessages" class="chat-messages"><div class="empty-state">从左侧选择客户会话</div></div><form id="chatReplyForm" class="chat-reply-form"><textarea id="chatReplyText" rows="2" placeholder="输入回复内容…" required disabled></textarea><button class="btn btn-primary" id="chatReplyBtn" type="submit" disabled>发送回复</button></form></article>
+        </div>
+        <article class="panel data-panel support-tickets"><div class="panel-heading"><div><h2>售后工单</h2><p>咨询、投诉与需要跟进的售后请求</p></div><select id="ticketStatus"><option value="">全部工单</option><option value="1">待处理</option><option value="2">处理中</option><option value="3">已关闭</option></select></div><div class="table-wrap"><table class="data-table"><thead><tr><th>工单</th><th>客户</th><th>主题</th><th>优先级</th><th>状态</th><th>更新时间</th><th>操作</th></tr></thead><tbody id="ticketsBody"><tr><td colspan="7" class="table-empty">等待加载工单</td></tr></tbody></table></div></article>
+      </section>
+      <section class="page" id="page-email">
+        <div class="page-heading"><div><p class="eyebrow">EMAIL CAMPAIGNS</p><h1>邮件系统</h1><p class="subheading">邮件模板、用户分组发送与群发任务</p></div><button class="btn btn-secondary" id="emailRefresh">↻ 刷新</button></div>
+        <div class="content-grid email-layout">
+          <article class="panel"><div class="panel-heading"><div><h2>邮件编辑器</h2><p>发送前可预览，群发需二次确认</p></div><span class="tag tag-green">SMTP 服务端发送</span></div>
+            <form id="emailSendForm"><label>邮件主题<input id="emailSubject" required maxlength="200" placeholder="填写邮件主题"></label><label>发送对象<select id="emailTarget"><option value="all">全部注册用户</option><option value="paid">已付费用户</option><option value="expiring">7 天内到期用户</option></select></label><label>邮件正文（支持 HTML）<textarea id="emailBody" rows="10" required placeholder="编写邮件内容，可使用 HTML"></textarea></label><div class="form-actions"><button type="button" class="btn btn-secondary" id="emailPreviewBtn">预览邮件</button><button class="btn btn-primary" type="submit" id="emailSendBtn">发送邮件</button></div><div class="form-result" id="emailSendResult" role="status"></div></form>
+          </article>
+          <article class="panel"><div class="panel-heading"><div><h2>邮件模板库</h2><p>保存常用邮件内容，发送前可载入编辑</p></div><button class="btn btn-secondary" id="emailTemplateNew">＋ 新模板</button></div><div id="emailTemplatesList" class="template-list"><div class="table-empty">正在加载邮件模板</div></div></article>
+        </div>
+        <article class="panel form-panel compact-form" id="emailTemplatePanel" hidden><div class="panel-heading"><div><h2 id="emailTemplateTitle">保存邮件模板</h2><p>模板保存在服务端</p></div><button class="btn btn-secondary" type="button" id="emailTemplateClose">关闭</button></div><form id="emailTemplateForm" class="admin-form-grid"><label>模板标识<input id="emailTemplateKey" required></label><label>模板名称<input id="emailTemplateName" required></label><label class="span-two">邮件主题<input id="emailTemplateSubject" required></label><label class="span-two">邮件正文<textarea id="emailTemplateBody" rows="6" required></textarea></label><div class="form-actions span-two"><button class="btn btn-primary" type="submit">保存模板</button><span id="emailTemplateResult" class="form-result"></span></div></form></article>
+        <div class="notice"><b>发送安全</b><span>邮件由现有 SMTP 服务发送，提交后后台异步处理；发送按钮会显示目标范围与预计收件人数，避免误发。</span></div>
+      </section>
+      <section class="page" id="page-notices">
+        <div class="page-heading"><div><p class="eyebrow">ANNOUNCEMENTS</p><h1>公告管理</h1><p class="subheading">创建站内公告、设置展示位置、有效时间与置顶状态</p></div><button class="btn btn-secondary" id="noticesRefresh">↻ 刷新</button></div>
+        <article class="panel form-panel compact-form" id="noticeFormPanel" hidden><div class="panel-heading"><div><h2 id="noticeFormTitle">发布新公告</h2><p>保存后按展示设置出现在商城前台</p></div><button type="button" class="btn btn-secondary" id="noticeFormClose">关闭</button></div>
+          <form id="noticeForm" class="admin-form-grid"><input id="noticeId" type="hidden"><label>公告标题<input id="noticeTitle" required maxlength="200"></label><label>公告类型<select id="noticeType"><option value="normal">普通公告</option><option value="important">重要通知</option><option value="maintenance">维护通知</option><option value="promotion">促销活动</option></select></label><label class="span-two">公告内容<textarea id="noticeContent" rows="5" required></textarea></label><label>展示位置<select id="noticeDisplay"><option value="banner">首页横幅</option><option value="popup">弹窗</option><option value="notice">公告列表</option></select></label><label>目标套餐 ID<input id="noticeTargetPlan" type="number" min="0" value="0"></label><label>开始时间<input id="noticeStart" type="datetime-local"></label><label>结束时间<input id="noticeEnd" type="datetime-local"></label><label>状态<select id="noticeStatus"><option value="1">发布</option><option value="0">草稿/停用</option></select></label><label>置顶<select id="noticePinned"><option value="0">普通</option><option value="1">置顶</option></select></label><div class="form-actions span-two"><button class="btn btn-primary" type="submit" id="noticeSaveBtn">保存公告</button><span id="noticeFormResult" class="form-result"></span></div></form>
+        </article>
+        <div class="toolbar-row"><p class="field-hint">公告变更会写入运营数据库，发布前请检查有效时间和展示位置。</p><button class="btn btn-primary" id="noticeAddBtn">＋ 发布公告</button></div>
+        <article class="panel data-panel"><div class="table-wrap"><table class="data-table"><thead><tr><th>标题</th><th>类型</th><th>展示位置</th><th>阅读数</th><th>状态</th><th>有效期</th><th>操作</th></tr></thead><tbody id="noticesBody"><tr><td colspan="7" class="table-empty">等待加载公告</td></tr></tbody></table></div><div class="table-foot"><span id="noticesCount">—</span><span>支持编辑、停用与删除</span></div></article>
       </section>
       <section class="page" id="page-bots">
         <div class="page-heading">
