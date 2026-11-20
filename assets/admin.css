@@ -302,3 +302,28 @@ button:disabled{cursor:wait;opacity:.62;transform:none!important;filter:none!imp
   .login-brand-panel{display:flex!important}
   .login-mobile-brand{display:none!important}
 }
+
+
+/* Live data tables */
+.data-panel{padding:0;overflow:hidden}
+.table-toolbar{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid #edf0f5}
+.table-toolbar input{flex:1;min-width:120px;height:38px;border:1px solid #e5e9f0;border-radius:8px;padding:0 12px;font:inherit;font-size:11px;color:#263149;outline:0;background:#fff}
+.table-toolbar input:focus,.table-toolbar select:focus{border-color:#a99cf2;box-shadow:0 0 0 3px #7962e915;outline:0}
+.table-toolbar select{height:38px;min-width:130px;border:1px solid #e5e9f0;border-radius:8px;padding:0 10px;background:#fff;color:#536078;font:inherit;font-size:11px}
+.table-wrap{width:100%;overflow:auto}
+.data-table{width:100%;border-collapse:collapse;white-space:nowrap;text-align:left}
+.data-table th{background:#fafbfe;color:#8c97a9;font-size:10px;font-weight:600;padding:12px 14px;border-bottom:1px solid #edf0f5}
+.data-table td{padding:13px 14px;border-bottom:1px solid #f0f2f6;color:#566278;font-size:10px;vertical-align:middle}
+.data-table tbody tr:hover{background:#fbfcff}
+.data-table td b{font-weight:600;color:#35425a}
+.data-table .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;color:#7f8ba0}
+.data-table .money{font-variant-numeric:tabular-nums;color:#38465f;font-weight:600}
+.table-empty{text-align:center!important;color:#9aa4b4!important;padding:34px 16px!important}
+.error-text{color:#cf6464!important}
+.table-foot{display:flex;justify-content:space-between;gap:12px;padding:12px 18px;color:#9aa4b4;font-size:9px}
+.status-pill{display:inline-block;border-radius:20px;padding:5px 8px;font-size:9px;font-weight:650;background:#f1f3f7;color:#8490a3}
+.status-pill.good{background:#e8f8f0;color:#239b70}
+.status-pill.bad{background:#fff0ed;color:#d36a58}
+.status-pill.wait{background:#fff6e7;color:#bb8a3d}
+.muted-inline{color:#9aa4b4;font-size:9px;margin-left:4px}
+@media(max-width:760px){.table-toolbar{flex-wrap:wrap}.table-toolbar input{flex-basis:100%;width:100%}.table-toolbar select{flex:1}.data-panel{border-radius:10px}.table-foot{font-size:9px}}
