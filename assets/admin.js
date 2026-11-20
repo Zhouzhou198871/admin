@@ -8,7 +8,26 @@ function toast(message){const el=$("#toast");el.textContent=message;el.classList
 function authHeaders(extra={}){return {...extra,Authorization:"Bearer "+(localStorage.getItem(TOKEN_KEY)||"")}}
 async function adminRequest(path,options={}){const response=await fetch(API_BASE+path,{...options,headers:authHeaders(options.headers||{})});let data={};try{data=await response.json()}catch{}if(!response.ok||!data.ok)throw new Error(data.error||"request_failed");return data}
 async function verifyAdmin(){const token=localStorage.getItem(TOKEN_KEY);if(!token){document.body.classList.remove("authenticated");return false}try{const data=await adminRequest("/api/admin/session");$("#loginScreen").hidden=true;document.body.classList.add("authenticated");return true}catch{localStorage.removeItem(TOKEN_KEY);document.body.classList.remove("authenticated");return false}}
-$("#adminLoginForm").addEventListener("submit",async e=>{e.preventDefault();const btn=$("#loginSubmit"),err=$("#loginError");btn.disabled=true;btn.textContent="正在验证…";err.textContent="";try{const response=await fetch(API_BASE+"/api/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:$("#loginEmail").value.trim().toLowerCase(),password:$("#loginPassword").value})});const data=await response.json();if(!response.ok||!data.token)throw new Error(data.error||"invalid_credentials");localStorage.setItem(TOKEN_KEY,data.token);if(!await verifyAdmin())throw new Error("admin_forbidden");$("#loginPassword").value="";checkApi()}catch(error){err.textContent=error.message==="admin_forbidden"?"此账号尚未获得管理员权限。":error.message==="invalid_credentials"?"邮箱或密码不正确。":"登录失败，请稍后重试。";localStorage.removeItem(TOKEN_KEY)}finally{btn.disabled=false;btn.textContent="登录管理后台 →"}});
+async function fetchWithTimeout(url,options={},timeoutMs=12000){
+ const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),timeoutMs);
+ try{return await fetch(url,{...options,signal:controller.signal})}
+ catch(error){if(error.name==="AbortError")throw new Error("请求超时，请检查网络后重试。");throw error}
+ finally{clearTimeout(timer)}
+}
+$("#adminLoginForm").addEventListener("submit",async e=>{
+ e.preventDefault();const btn=$("#loginSubmit"),err=$("#loginError");btn.disabled=true;err.textContent="正在核对账号密码…";btn.textContent="正在登录…";
+ try{
+  const response=await fetchWithTimeout(API_BASE+"/api/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:$("#loginEmail").value.trim().toLowerCase(),password:$("#loginPassword").value})});
+  const data=await response.json();if(!response.ok||!data.token)throw new Error(data.error||"invalid_credentials");
+  localStorage.setItem(TOKEN_KEY,data.token);err.textContent="账号验证通过，正在确认管理员权限…";btn.textContent="确认管理权限…";
+  await adminRequest("/api/admin/session");
+  $("#loginPassword").value="";$("#loginScreen").hidden=true;document.body.classList.add("authenticated");err.textContent="";checkApi();showPage("overview");
+ }catch(error){
+  localStorage.removeItem(TOKEN_KEY);
+  err.textContent=error.message==="admin_forbidden"||error.message==="unauthorized"?"此账号尚未获得管理员权限。":error.message==="invalid_credentials"?"邮箱或密码不正确。":error.message||"登录失败，请稍后重试。";
+ }finally{btn.disabled=false;btn.innerHTML='登录管理后台 <span>→</span>'}
+});
+
 $("#logoutBtn").addEventListener("click",()=>{localStorage.removeItem(TOKEN_KEY);document.body.classList.remove("authenticated");$("#loginPassword").value="";});
 function showPage(name){if(!pageNames[name])return;document.querySelectorAll(".page").forEach(el=>el.classList.toggle("active",el.id==="page-"+name));document.querySelectorAll(".nav-item").forEach(el=>el.classList.toggle("active",el.dataset.page===name));$("#pageCrumb").textContent=pageNames[name];$("#sidebar").classList.remove("open");window.scrollTo({top:0,behavior:"smooth"});if(name==="bots")loadBots()}
 document.querySelectorAll(".nav-item").forEach(btn=>btn.addEventListener("click",()=>showPage(btn.dataset.page)));
