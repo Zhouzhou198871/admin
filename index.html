@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f7fb">
   <title>晴天账号铺 · 管理后台</title>
-  <link rel="stylesheet" href="./assets/admin.css?v=20261121-7">
-  <script src="./assets/admin.js?v=20261121-7" defer></script>
+  <link rel="stylesheet" href="./assets/admin.css?v=20261121-8">
+  <script src="./assets/admin.js?v=20261121-8" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -238,10 +238,17 @@
         </div>
         <article class="panel data-panel support-tickets"><div class="panel-heading"><div><h2>售后工单</h2><p>咨询、投诉与需要跟进的售后请求</p></div><select id="ticketStatus"><option value="">全部工单</option><option value="1">待处理</option><option value="2">处理中</option><option value="3">已关闭</option></select></div><div class="table-wrap"><table class="data-table"><thead><tr><th>工单</th><th>客户</th><th>主题</th><th>优先级</th><th>状态</th><th>更新时间</th><th>操作</th></tr></thead><tbody id="ticketsBody"><tr><td colspan="7" class="table-empty">等待加载工单</td></tr></tbody></table></div></article>
       </section>
+      <div class="modal-overlay" id="ticketModal" hidden>
+        <article class="panel modal-card">
+          <div class="panel-heading"><div><h2 id="ticketModalTitle">售后工单</h2><p id="ticketModalMeta">客户工单详情</p></div><button class="btn btn-secondary" type="button" id="ticketModalClose">关闭</button></div>
+          <div class="ticket-content" id="ticketModalContent"></div>
+          <form id="ticketModalForm"><label>客服回复<textarea id="ticketModalReply" rows="5" required placeholder="输入给客户的回复"></textarea></label><div class="form-actions"><label>工单状态<select id="ticketModalStatus"><option value="1">待处理</option><option value="2">处理中</option><option value="3">已关闭</option></select></label><button class="btn btn-primary" type="submit">发送回复并保存状态</button></div></form>
+        </article>
+      </div>
       <section class="page" id="page-email">
         <div class="page-heading"><div><p class="eyebrow">EMAIL CAMPAIGNS</p><h1>邮件系统</h1><p class="subheading">邮件模板、用户分组发送与群发任务</p></div><button class="btn btn-secondary" id="emailRefresh">↻ 刷新</button></div>
         <div class="content-grid email-layout">
-          <article class="panel"><div class="panel-heading"><div><h2>邮件编辑器</h2><p>发送前可预览，群发需二次确认</p></div><span class="tag tag-green">SMTP 服务端发送</span></div>
+          <article class="panel"><div class="panel-heading"><div><h2>邮件编辑器</h2><p>发送前可预览，群发需二次确认</p></div><span class="tag tag-green">SMTP 服务端发送</span><small id="emailSystemHint" class="integration-tip">正在检查邮件通道</small></div>
             <form id="emailSendForm"><label>邮件主题<input id="emailSubject" required maxlength="200" placeholder="填写邮件主题"></label><label>发送对象<select id="emailTarget"><option value="all">全部注册用户</option><option value="paid">已付费用户</option><option value="expiring">7 天内到期用户</option></select></label><label>邮件正文（支持 HTML）<textarea id="emailBody" rows="10" required placeholder="编写邮件内容，可使用 HTML"></textarea></label><div class="form-actions"><button type="button" class="btn btn-secondary" id="emailPreviewBtn">预览邮件</button><button class="btn btn-primary" type="submit" id="emailSendBtn">发送邮件</button></div><div class="form-result" id="emailSendResult" role="status"></div></form>
           </article>
           <article class="panel"><div class="panel-heading"><div><h2>邮件模板库</h2><p>保存常用邮件内容，发送前可载入编辑</p></div><button class="btn btn-secondary" id="emailTemplateNew">＋ 新模板</button></div><div id="emailTemplatesList" class="template-list"><div class="table-empty">正在加载邮件模板</div></div></article>
