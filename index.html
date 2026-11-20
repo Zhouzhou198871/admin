@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f7fb">
   <title>晴天账号铺 · 管理后台</title>
-  <link rel="stylesheet" href="./assets/admin.css?v=20261121-8">
-  <script src="./assets/admin.js?v=20261121-8" defer></script>
+  <link rel="stylesheet" href="./assets/admin.css?v=20261121-9">
+  <script src="./assets/admin.js?v=20261121-9" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -211,17 +211,21 @@
           <article class="panel data-panel"><div class="table-wrap"><table class="data-table"><thead><tr><th>套餐</th><th>地区</th><th>月付</th><th>季付</th><th>半年</th><th>年付</th><th>流量</th><th>状态</th><th>操作</th></tr></thead><tbody id="plansBody"><tr><td colspan="9" class="table-empty">等待加载套餐</td></tr></tbody></table></div><div class="table-foot"><span id="plansCount">—</span><span>套餐变更会影响前台新订单价格</span></div></article>
         </div>
         <div class="node-view" id="nodeView-servers">
-          <div class="toolbar-row"><p class="field-hint">节点线路管理。配置 JSON 仅在编辑时加载，不在列表中暴露密钥。</p><button class="btn btn-primary" id="nodeAddBtn">＋ 新增节点</button></div>
+          <div class="toolbar-row"><p class="field-hint">管理节点服务器入口。访问令牌保留在服务端，不回显到网页。</p><button class="btn btn-primary" id="nodeAddBtn">＋ 新增节点</button></div>
           <article class="panel form-panel compact-form" id="nodeFormPanel" hidden>
             <div class="panel-heading"><div><h2 id="nodeFormTitle">新增节点线路</h2><p>设置节点名称、协议、端口与高级参数</p></div><button type="button" class="btn btn-secondary" id="nodeFormClose">关闭</button></div>
             <form id="nodeForm" class="admin-form-grid">
               <input id="nodeId" type="hidden">
-              <label>节点名称<input id="nodeName" required></label>
-              <label>协议<select id="nodeProtocol"><option>vless</option><option>vmess</option><option>trojan</option><option>hysteria2</option><option>ss</option></select></label>
-              <label>端口<input id="nodePort" type="number" min="1" max="65535" required></label>
+              <label>服务器名称<input id="nodeName" required></label>
+              <label>服务器 IP<input id="nodeIp" required placeholder="服务器公网 IP"></label>
+              <label>域名<input id="nodeDomain" placeholder="可选"></label>
+              <label>地区代码<input id="nodeRegion" placeholder="HK / US / JP"></label>
+              <label>地区名称<input id="nodeRegionName" placeholder="香港 / 美国 / 日本"></label>
+              <label>节点 API 端口<input id="nodeApiPort" type="number" min="1" max="65535" value="54323" required></label>
+              <label>管理端口<input id="nodeAdminPort" type="number" min="1" max="65535" value="54324" required></label>
               <label>排序<input id="nodeSort" type="number" value="0"></label>
               <label>启用状态<select id="nodeEnabled"><option value="1">启用</option><option value="0">停用</option></select></label>
-              <label class="span-two">高级配置 JSON<textarea id="nodeConfig" rows="5" placeholder="{}"></textarea></label>
+              <p class="field-hint span-two">服务器访问令牌由服务端保管，编辑时自动沿用原令牌，不会发送到浏览器。</p>
               <div class="form-actions span-two"><button class="btn btn-primary" type="submit" id="nodeSaveBtn">保存节点</button><span id="nodeFormResult" class="form-result"></span></div>
             </form>
           </article>
