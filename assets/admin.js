@@ -1,6 +1,9 @@
 "use strict";
 const API_BASE="https://qingtian-shop-api.chulingli1988.workers.dev";
 const TOKEN_KEY="qingtian_shop_token";
+const REMEMBER_EMAIL_KEY="qingtian_admin_remembered_email";
+const rememberedEmail=localStorage.getItem(REMEMBER_EMAIL_KEY);
+if(rememberedEmail){$("#loginEmail").value=rememberedEmail;$("#rememberPassword").checked=true}
 const $=s=>document.querySelector(s);
 const pageNames={overview:"总览",orders:"订单管理",users:"用户管理",products:"商品与库存",recharge:"余额充值",bots:"机器人管理"};
 let toastTimer;
@@ -17,11 +20,13 @@ async function fetchWithTimeout(url,options={},timeoutMs=12000){
 $("#adminLoginForm").addEventListener("submit",async e=>{
  e.preventDefault();const btn=$("#loginSubmit"),err=$("#loginError");btn.disabled=true;err.textContent="正在核对账号密码…";btn.textContent="正在登录…";
  try{
-  const response=await fetchWithTimeout(API_BASE+"/api/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:$("#loginEmail").value.trim().toLowerCase(),password:$("#loginPassword").value})});
+  const email=$("#loginEmail").value.trim().toLowerCase(),password=$("#loginPassword").value,remember=$("#rememberPassword").checked;
+  if(remember)localStorage.setItem(REMEMBER_EMAIL_KEY,email);else localStorage.removeItem(REMEMBER_EMAIL_KEY);
+  const response=await fetchWithTimeout(API_BASE+"/api/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password})});
   const data=await response.json();if(!response.ok||!data.token)throw new Error(data.error||"invalid_credentials");
   localStorage.setItem(TOKEN_KEY,data.token);err.textContent="账号验证通过，正在确认管理员权限…";btn.textContent="确认管理权限…";
   await adminRequest("/api/admin/session");
-  $("#loginPassword").value="";$("#loginScreen").hidden=true;document.body.classList.add("authenticated");err.textContent="";checkApi();showPage("overview");
+  if(!remember)$("#loginPassword").value="";$("#loginScreen").hidden=true;document.body.classList.add("authenticated");err.textContent="";checkApi();showPage("overview");
  }catch(error){
   localStorage.removeItem(TOKEN_KEY);
   err.textContent=error.message==="admin_forbidden"||error.message==="unauthorized"?"此账号尚未获得管理员权限。":error.message==="invalid_credentials"?"邮箱或密码不正确。":error.message||"登录失败，请稍后重试。";
