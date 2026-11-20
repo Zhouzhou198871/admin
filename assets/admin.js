@@ -362,8 +362,16 @@ function moneyCny(value){const n=Number(value);return Number.isFinite(n)?"¥"+n.
 function nodeStatus(value){return ({fulfilled:"已开通",provisioning:"开通中",refunded:"已退款",failed:"失败",active:"使用中",expired:"已到期"})[String(value||"").toLowerCase()]||String(value||"未知")}
 async function loadNodes(){await Promise.allSettled([loadPlans(),loadNodeServers()])}
 async function refreshUpstream(){
- const body=$("#upstreamOrdersBody");$("#upstreamApiStatus").textContent="检查中";$("#upstreamBalanceStatus").textContent="未接通";body.innerHTML='<tr><td colspan="6" class="table-empty">正在检查上游查询接口…</td></tr>';
- try{const d=await adminRequest("/api/admin/upstream/overview");$("#upstreamApiStatus").textContent="在线";$("#upstreamBalanceStatus").textContent="实时";$("#upstreamBalance").textContent=moneyCny(d.balance_cny);$("#upstreamBalanceHint").textContent="实时读取 · "+formatAdminDate(d.updated_at);const os=d.orders||[];body.innerHTML=os.length?os.map(o=>'<tr><td class="mono">'+escapeHtml(o.upstream_order_id)+'</td><td>'+escapeHtml(o.local_order_id||"—")+'</td><td>'+escapeHtml(o.product_name||"—")+'</td><td class="money">'+moneyCny(o.amount_cny)+'</td><td>'+statusPill(o.status)+'</td><td>'+escapeHtml(formatAdminDate(o.created_at))+'</td></tr>').join(""):'<tr><td colspan="6" class="table-empty">上游暂无订单</td></tr>'}catch(e){$("#upstreamApiStatus").textContent="待接入";$("#upstreamBalanceStatus").textContent="接口待接通";body.innerHTML='<tr><td colspan="6" class="table-empty">上游余额/订单只读代理尚未部署，不展示模拟数据。接口响应：'+escapeHtml(e.message||"未找到查询路由")+'</td></tr>'}
+ const body=$("#upstreamOrdersBody");$("#upstreamApiStatus").textContent="检查中";$("#upstreamBalanceStatus").textContent="查询中";body.innerHTML='<tr><td colspan="6" class="table-empty">正在读取上游采购记录…</td></tr>';
+ try{
+  const d=await legacyAdmin("/upstream/overview");
+  $("#upstreamApiStatus").textContent="在线";
+  if(d.balance_cny===null||d.balance_cny===undefined){$("#upstreamBalanceStatus").textContent="接口未提供";$("#upstreamBalance").textContent="暂不可查询";$("#upstreamBalanceHint").textContent="上游当前没有开放余额查询接口，不显示估算值"}
+  else{$("#upstreamBalanceStatus").textContent="实时";$("#upstreamBalance").textContent=moneyCny(d.balance_cny);$("#upstreamBalanceHint").textContent="实时读取 · "+formatAdminDate(d.updated_at)}
+  const os=d.orders||[];
+  body.innerHTML=os.length?os.map(o=>'<tr><td class="mono">'+escapeHtml(o.supplier_order_id||o.supplier_order_no||"—")+'</td><td class="mono">'+escapeHtml(o.idempotency_key||"—")+'</td><td>'+escapeHtml(o.product_id||"—")+' × '+Number(o.count||0)+'</td><td class="money">—</td><td>'+statusPill(o.status)+'</td><td>'+escapeHtml(formatAdminDate(o.created_at))+'</td></tr>').join(""):'<tr><td colspan="6" class="table-empty">当前没有通过本采购代理创建的上游订单</td></tr>';
+  $("#upstreamOrderCount")&&($("#upstreamOrderCount").textContent=Number(d.orders_total??os.length).toLocaleString("zh-CN")+" 条真实采购记录");
+ }catch(e){$("#upstreamApiStatus").textContent="待接入";$("#upstreamBalanceStatus").textContent="接口未提供";$("#upstreamBalance").textContent="暂不可查询";body.innerHTML='<tr><td colspan="6" class="table-empty error-text">读取上游采购记录失败：'+escapeHtml(e.message||"接口不可用")+'</td></tr>'}
 }
 $("#nodesRefresh")?.addEventListener("click",loadNodes);$("#upstreamRefresh")?.addEventListener("click",refreshUpstream);
 
