@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f7fb">
   <title>晴天账号铺 · 管理后台</title>
-  <link rel="stylesheet" href="./assets/admin.css?v=20261121-13">
-  <script src="./assets/admin.js?v=20261121-13" defer></script>
+  <link rel="stylesheet" href="./assets/admin.css?v=20261121-14">
+  <script src="./assets/admin.js?v=20261121-14" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -26,6 +26,7 @@
         <button class="nav-item" data-page="notices"><span class="nav-icon">▣</span>公告管理</button>
         <button class="nav-item" data-page="nodes"><span class="nav-icon">⌁</span>节点服务</button>
         <button class="nav-item" data-page="upstream"><span class="nav-icon">⇄</span>上游采购中心</button>
+        <button class="nav-item" data-page="payments"><span class="nav-icon">￥</span>支付系统</button>
         <button class="nav-item" data-page="recharge"><span class="nav-icon">＋</span>余额充值</button>
         <button class="nav-item" data-page="bots"><span class="nav-icon">⚙</span>机器人管理</button>
       </nav>
@@ -86,7 +87,18 @@
           <div class="table-wrap"><table class="data-table"><thead><tr><th>订单号</th><th>客户</th><th>商品</th><th>金额</th><th>状态</th><th>创建时间</th></tr></thead><tbody id="overviewOrdersBody"><tr><td colspan="6" class="table-empty">正在读取业务数据…</td></tr></tbody></table></div>
         </article>
       </section>
-      <section class="page" id="page-recharge">
+      
+      <section class="page" id="page-payments">
+        <div class="page-heading"><div><p class="eyebrow">PAYMENT OPERATIONS</p><h1>支付系统</h1><p class="subheading">支付渠道开通状态、实际收款配置与已支付订单统计</p></div><button class="btn btn-secondary" id="paymentsRefresh">↻ 刷新</button></div>
+        <div class="payment-grid">
+          <article class="panel payment-card" data-payment-card="alipay"><div class="payment-card-head"><span class="payment-logo alipay-logo">支</span><span class="tag" data-payment-status>检查中</span></div><h2>支付宝</h2><p data-payment-detail>正在读取支付网关配置</p><div class="payment-meta"><span>当前状态</span><b data-payment-enabled>—</b></div><div class="payment-meta"><span>最近更新</span><b data-payment-updated>—</b></div></article>
+          <article class="panel payment-card" data-payment-card="wechat"><div class="payment-card-head"><span class="payment-logo wechat-logo">微</span><span class="tag" data-payment-status>检查中</span></div><h2>微信支付</h2><p data-payment-detail>正在读取支付网关配置</p><div class="payment-meta"><span>当前状态</span><b data-payment-enabled>—</b></div><div class="payment-meta"><span>最近更新</span><b data-payment-updated>—</b></div><button class="btn btn-secondary" type="button" disabled>等待微信商户参数绑定</button></article>
+          <article class="panel payment-card" data-payment-card="usdt"><div class="payment-card-head"><span class="payment-logo usdt-logo">₮</span><span class="tag" data-payment-status>检查中</span></div><h2>USDT</h2><p data-payment-detail>正在读取链上收款配置</p><div class="payment-meta"><span>网络</span><b data-payment-network>—</b></div><div class="payment-meta"><span>收款地址</span><b data-payment-address>—</b></div><div class="payment-meta"><span>人民币折算</span><b data-payment-rate>—</b></div></article>
+        </div>
+        <article class="panel data-panel"><div class="panel-heading"><div><h2>实际支付统计</h2><p>只统计已支付订单，不包含待支付订单</p></div><span class="tag" id="paymentStatsUpdated">—</span></div><div class="table-wrap"><table class="data-table"><thead><tr><th>支付方式</th><th>已支付订单</th><th>已收金额（CNY）</th></tr></thead><tbody id="paymentStatsBody"><tr><td colspan="3" class="table-empty">等待读取支付记录</td></tr></tbody></table></div></article>
+        <p class="field-hint">微信支付当前没有商户配置记录；支付宝与 USDT 读取现有收款配置。未完成商户绑定的渠道不会显示为可收款，也不会被客服 AI 宣称已开通。</p>
+      </section>
+<section class="page" id="page-recharge">
         <div class="page-heading"><div><p class="eyebrow">BALANCE MANAGEMENT</p><h1>余额充值</h1><p class="subheading">通过现有管理 API 为指定用户增加人民币等值余额</p></div></div>
         <div class="notice"><b>安全提示</b><span>此操作使用已登录的管理员身份进行授权，服务端会再次校验管理员邮箱。</span></div>
         <div class="form-layout">
@@ -135,13 +147,24 @@
         </article>
       </div>
       <section class="page" id="page-users">
-        <div class="page-heading"><div><p class="eyebrow">CUSTOMER CENTER</p><h1>用户管理</h1><p class="subheading">查看注册用户、账户余额与 Telegram 绑定信息</p></div><button class="btn btn-secondary" id="usersRefresh">↻ 刷新</button></div>
+        <div class="page-heading"><div><p class="eyebrow">CUSTOMER CENTER</p><h1>用户管理</h1><p class="subheading">注册邮箱、登录 IP、设备、订单、套餐与客服记录</p></div><button class="btn btn-secondary" id="usersRefresh">↻ 刷新</button></div>
         <article class="panel data-panel">
           <div class="table-toolbar"><input id="userSearch" type="search" placeholder="搜索用户邮箱或昵称"><button class="btn btn-primary" id="userSearchBtn">查询</button></div>
-          <div class="table-wrap"><table class="data-table"><thead><tr><th>用户邮箱</th><th>昵称</th><th>Telegram ID</th><th>账户余额</th><th>注册时间</th></tr></thead><tbody id="usersBody"><tr><td colspan="5" class="table-empty">登录后加载用户数据</td></tr></tbody></table></div>
-          <div class="table-foot"><span id="usersCount">—</span><span>最多显示最近 50 位用户</span></div>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>注册邮箱</th><th>昵称</th><th>Telegram ID</th><th>佣金余额</th><th>注册时间</th><th>最近登录 IP</th><th>最近登录</th><th>详情</th></tr></thead><tbody id="usersBody"><tr><td colspan="8" class="table-empty">登录后加载用户数据</td></tr></tbody></table></div>
+          <div class="table-foot"><span id="usersCount">—</span><span>展示最近 50 位；点击详情查看登录 IP 与历史记录</span></div>
         </article>
       </section>
+      <div class="modal-overlay" id="userDetailModal" hidden>
+        <article class="panel modal-card user-detail-card">
+          <div class="panel-heading"><div><h2 id="userDetailTitle">客户详情</h2><p id="userDetailMeta">正在读取用户资料…</p></div><button class="btn btn-secondary" type="button" id="userDetailClose">关闭</button></div>
+          <div id="userDetailSummary" class="user-detail-grid"><div class="empty-state">正在读取真实用户资料…</div></div>
+          <div class="user-detail-columns">
+            <section><h3>最近登录记录</h3><div class="table-wrap"><table class="data-table"><thead><tr><th>IP 地址</th><th>设备 / 浏览器</th><th>时间</th></tr></thead><tbody id="userLoginHistory"><tr><td colspan="3" class="table-empty">等待加载</td></tr></tbody></table></div></section>
+            <section><h3>最近订单</h3><div class="table-wrap"><table class="data-table"><thead><tr><th>订单号</th><th>金额</th><th>支付方式</th><th>状态</th></tr></thead><tbody id="userOrdersHistory"><tr><td colspan="4" class="table-empty">等待加载</td></tr></tbody></table></div></section>
+          </div>
+          <div class="form-result" id="userDetailResult"></div>
+        </article>
+      </div>
       <section class="page" id="page-products">
         <div class="page-heading"><div><p class="eyebrow">PRODUCT & INVENTORY</p><h1>商品与库存</h1><p class="subheading">商品上架、价格库存、账号卡密批量导入与库存状态</p></div><button class="btn btn-secondary" id="productsRefresh">↻ 刷新数据</button></div>
         <div class="tab-bar" id="productTabs"><button class="tab-button active" data-product-tab="catalog">商品管理</button><button class="tab-button" data-product-tab="accounts">账号 / 卡密库存</button></div>
@@ -202,7 +225,7 @@
       </section>
       <section class="page" id="page-nodes">
         <div class="page-heading"><div><p class="eyebrow">NODE OPERATIONS</p><h1>节点服务</h1><p class="subheading">节点线路、协议、套餐、流量与人民币定价统一管理</p></div><button class="btn btn-secondary" id="nodesRefresh">↻ 刷新</button></div>
-        <div class="tab-bar" id="nodeTabs"><button class="tab-button active" data-node-tab="plans">套餐与价格</button><button class="tab-button" data-node-tab="servers">节点线路</button><button class="tab-button" data-node-tab="orders">节点订单</button></div>
+        <div class="tab-bar" id="nodeTabs"><button class="tab-button active" data-node-tab="plans">套餐与价格</button><button class="tab-button" data-node-tab="servers">节点线路</button><button class="tab-button" data-node-tab="protocols">协议开通</button><button class="tab-button" data-node-tab="orders">节点订单</button></div>
         <div class="node-view active" id="nodeView-plans">
           <div class="toolbar-row"><p class="field-hint">套餐价格统一以人民币展示；保存时按服务端分单位换算。</p><button class="btn btn-primary" id="planAddBtn">＋ 新增套餐</button></div>
           <article class="panel form-panel compact-form" id="planFormPanel" hidden>
@@ -211,6 +234,7 @@
               <input id="planId" type="hidden">
               <label>套餐名称<input id="planName" required placeholder="例如：香港高速节点"></label>
               <label>套餐类型<input id="planType" placeholder="例如：node"></label>
+              <div class="template-row span-two"><label>机器人现行价预设<select id="robotPriceTemplate"><option value="">选择 30 天套餐价格</option><option value="188|38.88">188GB · ¥38.88</option><option value="288|48.88">288GB · ¥48.88</option><option value="388|58.88">388GB · ¥58.88</option><option value="488|68.88">488GB · ¥68.88</option><option value="588|78.88">588GB · ¥78.88</option></select></label><button type="button" class="btn btn-secondary" id="applyRobotPrice">应用机器人价格</button><small>来源：两个签到机器人当前 30 天套餐；只预填表单，不会自动覆盖现有在售价格。</small></div>
               <label>月付价格（CNY）<input id="planMonthPrice" type="number" min="0" step="0.01" required></label>
               <label>季付价格（CNY）<input id="planQuarterPrice" type="number" min="0" step="0.01"></label>
               <label>半年价格（CNY）<input id="planHalfPrice" type="number" min="0" step="0.01"></label>
@@ -248,6 +272,45 @@
           </article>
           <article class="panel data-panel"><div class="table-wrap"><table class="data-table"><thead><tr><th>服务器名称</th><th>服务器 IP</th><th>地区</th><th>API 端口</th><th>状态</th><th>操作</th></tr></thead><tbody id="nodesBody"><tr><td colspan="6" class="table-empty">等待加载节点线路</td></tr></tbody></table></div><div class="table-foot"><span id="nodesCount">—</span><span>删除节点前请确认没有依赖中的用户配置</span></div></article>
         </div>
+
+        <div class="node-view" id="nodeView-protocols">
+          <div class="toolbar-row"><p class="field-hint">只开放订阅渲染器已支持的 VLESS、VMess、Trojan、Hysteria2、Shadowsocks。启用前会检测域名端口连通性。</p><button class="btn btn-primary" id="protocolNodeAddBtn">＋ 新增协议节点</button></div>
+          <div class="protocol-capability-grid" id="protocolCapabilityGrid">
+            <div class="protocol-capability" data-proto-cap="vless"><b>VLESS</b><span>订阅支持</span><small>检测中</small></div>
+            <div class="protocol-capability" data-proto-cap="vmess"><b>VMess</b><span>订阅支持</span><small>检测中</small></div>
+            <div class="protocol-capability" data-proto-cap="trojan"><b>Trojan</b><span>可配置</span><small>尚无启用节点</small></div>
+            <div class="protocol-capability" data-proto-cap="hysteria2"><b>Hysteria2</b><span>可配置</span><small>尚无启用节点</small></div>
+            <div class="protocol-capability" data-proto-cap="ss"><b>Shadowsocks</b><span>可配置</span><small>尚无启用节点</small></div>
+            <div class="protocol-capability pending" data-proto-cap="socks5"><b>SOCKS5</b><span>待接入订阅</span><small>旧线路不等于已迁移</small></div>
+            <div class="protocol-capability pending" data-proto-cap="mtproto"><b>MTProto</b><span>Telegram 专属</span><small>由签到机器人管理</small></div>
+            <div class="protocol-capability pending" data-proto-cap="ss2022"><b>Shadowsocks 2022</b><span>待部署</span><small>当前渲染器未实现</small></div>
+            <div class="protocol-capability pending" data-proto-cap="http"><b>HTTP / HTTPS</b><span>待部署</span><small>当前渲染器未实现</small></div>
+          </div>
+          <article class="panel form-panel compact-form" id="protocolNodeFormPanel" hidden>
+            <div class="panel-heading"><div><h2 id="protocolNodeFormTitle">新增协议节点</h2><p>写入真实订阅节点配置；域名和端口必须能连通</p></div><button type="button" class="btn btn-secondary" id="protocolNodeFormClose">关闭</button></div>
+            <form id="protocolNodeForm" class="admin-form-grid">
+              <input id="protocolNodeId" type="hidden">
+              <label>节点名称<input id="protocolNodeName" required placeholder="例如：美西 VLESS Reality"></label>
+              <label>协议<select id="protocolNodeType"><option value="vless">VLESS</option><option value="vmess">VMess</option><option value="trojan">Trojan</option><option value="hysteria2">Hysteria2</option><option value="ss">Shadowsocks</option></select></label>
+              <label>端口<input id="protocolNodePort" type="number" min="1" max="65535" required value="443"></label>
+              <label>地区<input id="protocolNodeRegion" required placeholder="美国·洛杉矶"></label>
+              <label class="span-two">域名列表（每行一个）<textarea id="protocolNodeDomains" rows="3" required placeholder="us1.example.com"></textarea></label>
+              <label>SNI / Server Name<input id="protocolNodeSni" placeholder="www.microsoft.com"></label>
+              <label>网络类型<select id="protocolNodeNetwork"><option value="tcp">TCP</option><option value="ws">WebSocket</option></select></label>
+              <label>Reality 公钥<input id="protocolNodePublicKey" placeholder="VLESS Reality 使用"></label>
+              <label>Reality Short ID<input id="protocolNodeShortId" placeholder="可选"></label>
+              <label>WebSocket Path<input id="protocolNodeWsPath" placeholder="/"></label>
+              <label>Shadowsocks 加密方式<select id="protocolNodeMethod"><option value="aes-256-gcm">aes-256-gcm</option><option value="aes-128-gcm">aes-128-gcm</option><option value="chacha20-ietf-poly1305">chacha20-ietf-poly1305</option></select></label>
+              <label>Hysteria2 混淆密码<input id="protocolNodeObfsPassword" placeholder="仅 Hysteria2 需要"></label>
+              <label>排序<input id="protocolNodeSort" type="number" value="100"></label>
+              <label>订阅状态<select id="protocolNodeEnabled"><option value="1">启用</option><option value="0">停用</option></select></label>
+              <div class="form-actions span-two"><button class="btn btn-primary" type="submit" id="protocolNodeSaveBtn">保存协议节点</button><span id="protocolNodeFormResult" class="form-result"></span></div>
+            </form>
+          </article>
+          <article class="panel data-panel"><div class="panel-heading"><div><h2>真实协议节点</h2><p>数据来自订阅 nodes 表与 TCP 端口检测</p></div><button class="btn btn-secondary" id="protocolNodesRefresh">↻ 检测并刷新</button></div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>名称</th><th>协议</th><th>地区</th><th>端口</th><th>域名连通</th><th>订阅状态</th><th>操作</th></tr></thead><tbody id="protocolNodesBody"><tr><td colspan="7" class="table-empty">等待加载协议节点</td></tr></tbody></table></div><div class="table-foot"><span id="protocolNodesCount">—</span><span>停用会从客户订阅中移除该协议节点</span></div>
+          </article>
+        </div>
         <div class="node-view" id="nodeView-orders">
           <article class="panel data-panel"><div class="panel-heading"><div><h2>节点服务订单</h2><p>全站套餐订购记录，不只显示当前管理员自己的订单</p></div><button class="btn btn-secondary" id="nodeOrdersRefresh">↻ 刷新</button></div>
             <div class="table-wrap"><table class="data-table"><thead><tr><th>订单号</th><th>客户</th><th>套餐</th><th>金额</th><th>状态</th><th>创建时间</th></tr></thead><tbody id="nodeAdminOrdersBody"><tr><td colspan="6" class="table-empty">等待加载节点订单</td></tr></tbody></table></div><div class="table-foot"><span id="nodeAdminOrdersCount">—</span><span>全站节点服务订单</span></div>
@@ -262,6 +325,8 @@
       </section>
       <section class="page" id="page-support">
         <div class="page-heading"><div><p class="eyebrow">CUSTOMER SUPPORT</p><h1>在线客服</h1><p class="subheading">查看客户会话、人工接管 AI、回复消息与处理售后工单</p></div><button class="btn btn-secondary" id="supportRefresh">↻ 刷新会话</button></div>
+
+        <article class="panel ai-status-panel"><div><h2>智谱 AI 客服</h2><p>在线客服使用服务器端智谱 API，密钥只保存在服务端</p></div><div class="ai-status-meta"><span id="zhipuStatus" class="tag">检测中</span><b id="zhipuModel">GLM-4-Flash</b></div></article>
         <div class="support-layout">
           <article class="panel support-list-panel"><div class="panel-heading"><div><h2>客户会话</h2><p>按最近消息排序</p></div><span class="tag" id="supportChatCount">—</span></div><div id="chatUsersList" class="chat-users-list"><div class="table-empty">正在加载会话</div></div></article>
           <article class="panel support-chat-panel"><div class="panel-heading"><div><h2 id="chatRoomTitle">选择一个会话</h2><p id="chatRoomMeta">客户消息会显示在这里</p></div><button class="btn btn-secondary" id="chatHandoffBtn" disabled>接管会话</button></div><div id="chatMessages" class="chat-messages"><div class="empty-state">从左侧选择客户会话</div></div><form id="chatReplyForm" class="chat-reply-form"><textarea id="chatReplyText" rows="2" placeholder="输入回复内容…" required disabled></textarea><button class="btn btn-primary" id="chatReplyBtn" type="submit" disabled>发送回复</button></form></article>
@@ -317,6 +382,14 @@
           <article class="bot-card" data-bot-card="tg"><div class="bot-card-top"><div><p class="eyebrow">TG SIGN</p><h2>TG 签到机器人</h2><span class="bot-handle">@qishe77</span></div><span class="bot-state pending">检测中</span></div><div class="bot-meta"><span>服务</span><b>signbot.service</b></div><div class="bot-meta"><span>进程 PID</span><b data-bot-pid>—</b></div><div class="bot-meta"><span>开机自启</span><b data-bot-enabled>—</b></div><div class="bot-actions"><button class="btn btn-primary" data-bot-action="start" data-bot="tg">启动</button><button class="btn btn-secondary" data-bot-action="restart" data-bot="tg">重启</button><button class="btn btn-secondary" data-bot-action="stop" data-bot="tg">停止</button><button class="btn btn-secondary" data-bot-logs="tg">查看日志</button></div></article>
           <article class="bot-card" data-bot-card="mivra"><div class="bot-card-top"><div><p class="eyebrow">MIVRA</p><h2>Mivra 签到机器人</h2><span class="bot-handle">@vpn88</span></div><span class="bot-state pending">检测中</span></div><div class="bot-meta"><span>服务</span><b>mivrabot.service</b></div><div class="bot-meta"><span>进程 PID</span><b data-bot-pid>—</b></div><div class="bot-meta"><span>开机自启</span><b data-bot-enabled>—</b></div><div class="bot-actions"><button class="btn btn-primary" data-bot-action="start" data-bot="mivra">启动</button><button class="btn btn-secondary" data-bot-action="restart" data-bot="mivra">重启</button><button class="btn btn-secondary" data-bot-action="stop" data-bot="mivra">停止</button><button class="btn btn-secondary" data-bot-logs="mivra">查看日志</button></div></article>
         </div>
+
+        <article class="panel data-panel bot-data-panel">
+          <div class="panel-heading"><div><h2>机器人真实业务数据</h2><p>从三个机器人各自用户库读取，不使用前端估算</p></div><span class="tag" id="botStatsUpdated">—</span></div>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>机器人</th><th>用户总数</th><th>今日签到</th><th>付费用户</th><th>有效代理</th><th>操作</th></tr></thead><tbody id="botStatsBody"><tr><td colspan="6" class="table-empty">等待加载机器人数据</td></tr></tbody></table></div>
+          <div class="panel-heading bot-users-heading"><div><h2>机器人用户</h2><p>仅展示用户标识、流量、到期时间和状态；不回显代理密码</p></div><div class="inline-tools"><select id="botUserFilter"><option value="safew">TG 签到机器人</option><option value="mivra">Mivra 签到机器人</option><option value="qingtian">晴天号铺机器人</option></select><button class="btn btn-secondary" id="botUsersRefresh">刷新用户</button></div></div>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>Telegram ID</th><th>昵称</th><th>流量</th><th>到期时间</th><th>余额</th><th>状态</th><th>最后签到</th></tr></thead><tbody id="botUsersBody"><tr><td colspan="7" class="table-empty">选择机器人查看用户</td></tr></tbody></table></div>
+          <div class="table-foot"><span id="botUsersCount">—</span><span>用户资料来自机器人数据库</span></div>
+        </article>
         <article class="panel bot-log-panel"><div class="panel-heading"><div><h2 id="botLogTitle">运行日志</h2><p>只读取所选机器人的 systemd 日志，最多显示最近 100 条</p></div><span class="tag" id="botLogStatus">等待选择</span></div><pre class="bot-logs" id="botLogs">点击任意机器人卡片中的“查看日志”。</pre></article>
         <p class="bot-updated" id="botsUpdated">状态尚未刷新</p>
       </section>
