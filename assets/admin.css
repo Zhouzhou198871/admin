@@ -327,3 +327,8 @@ button:disabled{cursor:wait;opacity:.62;transform:none!important;filter:none!imp
 .status-pill.wait{background:#fff6e7;color:#bb8a3d}
 .muted-inline{color:#9aa4b4;font-size:9px;margin-left:4px}
 @media(max-width:760px){.table-toolbar{flex-wrap:wrap}.table-toolbar input{flex-basis:100%;width:100%}.table-toolbar select{flex:1}.data-panel{border-radius:10px}.table-foot{font-size:9px}}
+
+
+/* Critical auth-state fix: the forced grid layout above must never override a successful login. */
+body.authenticated .login-screen,
+.login-screen[hidden]{display:none!important;visibility:hidden!important;pointer-events:none!important}
