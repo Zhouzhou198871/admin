@@ -1,10 +1,10 @@
 "use strict";
 const API_BASE="https://qingtian-shop-api.chulingli1988.workers.dev";
 const TOKEN_KEY="qingtian_shop_token";
+const $=s=>document.querySelector(s);
 const REMEMBER_EMAIL_KEY="qingtian_admin_remembered_email";
 const rememberedEmail=localStorage.getItem(REMEMBER_EMAIL_KEY);
 if(rememberedEmail){$("#loginEmail").value=rememberedEmail;$("#rememberPassword").checked=true}
-const $=s=>document.querySelector(s);
 const pageNames={overview:"总览",orders:"订单管理",users:"用户管理",products:"商品与库存",recharge:"余额充值",bots:"机器人管理"};
 let toastTimer;
 function toast(message){const el=$("#toast");el.textContent=message;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2600)}
