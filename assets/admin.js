@@ -386,24 +386,61 @@ $("#noticesRefresh")?.addEventListener("click",loadNotices);
 const botNames={fakabot:"晴天号铺机器人",tg:"TG 签到机器人",mivra:"Mivra 签到机器人"};
 async function loadBots(){
  const grid=$("#botGrid");if(!grid)return;
- $("#botsUpdated").textContent="正在读取服务器状态…";
- try{
-  const data=await adminRequest("/api/admin/bots");
-  (data.bots||[]).forEach(bot=>{
-   const card=document.querySelector('[data-bot-card="'+bot.id+'"]');if(!card)return;
-   const state=card.querySelector(".bot-state");const running=bot.status==="active";
-   state.textContent=running?"运行中":bot.status==="inactive"?"已停止":bot.status||"未知";
-   state.className="bot-state "+(running?"running":bot.status==="inactive"?"stopped":"pending");
-   card.querySelector("[data-bot-pid]").textContent=bot.pid||"—";
-   card.querySelector("[data-bot-enabled]").textContent=bot.enabled?"已启用":"未启用";
-   card.querySelectorAll("[data-bot-action]").forEach(btn=>{btn.disabled=(btn.dataset.botAction==="start"&&running)||(btn.dataset.botAction==="stop"&&!running);});
-  });
-  $("#botsUpdated").textContent="最后更新："+new Date().toLocaleString("zh-CN");
- }catch(error){
-  $("#botsUpdated").textContent="读取失败："+(error.message||"服务暂不可用");
-  if(error.message==="invalid_token"||error.message==="token_expired"||error.message==="admin_forbidden"){localStorage.removeItem(TOKEN_KEY);document.body.classList.remove("authenticated")}
+ $("#botsUpdated").textContent="正在读取机器人进程和用户统计…";
+ const [stateResult,statsResult]=await Promise.allSettled([adminRequest("/api/admin/bots"),legacyAdmin("/bots/matrix/stats")]);
+ const statePayload=stateResult.status==="fulfilled"?stateResult.value:{};
+ const bots=Array.isArray(statePayload.bots)?statePayload.bots:dataList(statePayload);
+ const stats=statsResult.status==="fulfilled"?dataList(statsResult.value):[];
+ const cardMap={safew:"tg",mivra:"mivra",qingtian:"fakabot"};
+ const nameMap={safew:"TG 签到机器人",mivra:"Mivra 签到机器人",qingtian:"晴天号铺机器人"};
+ bots.forEach(bot=>{
+  const key=bot.key||({1:"safew",2:"mivra",3:"qingtian"})[bot.id];
+  const card=document.querySelector('[data-bot-card="'+(cardMap[key]||key)+'"]');if(!card)return;
+  const state=card.querySelector(".bot-state"),running=!!bot.online||bot.status==="active",enabled=bot.status==="active"||bot.status===true||Number(bot.status)===1;
+  state.textContent=running?"运行中":enabled?"已启用 · 未运行":"已停用";
+  state.className="bot-state "+(running?"running":enabled?"pending":"stopped");
+  card.querySelector("[data-bot-pid]").textContent=bot.pid||"—";
+  card.querySelector("[data-bot-enabled]").textContent=enabled?"已启用":"已停用";
+  card.querySelectorAll("[data-bot-action]").forEach(btn=>{btn.disabled=(btn.dataset.botAction==="start"&&running)||(btn.dataset.botAction==="stop"&&!running);});
+ });
+ const statsBody=$("#botStatsBody");
+ if(statsBody){
+  statsBody.innerHTML=stats.length?stats.map(x=>{
+   const key=x.bot||x.key||"",name=nameMap[key]||key;
+   const row=grid.querySelector('[data-bot-card="'+(cardMap[key]||key)+'"]');
+   if(row){
+    const set=(k,v)=>{const el=row.querySelector('[data-bot-stat="'+k+'"]');if(el)el.textContent=v};
+    set("total","用户 "+Number(x.total_users??x.total??0).toLocaleString("zh-CN"));
+    set("today","今日签到 "+Number(x.today_sign||0).toLocaleString("zh-CN"));
+    set("paid","付费 "+Number(x.paid_users||0).toLocaleString("zh-CN"));
+   }
+   return '<tr><td>'+escapeHtml(name)+'</td><td>'+Number(x.total_users??x.total??0).toLocaleString("zh-CN")+'</td><td>'+Number(x.today_sign||0).toLocaleString("zh-CN")+'</td><td>'+Number(x.paid_users||0).toLocaleString("zh-CN")+'</td><td>'+Number(x.active_agents||0).toLocaleString("zh-CN")+'</td><td><button class="btn btn-secondary btn-small" data-bot-users="'+escapeHtml(key)+'">查看用户</button></td></tr>';
+  }).join(""):'<tr><td colspan="6" class="table-empty">'+(statsResult.status==="rejected"?"机器人用户统计读取失败":"暂无机器人统计")+'</td></tr>';
+  statsBody.querySelectorAll("[data-bot-users]").forEach(btn=>btn.addEventListener("click",()=>{$("#botUserFilter").value=btn.dataset.botUsers;loadBotUsers()}));
  }
+ $("#botStatsUpdated").textContent=statsResult.status==="fulfilled"?"真实数据库 · "+new Date().toLocaleTimeString("zh-CN"):"统计接口暂不可用";
+ $("#botsUpdated").textContent=stateResult.status==="fulfilled"?"最后更新："+new Date().toLocaleString("zh-CN"):"进程状态读取失败："+(stateResult.reason?.message||"服务暂不可用");
+ await loadBotUsers();
 }
+async function loadBotUsers(){
+ const body=$("#botUsersBody");if(!body)return;
+ const bot=$("#botUserFilter")?.value||"safew";
+ body.innerHTML='<tr><td colspan="7" class="table-empty">正在读取机器人用户数据…</td></tr>';
+ try{
+  const d=await legacyAdmin("/bots/matrix/users?bot_name="+encodeURIComponent(bot));
+  const users=dataList(d);
+  body.innerHTML=users.length?users.slice(0,500).map(u=>{
+   const traffic=(Number(u.traffic_mb||0)/1024).toFixed(2)+" GB";
+   const expire=Number(u.expire||0)>0?formatAdminDate(u.expire):"未开通";
+   const status=Number(u.banned)?"已封禁":Number(u.activated)?"正常":"未激活";
+   return '<tr><td class="mono">'+escapeHtml(u.tg_id||"—")+'</td><td>'+escapeHtml(u.nickname||u.username||"—")+'</td><td>'+traffic+'</td><td>'+escapeHtml(expire)+'</td><td>'+Number(u.balance||0).toFixed(2)+' USDT</td><td>'+statusPill(status)+'</td><td>'+escapeHtml(u.last_sign||"—")+'</td></tr>';
+  }).join(""):'<tr><td colspan="7" class="table-empty">该机器人暂无用户记录</td></tr>';
+  $("#botUsersCount").textContent="当前机器人 "+users.length.toLocaleString("zh-CN")+" 位用户";
+ }catch(e){body.innerHTML='<tr><td colspan="7" class="table-empty error-text">读取机器人用户失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';$("#botUsersCount").textContent="读取失败"}
+}
+$("#botUsersRefresh")?.addEventListener("click",loadBotUsers);
+$("#botUserFilter")?.addEventListener("change",loadBotUsers);
+
 $("#botsRefreshBtn")?.addEventListener("click",loadBots);
 document.querySelectorAll("[data-bot-action]").forEach(btn=>btn.addEventListener("click",async()=>{
  const bot=btn.dataset.bot,action=btn.dataset.botAction;
