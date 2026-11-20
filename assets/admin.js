@@ -6,7 +6,7 @@ const pageNames={overview:"总览",orders:"订单管理",users:"用户管理",pr
 let toastTimer;
 function toast(message){const el=$("#toast");el.textContent=message;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2600)}
 function authHeaders(extra={}){return {...extra,Authorization:"Bearer "+(localStorage.getItem(TOKEN_KEY)||"")}}
-async function adminRequest(path,options={}){const response=await fetch(API_BASE+path,{...options,headers:authHeaders(options.headers||{})});let data={};try{data=await response.json()}catch{}if(!response.ok||!data.ok)throw new Error(data.error||"request_failed");return data}
+async function adminRequest(path,options={}){const response=await fetchWithTimeout(API_BASE+path,{...options,headers:authHeaders(options.headers||{})},12000);let data={};try{data=await response.json()}catch{}if(!response.ok||!data.ok)throw new Error(data.error||"request_failed");return data}
 async function verifyAdmin(){const token=localStorage.getItem(TOKEN_KEY);if(!token){document.body.classList.remove("authenticated");return false}try{const data=await adminRequest("/api/admin/session");$("#loginScreen").hidden=true;document.body.classList.add("authenticated");return true}catch{localStorage.removeItem(TOKEN_KEY);document.body.classList.remove("authenticated");return false}}
 async function fetchWithTimeout(url,options={},timeoutMs=12000){
  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),timeoutMs);
