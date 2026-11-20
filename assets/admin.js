@@ -48,9 +48,9 @@ document.querySelectorAll("[data-bot-action]").forEach(btn=>btn.addEventListener
  const buttons=document.querySelectorAll('[data-bot="'+bot+'"]');buttons.forEach(b=>b.disabled=true);
  try{
   await adminRequest("/api/admin/bots/action",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({bot,action})});
-  toast(botNames[bot]+verb+"指令已执行");await loadBots();
- }catch(error){toast("操作失败："+(error.message||"请稍后重试"));await loadBots()}
- finally{buttons.forEach(b=>b.disabled=false)}
+  toast(botNames[bot]+verb+"指令已执行");
+ }catch(error){toast("操作失败："+(error.message||"请稍后重试"))}
+ finally{await loadBots()}
 }));
 document.querySelectorAll("[data-bot-logs]").forEach(btn=>btn.addEventListener("click",async()=>{
  const bot=btn.dataset.botLogs;$("#botLogTitle").textContent=botNames[bot]+" · 运行日志";$("#botLogStatus").textContent="读取中";$("#botLogs").textContent="正在读取日志…";
