@@ -5,7 +5,7 @@ const $=s=>document.querySelector(s);
 const REMEMBER_EMAIL_KEY="qingtian_admin_remembered_email";
 const rememberedEmail=localStorage.getItem(REMEMBER_EMAIL_KEY);
 if(rememberedEmail){$("#loginEmail").value=rememberedEmail;$("#rememberPassword").checked=true}
-const pageNames={overview:"经营总览",orders:"订单管理",users:"用户管理",products:"商品与库存",nodes:"节点服务",support:"在线客服",email:"邮件系统",notices:"公告管理",upstream:"上游采购中心",recharge:"余额充值",bots:"机器人管理"};
+const pageNames={overview:"经营总览",orders:"订单管理",users:"用户管理",products:"商品与库存",nodes:"节点服务",support:"在线客服",email:"邮件系统",notices:"公告管理",upstream:"上游采购中心",payments:"支付系统",recharge:"余额充值",bots:"机器人管理"};
 let toastTimer;
 function toast(message){const el=$("#toast");el.textContent=message;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2600)}
 function authHeaders(extra={}){return {...extra,Authorization:"Bearer "+(localStorage.getItem(TOKEN_KEY)||"")}}
@@ -37,7 +37,7 @@ $("#adminLoginForm").addEventListener("submit",async e=>{
 $("#togglePassword").addEventListener("click",()=>{const input=$("#loginPassword"),button=$("#togglePassword"),show=input.type==="password";input.type=show?"text":"password";button.textContent=show?"隐藏":"显示";button.setAttribute("aria-label",show?"隐藏密码":"显示密码");button.setAttribute("aria-pressed",String(show));});
 
 $("#logoutBtn").addEventListener("click",()=>{localStorage.removeItem(TOKEN_KEY);document.body.classList.remove("authenticated");$("#loginPassword").value="";});
-function showPage(name){if(!pageNames[name])return;document.querySelectorAll(".page").forEach(el=>{const active=el.id==="page-"+name;el.classList.toggle("active",active);el.setAttribute("aria-hidden",String(!active))});document.querySelectorAll(".nav-item").forEach(el=>{const active=el.dataset.page===name;el.classList.toggle("active",active);if(active)el.setAttribute("aria-current","page");else el.removeAttribute("aria-current")});$("#pageCrumb").textContent=pageNames[name];$("#sidebar").classList.remove("open");$("#menuToggle").setAttribute("aria-expanded","false");window.scrollTo({top:0,behavior:"smooth"});const loaders={overview:loadOverview,orders:loadOrders,users:loadUsers,products:loadProducts,nodes:loadNodes,support:loadSupport,email:loadEmail,notices:loadNotices,upstream:refreshUpstream,bots:loadBots};if(loaders[name])loaders[name]();}
+function showPage(name){if(!pageNames[name])return;document.querySelectorAll(".page").forEach(el=>{const active=el.id==="page-"+name;el.classList.toggle("active",active);el.setAttribute("aria-hidden",String(!active))});document.querySelectorAll(".nav-item").forEach(el=>{const active=el.dataset.page===name;el.classList.toggle("active",active);if(active)el.setAttribute("aria-current","page");else el.removeAttribute("aria-current")});$("#pageCrumb").textContent=pageNames[name];$("#sidebar").classList.remove("open");$("#menuToggle").setAttribute("aria-expanded","false");window.scrollTo({top:0,behavior:"smooth"});const loaders={overview:loadOverview,orders:loadOrders,users:loadUsers,products:loadProducts,nodes:loadNodes,support:loadSupport,email:loadEmail,notices:loadNotices,upstream:refreshUpstream,payments:loadPayments,bots:loadBots};if(loaders[name])loaders[name]();}
 document.querySelectorAll(".nav-item").forEach(btn=>btn.addEventListener("click",()=>showPage(btn.dataset.page)));
 document.querySelectorAll("[data-go]").forEach(btn=>btn.addEventListener("click",()=>{showPage(btn.dataset.go);if(btn.dataset.productTab)switchProductTab(btn.dataset.productTab);if(btn.dataset.nodeTab)switchNodeTab(btn.dataset.nodeTab)}));
 $("#menuToggle").addEventListener("click",()=>{const open=$("#sidebar").classList.toggle("open");$("#menuToggle").setAttribute("aria-expanded",String(open))});
@@ -55,12 +55,38 @@ function formatAdminDate(value){
 }
 function statusText(status){return ({pending:"待处理",reserved:"已预留",delivered:"已交付",refunded:"已退款",failed:"失败",processing:"处理中",paid:"已支付",cancelled:"已取消",expired:"已过期",provisioning:"配置中",active:"可用",inactive:"已停用",available:"可售",sold:"已售",completed:"已完成",started:"处理中",unknown:"待核对"})[String(status||"").toLowerCase()]||String(status||"未知")}
 function statusPill(status){const value=String(status||"").toLowerCase();const cls=["delivered","paid","active"].includes(value)?"good":["failed","refunded","cancelled","expired","inactive"].includes(value)?"bad":"wait";return '<span class="status-pill '+cls+'">'+escapeHtml(statusText(value))+'</span>'}
-async function legacyAdmin(path,options={}){return adminRequest("/api/admin/legacy"+path,options)}
-function dataList(value){if(Array.isArray(value))return value;if(!value||typeof value!=="object")return [];return value.list||value.items||value.products||value.orders||value.users||value.rows||[]}
+function unwrapLegacy(value){let v=value;for(let i=0;i<4;i++){if(!v||typeof v!=="object"||Array.isArray(v)||!Object.prototype.hasOwnProperty.call(v,"data"))break;if(v.ok===true||v.code!==undefined||v.status==="success")v=v.data;else break;}return v}
+async function legacyAdmin(path,options={}){return unwrapLegacy(await adminRequest("/api/admin/legacy"+path,options))}
+function dataList(value){const v=unwrapLegacy(value);if(Array.isArray(v))return v;if(!v||typeof v!=="object")return [];return v.list||v.items||v.products||v.orders||v.users||v.rows||v.records||[]}
 function dataTotal(value,list){return Number(value?.total??value?.count??value?.total_count??list.length)}
 function cnyValue(value){const n=Number(value);return Number.isFinite(n)?n:0}
 function formatCny(value){return "¥"+cnyValue(value).toFixed(2)}
 function orderStatusLabel(value){const n=Number(value);if(Number.isFinite(n)&&String(value).trim()!=="")return ({0:"待支付",1:"待发货",2:"已发货",3:"已完成","-1":"已取消"})[n]||String(value);return statusText(value)}
+async function loadPayments(){
+ const body=$("#paymentStatsBody");if(!body)return;body.innerHTML='<tr><td colspan="3" class="table-empty">正在读取支付配置和收款记录…</td></tr>';
+ try{
+  const d=await legacyAdmin("/payment_configs?view=status"),channels=d.channels||[];
+  channels.forEach(ch=>{
+   const card=document.querySelector('[data-payment-card="'+ch.channel+'"]');if(!card)return;
+   const ready=!!ch.configured&&!!ch.enabled;
+   const status=ready?"已开通":ch.configured?"已配置 / 停用":"待绑定";
+   const tag=card.querySelector("[data-payment-status]");tag.textContent=status;tag.className="tag "+(ready?"tag-green":"");
+   card.querySelector("[data-payment-detail]").textContent=ch.detail||"暂无说明";
+   const enabled=card.querySelector("[data-payment-enabled]");if(enabled)enabled.textContent=ch.enabled?"已启用":"未启用";
+   const updated=card.querySelector("[data-payment-updated]");if(updated)updated.textContent=ch.updated_at?formatAdminDate(ch.updated_at):"尚未配置";
+   if(ch.channel==="usdt"){
+    card.querySelector("[data-payment-network]").textContent=ch.network||"—";
+    card.querySelector("[data-payment-address]").textContent=ch.address_masked||"未配置";
+    card.querySelector("[data-payment-rate]").textContent=ch.rate?"¥"+Number(ch.rate).toFixed(2)+" / USDT":"—";
+   }
+  });
+  const names={alipay:"支付宝",wechat:"微信支付",usdt:"USDT",mtp_bind:"MTProto 绑定",other:"其他"};
+  const stats=d.paid_orders||{},rows=["alipay","wechat","usdt","mtp_bind"].map(k=>[k,stats[k]||{orders:0,amount_cny:0}]);
+  body.innerHTML=rows.map(([k,v])=>'<tr><td>'+escapeHtml(names[k]||k)+'</td><td>'+Number(v.orders||0).toLocaleString("zh-CN")+'</td><td class="money">'+formatCny(v.amount_cny||0)+'</td></tr>').join("");
+  $("#paymentStatsUpdated").textContent="刷新于 "+new Date().toLocaleTimeString("zh-CN");
+ }catch(e){body.innerHTML='<tr><td colspan="3" class="table-empty error-text">读取支付状态失败：'+escapeHtml(e.message||"接口不可用")+'</td></tr>'}
+}
+$("#paymentsRefresh")?.addEventListener("click",loadPayments);
 async function loadOverview(){
  const jobs=await Promise.allSettled([
   legacyAdmin("/shop/overview"),
@@ -112,15 +138,31 @@ async function loadOverview(){
  if(failed.length)$("#apiStatus").textContent="部分业务数据待接通";
 }
 async function loadUsers(){
- const body=$("#usersBody");if(!body)return;body.innerHTML='<tr><td colspan="5" class="table-empty">正在读取用户数据…</td></tr>';
+ const body=$("#usersBody");if(!body)return;body.innerHTML='<tr><td colspan="8" class="table-empty">正在读取用户数据…</td></tr>';
  const q=$("#userSearch")?.value.trim()||"";
  try{
   const data=await legacyAdmin("/users");
-  const users=dataList(data).filter(u=>!q||[u.email,u.nickname,u.short_id].some(v=>String(v||"").toLowerCase().includes(q.toLowerCase()))).slice(0,50);
-  body.innerHTML=users.length?users.map(user=>'<tr><td><b>'+escapeHtml(user.email)+'</b></td><td>'+escapeHtml(user.nickname||user.name||"—")+'</td><td class="mono">'+escapeHtml(user.tg_user_id||user.tg_id||"—")+'</td><td class="money">'+formatCny(Number(user.balance||0)*4)+'</td><td>'+escapeHtml(formatAdminDate(user.created_at))+'</td></tr>').join(""):'<tr><td colspan="5" class="table-empty">没有找到匹配用户</td></tr>';
-  $("#usersCount").textContent="全站用户 "+dataList(data).length.toLocaleString("zh-CN")+" 位（当前显示 "+users.length+" 位）";
- }catch(error){body.innerHTML='<tr><td colspan="5" class="table-empty error-text">读取失败：'+escapeHtml(error.message||"请求失败")+'</td></tr>';$("#usersCount").textContent="读取失败"}
+  const all=dataList(data),users=all.filter(u=>!q||[u.email,u.nickname,u.short_id,u.tg_id,u.tg_username,u.last_login_ip].some(v=>String(v||"").toLowerCase().includes(q.toLowerCase()))).slice(0,50);
+  body.innerHTML=users.length?users.map(user=>'<tr><td><b>'+escapeHtml(user.email||"—")+'</b></td><td>'+escapeHtml(user.nickname||user.name||"—")+'</td><td class="mono">'+escapeHtml(user.tg_username||user.tg_id||user.short_id||"—")+'</td><td class="money">'+formatCny(Number(user.commission_balance||0)/100)+'</td><td>'+escapeHtml(formatAdminDate(user.created_at))+'</td><td class="mono">'+escapeHtml(user.last_login_ip||"—")+'</td><td>'+escapeHtml(formatAdminDate(user.last_login_at))+'</td><td><button class="btn btn-secondary btn-small" data-user-detail="'+Number(user.id||0)+'">详情</button></td></tr>').join(""):'<tr><td colspan="8" class="table-empty">没有找到匹配用户</td></tr>';
+  $("#usersCount").textContent="全站用户 "+all.length.toLocaleString("zh-CN")+" 位（当前显示 "+users.length+" 位）";
+  body.querySelectorAll("[data-user-detail]").forEach(btn=>btn.addEventListener("click",()=>openUserDetail(Number(btn.dataset.userDetail))));
+ }catch(error){body.innerHTML='<tr><td colspan="8" class="table-empty error-text">读取失败：'+escapeHtml(error.message||"请求失败")+'</td></tr>';$("#usersCount").textContent="读取失败"}
 }
+async function openUserDetail(id){
+ const modal=$("#userDetailModal");modal.hidden=false;$("#userDetailTitle").textContent="客户 #"+id;$("#userDetailMeta").textContent="正在读取用户资料…";$("#userDetailSummary").innerHTML='<div class="empty-state">读取中…</div>';$("#userLoginHistory").innerHTML='<tr><td colspan="3" class="table-empty">读取中…</td></tr>';$("#userOrdersHistory").innerHTML='<tr><td colspan="4" class="table-empty">读取中…</td></tr>';$("#userDetailResult").textContent="";
+ try{
+  const raw=await legacyAdmin("/users/detail?id="+encodeURIComponent(id)),u=raw?.user||raw;
+  $("#userDetailTitle").textContent=u.email||("客户 #"+id);$("#userDetailMeta").textContent="用户 ID "+id+" · "+(Number(u.banned)?"已封禁":"正常");
+  const used=Number(u.u||0)+Number(u.d||0),traffic=Number(u.transfer_enable||0);
+  const items=[["注册邮箱",u.email||"—"],["首次记录 IP",u.first_login_ip||"暂无登录记录"],["最近登录 IP",u.last_login_ip||"—"],["登录次数",Number(u.login_count||0).toLocaleString("zh-CN")],["注册时间",formatAdminDate(u.created_at)],["最近登录",formatAdminDate(u.last_login_at)],["佣金余额",formatCny(Number(u.commission_balance||0)/100)],["累计佣金",formatCny(Number(u.commission_total||0)/100)],["套餐 ID",u.plan_id??"—"],["到期时间",formatAdminDate(u.expired_at)],["流量使用",((used/1073741824)||0).toFixed(2)+" GB"],["流量上限",traffic?((traffic/1073741824).toFixed(2)+" GB"):"不限/未设置"]];
+  $("#userDetailSummary").innerHTML=items.map(x=>'<div class="user-detail-item"><small>'+escapeHtml(x[0])+'</small><b>'+escapeHtml(String(x[1]))+'</b></div>').join("");
+  const logs=u.login_history||[];
+  $("#userLoginHistory").innerHTML=logs.length?logs.map(x=>'<tr><td class="mono">'+escapeHtml(x.ip||"—")+'</td><td>'+escapeHtml((x.ua||"—").slice(0,100))+'</td><td>'+escapeHtml(formatAdminDate(x.created_at))+'</td></tr>').join(""):'<tr><td colspan="3" class="table-empty">暂无登录历史</td></tr>';
+  const orders=u.orders||[];
+  $("#userOrdersHistory").innerHTML=orders.length?orders.map(x=>'<tr><td class="mono">'+escapeHtml(x.trade_no||"—")+'</td><td class="money">'+formatCny(Number(x.total_amount||0)/100)+'</td><td>'+escapeHtml(({alipay:"支付宝",wechat:"微信支付",usdt:"USDT"})[x.method]||x.method||"—")+'</td><td>'+statusPill(orderStatusLabel(x.status))+'</td></tr>').join(""):'<tr><td colspan="4" class="table-empty">暂无订单</td></tr>';
+ }catch(e){$("#userDetailMeta").textContent="读取失败";$("#userDetailSummary").innerHTML='<div class="table-empty error-text">'+escapeHtml(e.message||"读取用户详情失败")+'</div>'}
+}
+$("#userDetailClose")?.addEventListener("click",()=>$("#userDetailModal").hidden=true);
 
 async function loadOrders(){
  const body=$("#ordersBody");if(!body)return;body.innerHTML='<tr><td colspan="8" class="table-empty">正在读取订单数据…</td></tr>';
@@ -291,9 +333,13 @@ async function loadNodeOrders(){
 }
 $("#nodeOrdersRefresh")?.addEventListener("click",loadNodeOrders);
 async function loadNodes(){await Promise.allSettled([loadPlans(),loadNodeServers(),loadNodeOrders()])}
+async function loadAiStatus(){
+ try{const d=await legacyAdmin("/config/ai");$("#zhipuModel").textContent=d.model||"GLM-4-Flash";$("#zhipuStatus").textContent=d.configured?"已连接":"未配置";$("#zhipuStatus").className="tag "+(d.configured?"tag-green":"")}
+ catch(e){$("#zhipuStatus").textContent="状态读取失败";$("#zhipuStatus").className="tag"}
+}
 async function loadSupport(){
  const users=$("#chatUsersList"),ticketsBody=$("#ticketsBody");if(users)users.innerHTML='<div class="table-empty">正在读取客户会话…</div>';if(ticketsBody)ticketsBody.innerHTML='<tr><td colspan="7" class="table-empty">正在读取工单…</td></tr>';
- const [cr,tr]=await Promise.allSettled([legacyAdmin("/chat/users"),legacyAdmin("/tickets?status="+encodeURIComponent($("#ticketStatus")?.value||"")+"&page=1&size=50")]);
+ const [cr,tr]=await Promise.allSettled([legacyAdmin("/chat/users"),legacyAdmin("/tickets?status="+encodeURIComponent($("#ticketStatus")?.value||"")+"&page=1&size=50")]);loadAiStatus();
  if(cr.status==="fulfilled"){const chats=dataList(cr.value);$("#supportChatCount").textContent=chats.length+" 个会话";users.innerHTML=chats.length?chats.map(c=>'<button class="chat-user" data-chat-id="'+c.ticket_id+'"><b>'+escapeHtml(c.email||("客户 #"+c.user_id))+'</b><small>'+escapeHtml(c.last_message||"暂无消息")+'</small><span>'+escapeHtml(formatAdminDate(c.updated_at))+'</span></button>').join(""):'<div class="table-empty">暂无在线客服会话</div>';users.querySelectorAll("[data-chat-id]").forEach(b=>b.addEventListener("click",()=>loadChatHistory(Number(b.dataset.chatId))))}else users.innerHTML='<div class="table-empty error-text">会话读取失败：'+escapeHtml(cr.reason?.message||"接口错误")+'</div>';
  if(tr.status==="fulfilled"){const d=tr.value,items=dataList(d);ticketsBody.innerHTML=items.length?items.map(t=>'<tr><td class="mono">#'+t.id+'</td><td>'+escapeHtml(t.email||"—")+'</td><td>'+escapeHtml(t.subject||"—")+'</td><td>'+escapeHtml(t.priority||"普通")+'</td><td>'+statusPill(({1:"pending",2:"processing",3:"completed"})[Number(t.status)]||t.status_text||t.status)+'</td><td>'+escapeHtml(formatAdminDate(t.updated_at))+'</td><td><button class="btn btn-secondary btn-small" data-ticket-open="'+t.id+'">查看</button></td></tr>').join(""):'<tr><td colspan="7" class="table-empty">暂无售后工单</td></tr>';ticketsBody.querySelectorAll("[data-ticket-open]").forEach(b=>b.addEventListener("click",()=>openTicket(Number(b.dataset.ticketOpen))))}else ticketsBody.innerHTML='<tr><td colspan="7" class="table-empty error-text">工单读取失败：'+escapeHtml(tr.reason?.message||"接口错误")+'</td></tr>';
 }
