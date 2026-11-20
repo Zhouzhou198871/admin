@@ -252,7 +252,7 @@ function switchProductTab(tab){
 function switchNodeTab(tab){
  document.querySelectorAll("[data-node-tab]").forEach(b=>b.classList.toggle("active",b.dataset.nodeTab===tab));
  document.querySelectorAll(".node-view").forEach(v=>v.classList.toggle("active",v.id==="nodeView-"+tab));
- if(tab==="servers")loadNodeServers();else if(tab==="orders")loadNodeOrders();else loadPlans();
+ if(tab==="servers")loadNodeServers();else if(tab==="protocols")loadProtocolNodes();else if(tab==="orders")loadNodeOrders();else loadPlans();
 }
 document.querySelectorAll("[data-product-tab]").forEach(b=>b.addEventListener("click",()=>switchProductTab(b.dataset.productTab)));
 document.querySelectorAll("[data-node-tab]").forEach(b=>b.addEventListener("click",()=>switchNodeTab(b.dataset.nodeTab)));
@@ -332,7 +332,53 @@ async function loadNodeOrders(){
  }
 }
 $("#nodeOrdersRefresh")?.addEventListener("click",loadNodeOrders);
-async function loadNodes(){await Promise.allSettled([loadPlans(),loadNodeServers(),loadNodeOrders()])}
+function editProtocolNode(n={}){
+ const cfg=typeof n.config_json==="string"?(()=>{try{return JSON.parse(n.config_json)}catch{return {}}})():(n.config_json||{});
+ $("#protocolNodeId").value=n.id||"";$("#protocolNodeName").value=n.name||"";$("#protocolNodeType").value=n.protocol||"vless";$("#protocolNodePort").value=n.port||443;$("#protocolNodeRegion").value=cfg.region||"";
+ $("#protocolNodeDomains").value=(cfg.domains||[]).join("\n");$("#protocolNodeSni").value=cfg.sni||"";$("#protocolNodeNetwork").value=cfg.network||"tcp";$("#protocolNodePublicKey").value=cfg.reality_public_key||"";$("#protocolNodeShortId").value=cfg.short_id||"";$("#protocolNodeWsPath").value=cfg.ws_path||"/";$("#protocolNodeMethod").value=cfg.method||"aes-256-gcm";$("#protocolNodeObfsPassword").value=cfg.obfs_password||"";$("#protocolNodeSort").value=n.sort??100;$("#protocolNodeEnabled").value=String(n.enabled??1);$("#protocolNodeFormTitle").textContent=n.id?"编辑协议节点":"新增协议节点";$("#protocolNodeFormResult").textContent="";$("#protocolNodeFormPanel").hidden=false;$("#protocolNodeFormPanel").scrollIntoView({behavior:"smooth",block:"start"});
+}
+$("#protocolNodeAddBtn")?.addEventListener("click",()=>editProtocolNode({}));
+$("#protocolNodeFormClose")?.addEventListener("click",()=>$("#protocolNodeFormPanel").hidden=true);
+async function loadProtocolNodes(){
+ const body=$("#protocolNodesBody");if(!body)return;body.innerHTML='<tr><td colspan="7" class="table-empty">正在读取真实协议节点与端口连通性…</td></tr>';
+ try{
+  const [nr,hr]=await Promise.all([legacyAdmin("/nodes"),legacyAdmin("/nodes/health")]);
+  const nodes=dataList(nr),health=dataList(hr),healthById={};health.forEach(x=>healthById[String(x.id)]=x);
+  body.innerHTML=nodes.length?nodes.map(n=>{
+   const h=healthById[String(n.id)]||{},checks=h.domains||[],up=checks.filter(x=>x.reachable).length;
+   const domains=checks.length?up+"/"+checks.length+" 可达":"未检测";
+   const state=Number(n.enabled)?"已启用":"已停用";
+   return '<tr><td><b>'+escapeHtml(n.name||"—")+'</b></td><td>'+escapeHtml(String(n.protocol||"").toUpperCase())+'</td><td>'+escapeHtml(h.region||"—")+'</td><td>'+Number(n.port||0)+'</td><td>'+escapeHtml(domains)+(h.reachable?' · 在线':' · 不可达')+'</td><td>'+statusPill(Number(n.enabled)&&h.reachable?"active":Number(n.enabled)?"unreachable":"inactive")+'</td><td><div class="table-actions"><button class="btn btn-secondary btn-small" data-proto-edit="'+n.id+'">编辑</button><button class="btn btn-secondary btn-small" data-proto-toggle="'+n.id+'" data-enabled="'+(Number(n.enabled)?0:1)+'">'+(Number(n.enabled)?"停用":"启用")+'</button><button class="btn btn-danger btn-small" data-proto-delete="'+n.id+'">删除</button></div></td></tr>';
+  }).join(""):'<tr><td colspan="7" class="table-empty">暂无协议节点，添加后才会出现在客户订阅中</td></tr>';
+  $("#protocolNodesCount").textContent="共 "+nodes.length+" 个协议节点 · "+nodes.filter(x=>Number(x.enabled)).length+" 个启用";
+  document.querySelectorAll("[data-proto-cap]").forEach(card=>{
+   const proto=card.dataset.protoCap;
+   if(["socks5","mtproto","ss2022","http"].includes(proto))return;
+   const group=nodes.filter(x=>x.protocol===proto),enabled=group.filter(x=>Number(x.enabled)),online=enabled.filter(x=>healthById[String(x.id)]?.reachable);
+   card.querySelector("small").textContent=enabled.length?"启用 "+enabled.length+" · 在线 "+online.length:"尚无启用节点";
+   card.classList.toggle("pending",!enabled.length);
+  });
+  body.querySelectorAll("[data-proto-edit]").forEach(btn=>btn.addEventListener("click",()=>{const n=nodes.find(x=>String(x.id)===btn.dataset.protoEdit);if(n)editProtocolNode(n)}));
+  body.querySelectorAll("[data-proto-toggle]").forEach(btn=>btn.addEventListener("click",async()=>{try{await legacyAdmin("/nodes/toggle",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(btn.dataset.protoToggle),enabled:Number(btn.dataset.enabled)})});toast(Number(btn.dataset.enabled)?"协议节点已启用":"协议节点已停用");await loadProtocolNodes()}catch(e){toast("协议状态更新失败："+(e.message||"接口错误"))}}));
+  body.querySelectorAll("[data-proto-delete]").forEach(btn=>btn.addEventListener("click",async()=>{if(!confirm("删除该协议节点后，它会从客户订阅中移除。确认删除？"))return;try{await legacyAdmin("/nodes/delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(btn.dataset.protoDelete)})});toast("协议节点已删除");await loadProtocolNodes()}catch(e){toast("删除失败："+(e.message||"接口错误"))}}));
+ }catch(e){body.innerHTML='<tr><td colspan="7" class="table-empty error-text">读取协议节点失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';$("#protocolNodesCount").textContent="读取失败"}
+}
+$("#protocolNodesRefresh")?.addEventListener("click",loadProtocolNodes);
+$("#protocolNodeForm")?.addEventListener("submit",async e=>{
+ e.preventDefault();const btn=$("#protocolNodeSaveBtn"),res=$("#protocolNodeFormResult");btn.disabled=true;res.textContent="正在保存真实节点配置…";
+ const proto=$("#protocolNodeType").value,domains=$("#protocolNodeDomains").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+ if(!domains.length){res.textContent="至少填写一个节点域名";btn.disabled=false;return}
+ const cfg={domains,region:$("#protocolNodeRegion").value.trim(),sni:$("#protocolNodeSni").value.trim(),network:$("#protocolNodeNetwork").value,ws_path:$("#protocolNodeWsPath").value.trim()||"/",reality_public_key:$("#protocolNodePublicKey").value.trim(),short_id:$("#protocolNodeShortId").value.trim(),fingerprint:"chrome",tls:true,skip_cert_verify:true,method:$("#protocolNodeMethod").value,obfs:proto==="hysteria2"?"salamander":"",obfs_password:$("#protocolNodeObfsPassword").value};
+ const payload={id:Number($("#protocolNodeId").value)||undefined,name:$("#protocolNodeName").value.trim(),protocol:proto,port:Number($("#protocolNodePort").value),enabled:Number($("#protocolNodeEnabled").value),sort:Number($("#protocolNodeSort").value||100),config_json:cfg};
+ try{await legacyAdmin("/nodes/save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});res.className="form-result success";res.textContent="节点协议配置已保存。订阅端会按用户自动生成独立凭证。";toast("协议节点保存成功");$("#protocolNodeFormPanel").hidden=true;await loadProtocolNodes()}
+ catch(e){res.className="form-result error";res.textContent=e.message||"保存失败"}
+ finally{btn.disabled=false}
+});
+$("#applyRobotPrice")?.addEventListener("click",()=>{
+ const raw=$("#robotPriceTemplate").value;if(!raw){toast("先选择机器人套餐价格");return}
+ const [gb,price]=raw.split("|");$("#planTraffic").value=gb;$("#planMonthPrice").value=Number(price).toFixed(2);$("#planQuarterPrice").value="";$("#planHalfPrice").value="";$("#planYearPrice").value="";$("#planType").value="monthly";$("#planName").value=gb+"GB·月付";$("#planContent").value="30天 / "+gb+"GB（采用机器人现行价）";toast("已填入机器人当前套餐价格，保存后才会生效");
+});
+async function loadNodes(){await Promise.allSettled([loadPlans(),loadNodeServers(),loadNodeOrders(),loadProtocolNodes()])}
 async function loadAiStatus(){
  try{const d=await legacyAdmin("/config/ai");$("#zhipuModel").textContent=d.model||"GLM-4-Flash";$("#zhipuStatus").textContent=d.configured?"已连接":"未配置";$("#zhipuStatus").className="tag "+(d.configured?"tag-green":"")}
  catch(e){$("#zhipuStatus").textContent="状态读取失败";$("#zhipuStatus").className="tag"}
