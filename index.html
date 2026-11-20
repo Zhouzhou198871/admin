@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f7fb">
   <title>晴天账号铺 · 管理后台</title>
-  <link rel="stylesheet" href="./assets/admin.css?v=20261120-2">
-  <script src="./assets/admin.js" defer></script>
+  <link rel="stylesheet" href="./assets/admin.css?v=20261121-1">
+  <script src="./assets/admin.js?v=20261121-1" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -46,7 +46,7 @@
           <button class="btn btn-secondary" id="refreshBtn">↻ 刷新状态</button>
         </div>
         <div class="welcome-card">
-          <div><span class="welcome-kicker">CONTROL CENTER</span><h2>欢迎回来</h2><p>管理端已独立部署框架，正在连接商城 API。</p></div>
+          <div><span class="welcome-kicker">CONTROL CENTER</span><h2>欢迎回来</h2><p>管理端已连接晴天号铺 API，可查看业务数据并管理指定服务。</p></div>
           <div class="welcome-art"><img src="https://shop.lynli.me/logo.jpg" alt="晴天号铺图标"><i></i><b></b></div>
         </div>
         <div class="section-title"><div><h2>业务概况</h2><p>从晴天号铺生产数据库实时读取</p></div><span class="live-label"><i></i>实时检测</span></div>
@@ -60,14 +60,14 @@
           <article class="panel">
             <div class="panel-heading"><div><h2>快捷操作</h2><p>已接通的管理功能</p></div></div>
             <button class="action-row" data-go="recharge"><span class="action-icon green">＋</span><span><b>用户余额充值</b><small>按用户邮箱增加 USDT 余额</small></span></button>
-            <div class="action-row disabled"><span class="action-icon blue">▤</span><span><b>订单查询</b><small>等待安全的后台查询接口</small></span><span class="tag">开发中</span></div>
-            <div class="action-row disabled"><span class="action-icon purple">♙</span><span><b>用户管理</b><small>等待管理员专用数据接口</small></span><span class="tag">开发中</span></div>
+            <div class="action-row" data-go="orders"><span class="action-icon blue">▤</span><span><b>订单查询</b><small>查看商城与节点订单</small></span></div>
+            <div class="action-row" data-go="users"><span class="action-icon purple">♙</span><span><b>用户管理</b><small>查看注册用户与余额</small></span></div>
           </article>
           <article class="panel integration-panel">
             <div class="panel-heading"><div><h2>系统连接</h2><p>当前项目基础配置</p></div></div>
             <div class="info-line"><span>前台商城</span><b>shop.lynli.me</b></div>
             <div class="info-line"><span>API 服务</span><b id="apiHost">qingtian-shop-api</b></div>
-            <div class="info-line"><span>部署方式</span><b>GitHub Actions</b></div>
+            <div class="info-line"><span>部署方式</span><b>GitHub + Vercel</b></div>
             <div class="info-line"><span>数据源</span><b>Vercel API / Neon PostgreSQL</b></div>
             <p class="integration-tip">管理端不会直接连接数据库，也不会在网页代码中保存管理密钥。</p>
           </article>
