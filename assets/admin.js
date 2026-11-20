@@ -64,7 +64,8 @@ function orderStatusLabel(value){const n=Number(value);if(Number.isFinite(n)&&St
 async function loadOverview(){
  const jobs=await Promise.allSettled([
   legacyAdmin("/shop/overview"),
-  legacyAdmin("/users?page=1&size=1"),
+  legacyAdmin("/stats/overview"),
+  legacyAdmin("/users"),
   legacyAdmin("/account_pool/stats"),
   legacyAdmin("/tickets?status=1&page=1&size=1"),
   legacyAdmin("/nodes"),
@@ -76,16 +77,16 @@ async function loadOverview(){
   adminRequest("/api/admin/bots")
  ]);
  const val=i=>jobs[i].status==="fulfilled"?jobs[i].value:null;
- const shop=val(0)||{},users=val(1)||{},accounts=val(2)||{},tickets=val(3)||{},nodes=dataList(val(4)),plans=dataList(val(5)),ordersData=val(6)||{},productsData=val(7)||{};
- const orders=dataList(ordersData),products=dataList(productsData),notices=dataList(val(8)),mail=val(9)||{},bots=val(10)?.bots||[];
- const userTotal=Number(users.total??users.total_count??dataTotal(users,dataList(users)));
- const orderTotal=Number(shop.orders_total??shop.order_count??shop.total_orders??ordersData.total??orders.length);
- const productTotal=Number(shop.products_active??shop.active_products??shop.products_total??productsData.total??products.length);
+ const shop=val(0)||{},stats=val(1)||{},users=val(2)||{},accounts=val(3)||{},tickets=val(4)||{},nodes=dataList(val(5)),plans=dataList(val(6)),ordersData=val(7)||{},productsData=val(8)||{};
+ const orders=dataList(ordersData),products=dataList(productsData),notices=dataList(val(9)),mail=val(10)||{},bots=val(11)?.bots||[];
+ const userTotal=Number(stats.users_total??dataList(users).length);
+ const orderTotal=Number(stats.orders_total??ordersData.total??orders.length);
+ const productTotal=Number(shop.products_online??shop.products_total??productsData.total??products.length);
  const stockTotal=Number(shop.stock_total??shop.total_stock??products.reduce((n,p)=>n+Number(p.stock||0),0));
- const revenue=Number(shop.revenue_total??shop.sales_total??shop.total_revenue??shop.paid_amount??0);
- const pendingOrders=Number(shop.orders_pending??shop.pending_orders??shop.pending_count??0);
+ const revenue=Number(stats.income_total??shop.today_amount??0);
+ const pendingOrders=Number(shop.orders_pending??0)+Number(shop.orders_toship??0);
  const available=Number(accounts.available??accounts.in_stock??0),sold=Number(accounts.sold??0);
- const pendingSupport=Number(tickets.total??tickets.list?.length??0);
+ const pendingSupport=Number(tickets.total??dataList(tickets).length??0);
  const lowStock=products.filter(p=>Number(p.stock||0)<=5&&Number(p.status??p.is_active??1)!==0).length;
  $("#metricRevenue").textContent=formatCny(revenue);
  $("#metricOrders").textContent=orderTotal.toLocaleString("zh-CN");
@@ -114,10 +115,10 @@ async function loadUsers(){
  const body=$("#usersBody");if(!body)return;body.innerHTML='<tr><td colspan="5" class="table-empty">正在读取用户数据…</td></tr>';
  const q=$("#userSearch")?.value.trim()||"";
  try{
-  const data=await legacyAdmin("/users?kw="+encodeURIComponent(q)+"&page=1&size=50");
-  const users=dataList(data);
+  const data=await legacyAdmin("/users");
+  const users=dataList(data).filter(u=>!q||[u.email,u.nickname,u.short_id].some(v=>String(v||"").toLowerCase().includes(q.toLowerCase()))).slice(0,50);
   body.innerHTML=users.length?users.map(user=>'<tr><td><b>'+escapeHtml(user.email)+'</b></td><td>'+escapeHtml(user.nickname||user.name||"—")+'</td><td class="mono">'+escapeHtml(user.tg_user_id||user.tg_id||"—")+'</td><td class="money">'+formatCny(Number(user.balance||0)*4)+'</td><td>'+escapeHtml(formatAdminDate(user.created_at))+'</td></tr>').join(""):'<tr><td colspan="5" class="table-empty">没有找到匹配用户</td></tr>';
-  $("#usersCount").textContent="共 "+dataTotal(data,users).toLocaleString("zh-CN")+" 位用户";
+  $("#usersCount").textContent="全站用户 "+dataList(data).length.toLocaleString("zh-CN")+" 位（当前显示 "+users.length+" 位）";
  }catch(error){body.innerHTML='<tr><td colspan="5" class="table-empty error-text">读取失败：'+escapeHtml(error.message||"请求失败")+'</td></tr>';$("#usersCount").textContent="读取失败"}
 }
 
@@ -125,10 +126,10 @@ async function loadOrders(){
  const body=$("#ordersBody");if(!body)return;body.innerHTML='<tr><td colspan="7" class="table-empty">正在读取订单数据…</td></tr>';
  const q=$("#orderSearch")?.value.trim()||"",status=$("#orderStatus")?.value||"";
  try{
-  const data=await legacyAdmin("/shop/orders?kw="+encodeURIComponent(q)+"&status="+encodeURIComponent(status)+"&page=1&size=50");
+  const data=await legacyAdmin("/shop/orders?trade_no="+encodeURIComponent(q)+"&status="+encodeURIComponent(status)+"&page=1&size=50");
   const orders=dataList(data);
   body.innerHTML=orders.length?orders.map(order=>'<tr><td class="mono">'+escapeHtml(order.trade_no||order.order_no||order.id||"—")+'</td><td>'+escapeHtml(order.delivery_type===1?"数字商品":order.order_type||"商城订单")+'</td><td>'+escapeHtml(order.user_email||order.email||order.user_id||"—")+'</td><td class="mono">'+escapeHtml(order.product_title||order.title||order.product_id||"—")+'</td><td class="money">'+formatCny(order.total_amount??order.amount??order.total??0)+'</td><td>'+statusPill(orderStatusLabel(order.status))+'</td><td>'+escapeHtml(formatAdminDate(order.created_at))+'</td></tr>').join(""):'<tr><td colspan="7" class="table-empty">暂无符合条件的订单</td></tr>';
-  $("#ordersCount").textContent="共 "+dataTotal(data,orders).toLocaleString("zh-CN")+" 条订单";
+  $("#ordersCount").textContent="全站订单 "+dataTotal(data,orders).toLocaleString("zh-CN")+" 条";
  }catch(error){body.innerHTML='<tr><td colspan="7" class="table-empty error-text">读取失败：'+escapeHtml(error.message||"请求失败")+'</td></tr>';$("#ordersCount").textContent="读取失败"}
 }
 async function loadProducts(){
@@ -140,7 +141,7 @@ async function loadProducts(){
   body.innerHTML=products.length?products.map(p=>'<tr><td><b>'+escapeHtml(p.title||p.name||"未命名商品")+'</b><small class="muted-inline">#'+escapeHtml(p.id)+'</small></td><td>'+escapeHtml(p.category||"—")+'</td><td class="money">'+formatCny(p.price)+'</td><td class="money">'+formatCny(p.cost)+'</td><td>'+Number(p.stock||0).toLocaleString("zh-CN")+'</td><td>'+statusPill(Number(p.status??p.is_active??0)?"active":"inactive")+'</td><td><div class="table-actions"><button class="btn btn-secondary btn-small" data-product-edit="'+escapeHtml(p.id)+'">编辑</button><button class="btn btn-secondary btn-small" data-product-toggle="'+escapeHtml(p.id)+'" data-status="'+(Number(p.status??p.is_active??0)?0:1)+'">'+(Number(p.status??p.is_active??0)?"下架":"上架")+'</button><button class="btn btn-danger btn-small" data-product-delete="'+escapeHtml(p.id)+'">删除</button></div></td></tr>').join(""):'<tr><td colspan="7" class="table-empty">暂无商品，请新增商品或检查数据接口</td></tr>';
   $("#productsCount").textContent="共 "+dataTotal(data,products).toLocaleString("zh-CN")+" 件商品";
   body.querySelectorAll("[data-product-edit]").forEach(btn=>btn.addEventListener("click",()=>{const p=products.find(x=>String(x.id)===btn.dataset.productEdit);if(p)editProduct(p)}));
-  body.querySelectorAll("[data-product-toggle]").forEach(btn=>btn.addEventListener("click",async()=>{btn.disabled=true;try{await legacyAdmin("/shop/product/toggle",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(btn.dataset.productToggle),status:Number(btn.dataset.status)})});toast("商品状态已更新");await loadProducts()}catch(e){toast("更新失败："+e.message)}finally{btn.disabled=false}}));
+  body.querySelectorAll("[data-product-toggle]").forEach(btn=>btn.addEventListener("click",async()=>{btn.disabled=true;try{await legacyAdmin("/shop/product/status",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(btn.dataset.productToggle),status:Number(btn.dataset.status)})});toast("商品状态已更新");await loadProducts()}catch(e){toast("更新失败："+e.message)}finally{btn.disabled=false}}));
   body.querySelectorAll("[data-product-delete]").forEach(btn=>btn.addEventListener("click",async()=>{if(!confirm("确定删除这件商品？删除后不会影响已完成订单。"))return;btn.disabled=true;try{await legacyAdmin("/shop/product/delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(btn.dataset.productDelete)})});toast("商品已删除");await loadProducts()}catch(e){toast("删除失败："+e.message)}finally{btn.disabled=false}}));
  }catch(error){body.innerHTML='<tr><td colspan="7" class="table-empty error-text">读取失败：'+escapeHtml(error.message||"请求失败")+'</td></tr>';$("#productsCount").textContent="读取失败"}
 }
