@@ -198,3 +198,63 @@ button:disabled{cursor:wait;opacity:.62;transform:none!important;filter:none!imp
  .login-screen{overflow-y:auto;place-items:start center}
  .login-layout{min-height:560px}
 }
+
+
+/* Authoritative login layout reset — keep mobile and desktop grids isolated */
+.login-screen{
+  position:fixed!important;inset:0!important;z-index:20!important;
+  display:grid!important;place-items:center!important;
+  min-height:100vh;min-height:100dvh;
+  padding:20px!important;overflow-y:auto!important;
+  box-sizing:border-box!important;
+}
+.login-layout{
+  display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  width:min(100%,1000px)!important;min-height:590px!important;
+  margin:auto!important;box-sizing:border-box!important;
+}
+.login-brand-panel{display:flex!important;min-width:0!important}
+.login-card{
+  display:block!important;align-self:center!important;justify-self:stretch!important;
+  width:100%!important;min-width:0!important;max-width:none!important;
+  margin:0!important;box-sizing:border-box!important;
+}
+.login-card>input,.login-card .password-field,.login-card .password-field input{
+  display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;
+  box-sizing:border-box!important;
+}
+.login-mobile-brand{display:none!important}
+@media(max-width:760px){
+  .login-screen{
+    position:fixed!important;inset:0!important;
+    display:grid!important;place-items:center!important;
+    padding:16px!important;overflow-y:auto!important;
+  }
+  .login-layout{
+    display:block!important;grid-template-columns:minmax(0,1fr)!important;
+    width:min(100%,440px)!important;min-height:0!important;height:auto!important;
+    margin:auto!important;border-radius:20px!important;overflow:hidden!important;
+  }
+  .login-brand-panel{display:none!important}
+  .login-card{
+    display:block!important;width:100%!important;min-width:0!important;
+    max-width:none!important;padding:30px 25px 25px!important;
+    margin:0!important;align-self:stretch!important;
+  }
+  .login-mobile-brand{display:block!important;margin:0 0 22px!important}
+  .login-mobile-brand img{display:block;width:52px;height:52px;object-fit:contain;border-radius:14px}
+  .login-card h1{font-size:26px!important}
+  .login-card>label:not(.remember-option){display:block!important}
+  .login-card>input,.login-card .password-field,.login-card .password-field input{
+    width:100%!important;max-width:100%!important;min-width:0!important;
+  }
+  .remember-option{display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:9px!important}
+  .remember-option input{flex:0 0 17px!important;width:17px!important;height:17px!important}
+  .remember-option small{margin-left:26px!important;flex-basis:100%!important}
+  .login-card .submit-btn{width:100%!important}
+}
+@media(min-width:761px){
+  .login-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
+  .login-brand-panel{display:flex!important}
+  .login-mobile-brand{display:none!important}
+}
