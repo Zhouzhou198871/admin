@@ -249,10 +249,10 @@
         </div>
       </section>
       <section class="page" id="page-upstream">
-        <div class="page-heading"><div><p class="eyebrow">SUPPLIER OPERATIONS</p><h1>上游采购中心</h1><p class="subheading">供应商余额、采购订单与 API 连接</p></div><button class="btn btn-secondary" id="upstreamRefresh">↻ 检查连接</button></div>
-        <div class="notice"><b>真实数据状态</b><span>账号铺继续复用既有大号商 API。当前管理端尚未部署上游余额与订单只读代理，因此不会用旧余额或模拟订单填充。</span></div>
+        <div class="page-heading"><div><p class="eyebrow">SUPPLIER OPERATIONS</p><h1>上游采购中心</h1><p class="subheading">上游采购订单记录、账户余额接口状态与 API 连接</p></div><button class="btn btn-secondary" id="upstreamRefresh">↻ 检查连接</button></div>
+        <div class="notice"><b>真实数据状态</b><span>继续复用既有大号商采购代理。订单记录已接入本地真实采购流水；供应商余额接口暂未提供，因此余额不会显示估算值。</span></div>
         <div class="content-grid upstream-grid"><article class="panel"><div class="panel-heading"><div><h2>上游账户余额</h2><p>供应商实时可用余额</p></div><span class="tag" id="upstreamBalanceStatus">接口待接通</span></div><div class="upstream-balance-value" id="upstreamBalance">暂不可读取</div><p class="integration-tip" id="upstreamBalanceHint">通过服务端安全代理读取，不在浏览器暴露供应商密钥。</p></article><article class="panel"><div class="panel-heading"><div><h2>上游 API 连接</h2><p>复用现有采购服务，不新建采购系统</p></div><span class="tag" id="upstreamApiStatus">未验证</span></div><div class="info-line"><span>采购方式</span><b>现有大号商 API</b></div><div class="info-line"><span>密钥管理</span><b>仅服务端保存</b></div><div class="info-line"><span>币种</span><b>CNY 人民币</b></div></article></div>
-        <article class="panel data-panel node-data-panel"><div class="panel-heading"><div><h2>上游订单</h2><p>真实供应商订单号、成本与同步时间</p></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>上游订单号</th><th>关联商城订单</th><th>商品</th><th>采购金额</th><th>状态</th><th>下单时间</th></tr></thead><tbody id="upstreamOrdersBody"><tr><td colspan="6" class="table-empty">查询接口尚未接通，不显示模拟数据</td></tr></tbody></table></div></article>
+        <article class="panel data-panel node-data-panel"><div class="panel-heading"><div><h2>上游订单</h2><p>真实采购流水、上游订单号与同步时间</p></div><span class="tag" id="upstreamOrderCount">—</span></div><div class="table-wrap"><table class="data-table"><thead><tr><th>上游订单号</th><th>关联商城订单</th><th>商品</th><th>采购金额</th><th>状态</th><th>下单时间</th></tr></thead><tbody id="upstreamOrdersBody"><tr><td colspan="6" class="table-empty">查询接口尚未接通，不显示模拟数据</td></tr></tbody></table></div></article>
       </section>
       <section class="page" id="page-support">
         <div class="page-heading"><div><p class="eyebrow">CUSTOMER SUPPORT</p><h1>在线客服</h1><p class="subheading">查看客户会话、人工接管 AI、回复消息与处理售后工单</p></div><button class="btn btn-secondary" id="supportRefresh">↻ 刷新会话</button></div>
