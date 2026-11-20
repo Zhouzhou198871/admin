@@ -18,9 +18,9 @@
       <div class="nav-label">工作台</div>
       <nav class="nav">
         <button class="nav-item active" data-page="overview"><span class="nav-icon">▦</span>总览</button>
-        <button class="nav-item" data-page="orders"><span class="nav-icon">▤</span>订单管理<span class="nav-soon">待接入</span></button>
-        <button class="nav-item" data-page="users"><span class="nav-icon">♙</span>用户管理<span class="nav-soon">待接入</span></button>
-        <button class="nav-item" data-page="products"><span class="nav-icon">◇</span>商品与库存<span class="nav-soon">待接入</span></button>
+        <button class="nav-item" data-page="orders"><span class="nav-icon">▤</span>订单管理</button>
+        <button class="nav-item" data-page="users"><span class="nav-icon">♙</span>用户管理</button>
+        <button class="nav-item" data-page="products"><span class="nav-icon">◇</span>商品与库存</button>
         <button class="nav-item" data-page="recharge"><span class="nav-icon">＋</span>余额充值</button>
         <button class="nav-item" data-page="bots"><span class="nav-icon">⚙</span>机器人管理</button>
       </nav>
@@ -49,12 +49,12 @@
           <div><span class="welcome-kicker">CONTROL CENTER</span><h2>欢迎回来</h2><p>管理端已独立部署框架，正在连接商城 API。</p></div>
           <div class="welcome-art"><img src="https://shop.lynli.me/logo.jpg" alt="晴天号铺图标"><i></i><b></b></div>
         </div>
-        <div class="section-title"><div><h2>业务概况</h2><p>当前 API 已开放的数据能力</p></div><span class="live-label"><i></i>实时检测</span></div>
+        <div class="section-title"><div><h2>业务概况</h2><p>从晴天号铺生产数据库实时读取</p></div><span class="live-label"><i></i>实时检测</span></div>
         <div class="metric-grid">
           <article class="metric-card"><div class="metric-top"><span>API 服务</span><span class="metric-icon purple">⌁</span></div><strong id="metricApi">检测中</strong><small id="metricApiHint">正在请求健康检查</small></article>
-          <article class="metric-card"><div class="metric-top"><span>订单数据</span><span class="metric-icon blue">▤</span></div><strong class="muted-value">待接入</strong><small>后台订单查询接口尚未开放</small></article>
-          <article class="metric-card"><div class="metric-top"><span>用户数据</span><span class="metric-icon green">♙</span></div><strong class="muted-value">待接入</strong><small>后台用户列表接口尚未开放</small></article>
-          <article class="metric-card"><div class="metric-top"><span>商品库存</span><span class="metric-icon orange">◇</span></div><strong class="muted-value">待接入</strong><small>管理端商品接口尚未开放</small></article>
+          <article class="metric-card"><div class="metric-top"><span>订单数据</span><span class="metric-icon blue">▤</span></div><strong id="metricOrders">—</strong><small>商城订单与节点订单</small></article>
+          <article class="metric-card"><div class="metric-top"><span>用户数据</span><span class="metric-icon green">♙</span></div><strong id="metricUsers">—</strong><small>注册用户总数</small></article>
+          <article class="metric-card"><div class="metric-top"><span>商品库存</span><span class="metric-icon orange">◇</span></div><strong id="metricProducts">—</strong><small>当前商城商品目录</small></article>
         </div>
         <div class="content-grid">
           <article class="panel">
@@ -98,9 +98,31 @@
         </div>
       </section>
 
-      <section class="page" id="page-orders"><div class="page-heading"><div><p class="eyebrow">ORDER CENTER</p><h1>订单管理</h1><p class="subheading">订单列表、状态筛选与交付记录</p></div></div><div class="empty-state"><span>▤</span><h2>订单管理接口待接入</h2><p>当前 Worker 只开放用户自己的订单查询，没有管理员订单列表接口。为避免越权读取，不会伪造数据或调用用户端接口代替。</p></div></section>
-      <section class="page" id="page-users"><div class="page-heading"><div><p class="eyebrow">CUSTOMER CENTER</p><h1>用户管理</h1><p class="subheading">用户资料、账户状态与余额管理</p></div></div><div class="empty-state"><span>♙</span><h2>用户管理接口待接入</h2><p>现有 API 没有管理员用户列表与详情接口。余额充值已单独接通，其他用户数据等后端鉴权接口完成后再开放。</p></div></section>
-      <section class="page" id="page-products"><div class="page-heading"><div><p class="eyebrow">CATALOG CENTER</p><h1>商品与库存</h1><p class="subheading">商品目录、库存与上游采购状态</p></div></div><div class="empty-state"><span>◇</span><h2>商品管理接口待接入</h2><p>现有商品接口面向已登录用户，只返回可购买商品。后台编辑和库存操作接口尚未开放。</p></div></section>
+      <section class="page" id="page-orders">
+        <div class="page-heading"><div><p class="eyebrow">ORDER CENTER</p><h1>订单管理</h1><p class="subheading">统一查看商城订单与节点订单，不触发采购或交付操作</p></div><button class="btn btn-secondary" id="ordersRefresh">↻ 刷新</button></div>
+        <article class="panel data-panel">
+          <div class="table-toolbar"><input id="orderSearch" type="search" placeholder="搜索订单号、用户邮箱或商品 ID"><select id="orderStatus"><option value="">全部状态</option><option value="pending">待处理</option><option value="reserved">已预留</option><option value="delivered">已交付</option><option value="refunded">已退款</option><option value="failed">失败</option></select><button class="btn btn-primary" id="orderSearchBtn">查询</button></div>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>订单号</th><th>类型</th><th>用户</th><th>商品 ID</th><th>金额</th><th>状态</th><th>创建时间</th></tr></thead><tbody id="ordersBody"><tr><td colspan="7" class="table-empty">登录后加载订单数据</td></tr></tbody></table></div>
+          <div class="table-foot"><span id="ordersCount">—</span><span>最多显示最近 50 条</span></div>
+        </article>
+      </section>
+      <section class="page" id="page-users">
+        <div class="page-heading"><div><p class="eyebrow">CUSTOMER CENTER</p><h1>用户管理</h1><p class="subheading">查看注册用户、账户余额与 Telegram 绑定信息</p></div><button class="btn btn-secondary" id="usersRefresh">↻ 刷新</button></div>
+        <article class="panel data-panel">
+          <div class="table-toolbar"><input id="userSearch" type="search" placeholder="搜索用户邮箱或昵称"><button class="btn btn-primary" id="userSearchBtn">查询</button></div>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>用户邮箱</th><th>昵称</th><th>Telegram ID</th><th>账户余额</th><th>注册时间</th></tr></thead><tbody id="usersBody"><tr><td colspan="5" class="table-empty">登录后加载用户数据</td></tr></tbody></table></div>
+          <div class="table-foot"><span id="usersCount">—</span><span>最多显示最近 50 位用户</span></div>
+        </article>
+      </section>
+      <section class="page" id="page-products">
+        <div class="page-heading"><div><p class="eyebrow">CATALOG CENTER</p><h1>商品与库存</h1><p class="subheading">读取当前商城商品目录与库存状态；采购仍由现有供应商 API 负责</p></div><button class="btn btn-secondary" id="productsRefresh">↻ 刷新</button></div>
+        <div class="notice"><b>数据边界</b><span>此页只读展示商城同步目录，不直接修改上游商品、采购系统或库存，避免影响现有自动同步。</span></div>
+        <article class="panel data-panel">
+          <div class="table-toolbar"><input id="productSearch" type="search" placeholder="搜索商品名称、商品 ID 或分类"><button class="btn btn-primary" id="productSearchBtn">查询</button></div>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>商品名称</th><th>分类</th><th>商品 ID</th><th>售价 USDT</th><th>库存</th><th>状态</th><th>同步时间</th></tr></thead><tbody id="productsBody"><tr><td colspan="7" class="table-empty">登录后加载商品目录</td></tr></tbody></table></div>
+          <div class="table-foot"><span id="productsCount">—</span><span>最多显示最近 50 条</span></div>
+        </article>
+      </section>
 
       <section class="page" id="page-bots">
         <div class="page-heading">
