@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f7fb">
   <title>晴天账号铺 · 管理后台</title>
-  <link rel="stylesheet" href="./assets/admin.css?v=20261121-11">
-  <script src="./assets/admin.js?v=20261121-11" defer></script>
+  <link rel="stylesheet" href="./assets/admin.css?v=20261121-12">
+  <script src="./assets/admin.js?v=20261121-12" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -125,8 +125,11 @@
             <label>更新订单状态<select id="orderModalStatus"><option value="0">待支付</option><option value="1">待发货</option><option value="2">已发货</option><option value="3">已完成</option></select></label>
             <label>快递公司<input id="orderTrackingCompany" placeholder="例如：顺丰"></label>
             <label class="span-two">物流单号<input id="orderTrackingNo" placeholder="填写物流单号；发货时必填"></label>
+            <label>交付类型<select id="orderDeliveryType"><option value="account">账号</option><option value="card">卡密</option><option value="license">授权码</option><option value="other">其他</option></select></label>
+            <label><span>覆盖已有交付内容</span><select id="orderDeliveryOverwrite"><option value="0">否（默认保护）</option><option value="1">是（确认后覆盖）</option></select></label>
+            <label class="span-two">上传账号 / 卡密 / 授权内容<textarea id="orderDeliveryContent" rows="5" placeholder="粘贴本订单的交付内容。支持多行，最多 20000 字符。"></textarea><small class="field-hint">仅已付款订单允许交付；保存后客户可在订单详情中查看。已有不同交付内容时默认拒绝覆盖。</small></label>
           </div>
-          <div class="form-actions"><button class="btn btn-secondary" id="orderPurchaseCopy" type="button">复制采购信息</button><button class="btn btn-secondary" id="orderStatusSave" type="button">保存订单状态</button><button class="btn btn-primary" id="orderShipBtn" type="button">确认发货</button></div>
+          <div class="form-actions"><button class="btn btn-secondary" id="orderPurchaseCopy" type="button">复制采购信息</button><button class="btn btn-secondary" id="orderStatusSave" type="button">保存订单状态</button><button class="btn btn-secondary" id="orderDeliverBtn" type="button">上传并交付</button><button class="btn btn-primary" id="orderShipBtn" type="button">确认发货</button></div>
           <div class="form-result" id="orderModalResult" role="status"></div>
         </article>
       </div>
