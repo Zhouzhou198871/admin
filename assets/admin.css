@@ -119,3 +119,10 @@ button:disabled{cursor:wait;opacity:.62;transform:none!important;filter:none!imp
 @media(prefers-reduced-motion:reduce){
  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
+
+
+/* Remember-password preference */
+.remember-option{display:flex!important;align-items:center;gap:9px;margin:14px 0 0!important;font-size:11px!important;font-weight:500!important;color:#536078!important;cursor:pointer}
+.remember-option input{appearance:auto!important;-webkit-appearance:checkbox!important;width:15px!important;height:15px!important;margin:0!important;padding:0!important;accent-color:#705bdc;box-shadow:none!important;cursor:pointer}
+.remember-option span{white-space:nowrap}
+.remember-option small{font-size:9px;color:#9aa4b4;font-weight:400;margin-left:2px}
