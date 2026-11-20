@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f7fb">
   <title>晴天账号铺 · 管理后台</title>
-  <link rel="stylesheet" href="./assets/admin.css?v=20261121-12">
-  <script src="./assets/admin.js?v=20261121-12" defer></script>
+  <link rel="stylesheet" href="./assets/admin.css?v=20261121-13">
+  <script src="./assets/admin.js?v=20261121-13" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -52,6 +52,7 @@
           <button type="button" class="metric-card metric-action" data-go="orders"><div class="metric-top"><span>节点服务累计收入</span><span class="metric-icon green">¥</span></div><strong id="metricRevenue">¥—</strong><small>来自节点服务已支付订单</small><span class="metric-detail">查看销售明细 →</span></button>
           <button type="button" class="metric-card metric-action" data-go="orders"><div class="metric-top"><span>商城订单</span><span class="metric-icon blue">▤</span></div><strong id="metricOrders">—</strong><small id="metricPendingOrders">待处理 —</small><span class="metric-detail">进入订单中心 →</span></button>
           <button type="button" class="metric-card metric-action" data-go="users"><div class="metric-top"><span>注册用户</span><span class="metric-icon purple">♙</span></div><strong id="metricUsers">—</strong><small>全站用户账户</small><span class="metric-detail">查看用户明细 →</span></button>
+          <button type="button" class="metric-card metric-action" data-go="nodes" data-node-tab="orders"><div class="metric-top"><span>节点服务订单</span><span class="metric-icon blue">▤</span></div><strong id="metricNodeOrders">—</strong><small>全站套餐订购记录</small><span class="metric-detail">查看节点订单 →</span></button>
           <button type="button" class="metric-card metric-action" data-go="products"><div class="metric-top"><span>在售商品</span><span class="metric-icon orange">◇</span></div><strong id="metricProducts">—</strong><small id="metricStock">商品库存 —</small><span class="metric-detail">管理商品与价格 →</span></button>
           <button type="button" class="metric-card metric-action" data-go="products" data-product-tab="accounts"><div class="metric-top"><span>可售账号库存</span><span class="metric-icon green">▣</span></div><strong id="metricInventory">—</strong><small id="metricSoldInventory">已售 —</small><span class="metric-detail">上传账号/卡密 →</span></button>
           <button type="button" class="metric-card metric-action" data-go="support"><div class="metric-top"><span>待处理客服</span><span class="metric-icon purple">◉</span></div><strong id="metricTickets">—</strong><small>等待人工回复</small><span class="metric-detail">进入客服工作台 →</span></button>
@@ -201,7 +202,7 @@
       </section>
       <section class="page" id="page-nodes">
         <div class="page-heading"><div><p class="eyebrow">NODE OPERATIONS</p><h1>节点服务</h1><p class="subheading">节点线路、协议、套餐、流量与人民币定价统一管理</p></div><button class="btn btn-secondary" id="nodesRefresh">↻ 刷新</button></div>
-        <div class="tab-bar" id="nodeTabs"><button class="tab-button active" data-node-tab="plans">套餐与价格</button><button class="tab-button" data-node-tab="servers">节点线路</button></div>
+        <div class="tab-bar" id="nodeTabs"><button class="tab-button active" data-node-tab="plans">套餐与价格</button><button class="tab-button" data-node-tab="servers">节点线路</button><button class="tab-button" data-node-tab="orders">节点订单</button></div>
         <div class="node-view active" id="nodeView-plans">
           <div class="toolbar-row"><p class="field-hint">套餐价格统一以人民币展示；保存时按服务端分单位换算。</p><button class="btn btn-primary" id="planAddBtn">＋ 新增套餐</button></div>
           <article class="panel form-panel compact-form" id="planFormPanel" hidden>
@@ -246,6 +247,11 @@
             </form>
           </article>
           <article class="panel data-panel"><div class="table-wrap"><table class="data-table"><thead><tr><th>服务器名称</th><th>服务器 IP</th><th>地区</th><th>API 端口</th><th>状态</th><th>操作</th></tr></thead><tbody id="nodesBody"><tr><td colspan="6" class="table-empty">等待加载节点线路</td></tr></tbody></table></div><div class="table-foot"><span id="nodesCount">—</span><span>删除节点前请确认没有依赖中的用户配置</span></div></article>
+        </div>
+        <div class="node-view" id="nodeView-orders">
+          <article class="panel data-panel"><div class="panel-heading"><div><h2>节点服务订单</h2><p>全站套餐订购记录，不只显示当前管理员自己的订单</p></div><button class="btn btn-secondary" id="nodeOrdersRefresh">↻ 刷新</button></div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>订单号</th><th>客户</th><th>套餐</th><th>金额</th><th>状态</th><th>创建时间</th></tr></thead><tbody id="nodeAdminOrdersBody"><tr><td colspan="6" class="table-empty">等待加载节点订单</td></tr></tbody></table></div><div class="table-foot"><span id="nodeAdminOrdersCount">—</span><span>全站节点服务订单</span></div>
+          </article>
         </div>
       </section>
       <section class="page" id="page-upstream">
