@@ -70,11 +70,14 @@ async function loadOverview(){
   legacyAdmin("/nodes"),
   legacyAdmin("/plans"),
   legacyAdmin("/shop/orders?page=1&size=6"),
-  legacyAdmin("/shop/products?page=1&size=100")
+  legacyAdmin("/shop/products?page=1&size=100"),
+  legacyAdmin("/notices"),
+  legacyAdmin("/config/mail"),
+  adminRequest("/api/admin/bots")
  ]);
  const val=i=>jobs[i].status==="fulfilled"?jobs[i].value:null;
  const shop=val(0)||{},users=val(1)||{},accounts=val(2)||{},tickets=val(3)||{},nodes=dataList(val(4)),plans=dataList(val(5)),ordersData=val(6)||{},productsData=val(7)||{};
- const orders=dataList(ordersData),products=dataList(productsData);
+ const orders=dataList(ordersData),products=dataList(productsData),notices=dataList(val(8)),mail=val(9)||{},bots=val(10)?.bots||[];
  const userTotal=Number(users.total??users.total_count??dataTotal(users,dataList(users)));
  const orderTotal=Number(shop.orders_total??shop.order_count??shop.total_orders??ordersData.total??orders.length);
  const productTotal=Number(shop.products_active??shop.active_products??shop.products_total??productsData.total??products.length);
@@ -93,6 +96,11 @@ async function loadOverview(){
  $("#metricInventory").textContent=available.toLocaleString("zh-CN");
  $("#metricSoldInventory").textContent="已售 "+sold.toLocaleString("zh-CN");
  $("#metricTickets").textContent=pendingSupport.toLocaleString("zh-CN");
+ $("#metricNodes").textContent=nodes.length.toLocaleString("zh-CN");
+ $("#metricPlans").textContent="节点套餐 "+plans.length.toLocaleString("zh-CN");
+ $("#metricNotices").textContent=notices.filter(n=>Number(n.status)===1).length.toLocaleString("zh-CN");
+ $("#metricEmail").textContent=mail.smtp_host&&mail.sender_email?"已配置":"待配置";
+ $("#metricBots").textContent=bots.filter(b=>b.status==="active").length+" / "+(bots.length||3);
  $("#todoOrders").textContent=pendingOrders.toLocaleString("zh-CN");
  $("#todoSupport").textContent=pendingSupport.toLocaleString("zh-CN");
  $("#todoLowStock").textContent=lowStock.toLocaleString("zh-CN");
