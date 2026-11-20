@@ -332,3 +332,22 @@ button:disabled{cursor:wait;opacity:.62;transform:none!important;filter:none!imp
 /* Critical auth-state fix: the forced grid layout above must never override a successful login. */
 body.authenticated .login-screen,
 .login-screen[hidden]{display:none!important;visibility:hidden!important;pointer-events:none!important}
+
+/* Enterprise interactions and node/upstream operations */
+.metric-action{appearance:none;text-align:left;color:inherit;cursor:pointer;position:relative;transition:transform .18s,border-color .18s,box-shadow .18s}
+.metric-action:hover,.metric-action:focus-visible{transform:translateY(-2px);border-color:#c9c3f5;box-shadow:0 12px 30px rgba(48,55,90,.09);outline:none}
+.metric-action:focus-visible{box-shadow:0 0 0 3px #7962e922,0 12px 30px rgba(48,55,90,.09)}
+.metric-detail{display:block;margin-top:10px;color:#6d5bd6;font-size:10px;font-weight:700}
+.metric-action small{display:block}
+.node-data-panel{margin-top:16px;overflow:hidden}
+.node-data-panel .table-wrap{overflow:auto}
+.node-data-panel .data-table{min-width:760px}
+.upstream-balance-value{font-size:30px;font-weight:800;letter-spacing:-1px;color:#263149;padding:12px 0 4px}
+.upstream-grid{margin:0 0 16px}
+.status-pill{display:inline-flex;align-items:center;padding:5px 8px;border-radius:6px;font-size:9px;font-weight:700;white-space:nowrap}
+.status-pill.good{background:#e8f8f0;color:#239b70}
+.status-pill.bad{background:#fff0ed;color:#d56c57}
+.status-pill.wait{background:#f2f4f8;color:#8792a4}
+.btn-small{padding:6px 9px;font-size:9px}
+.metric-action:active{transform:translateY(0)}
+@media(max-width:760px){.metric-action{min-height:126px}.upstream-balance-value{font-size:26px}.node-data-panel .table-wrap{margin:0 -4px}}
