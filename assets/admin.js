@@ -94,7 +94,7 @@ async function loadProducts(){
   const products=(data.items||[]).filter(p=>!q||[p.name,p.product_id,p.category].some(v=>String(v||"").toLowerCase().includes(q.toLowerCase()))).slice(0,50);
   body.innerHTML=products.length?products.map(product=>{
    const state=product.purchasable?"可购买":product.is_on_sale?"上架中":"未上架";
-   return '<tr><td><b>'+escapeHtml(product.name)+'</b></td><td>'+escapeHtml(product.category_name||"—")+'</td><td class="mono">'+escapeHtml(product.product_id)+'</td><td class="money">'+escapeHtml(Number(product.price_usdt||0).toFixed(4))+' USDT</td><td>'+escapeHtml(Number(product.stock||0).toLocaleString("zh-CN"))+'</td><td>'+statusPill(product.purchasable?"active":"inactive")+' <small class="muted-inline">'+escapeHtml(state)+'</small></td><td>'+escapeHtml(formatAdminDate(product.updated_at))+'</td></tr>';
+   return '<tr><td><b>'+escapeHtml(product.name)+'</b></td><td>'+escapeHtml(product.category||product.category_name||"—")+'</td><td class="mono">'+escapeHtml(product.product_id)+'</td><td class="money">'+escapeHtml(Number(product.price_usdt||0).toFixed(4))+' USDT</td><td>'+escapeHtml(Number(product.stock||0).toLocaleString("zh-CN"))+'</td><td>'+statusPill(product.purchasable?"active":"inactive")+' <small class="muted-inline">'+escapeHtml(state)+'</small></td><td>'+escapeHtml(formatAdminDate(product.updated_at))+'</td></tr>';
   }).join(""):'<tr><td colspan="7" class="table-empty">没有找到匹配商品</td></tr>';
   $("#productsCount").textContent="目录共 "+Number(data.count||data.items?.length||0).toLocaleString("zh-CN")+" 件商品（当前显示 "+products.length+" 件）";
  }catch(error){body.innerHTML='<tr><td colspan="7" class="table-empty error-text">读取失败：'+escapeHtml(error.message||"请求失败")+'</td></tr>';$("#productsCount").textContent="读取失败"}
