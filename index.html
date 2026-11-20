@@ -22,6 +22,7 @@
         <button class="nav-item" data-page="users"><span class="nav-icon">♙</span>用户管理<span class="nav-soon">待接入</span></button>
         <button class="nav-item" data-page="products"><span class="nav-icon">◇</span>商品与库存<span class="nav-soon">待接入</span></button>
         <button class="nav-item" data-page="recharge"><span class="nav-icon">＋</span>余额充值</button>
+        <button class="nav-item" data-page="bots"><span class="nav-icon">⚙</span>机器人管理</button>
       </nav>
       <div class="sidebar-bottom">
         <div class="secure-note"><span class="secure-dot"></span><span><b>独立管理端</b><small>与商城前台分离</small></span></div>
@@ -100,6 +101,21 @@
       <section class="page" id="page-orders"><div class="page-heading"><div><p class="eyebrow">ORDER CENTER</p><h1>订单管理</h1><p class="subheading">订单列表、状态筛选与交付记录</p></div></div><div class="empty-state"><span>▤</span><h2>订单管理接口待接入</h2><p>当前 Worker 只开放用户自己的订单查询，没有管理员订单列表接口。为避免越权读取，不会伪造数据或调用用户端接口代替。</p></div></section>
       <section class="page" id="page-users"><div class="page-heading"><div><p class="eyebrow">CUSTOMER CENTER</p><h1>用户管理</h1><p class="subheading">用户资料、账户状态与余额管理</p></div></div><div class="empty-state"><span>♙</span><h2>用户管理接口待接入</h2><p>现有 API 没有管理员用户列表与详情接口。余额充值已单独接通，其他用户数据等后端鉴权接口完成后再开放。</p></div></section>
       <section class="page" id="page-products"><div class="page-heading"><div><p class="eyebrow">CATALOG CENTER</p><h1>商品与库存</h1><p class="subheading">商品目录、库存与上游采购状态</p></div></div><div class="empty-state"><span>◇</span><h2>商品管理接口待接入</h2><p>现有商品接口面向已登录用户，只返回可购买商品。后台编辑和库存操作接口尚未开放。</p></div></section>
+
+      <section class="page" id="page-bots">
+        <div class="page-heading">
+          <div><p class="eyebrow">BOT OPERATIONS</p><h1>机器人管理</h1><p class="subheading">实时查看三台机器人进程，支持启动、停止、重启与运行日志</p></div>
+          <button class="btn btn-secondary" id="botsRefreshBtn" type="button">↻ 刷新状态</button>
+        </div>
+        <div class="notice"><b>操作权限</b><span>所有控制请求均由后台再次校验管理员身份；服务端仅允许操作这三个指定的 systemd 服务。</span></div>
+        <div class="bot-grid" id="botGrid">
+          <article class="bot-card" data-bot-card="fakabot"><div class="bot-card-top"><div><p class="eyebrow">FAKABOT</p><h2>晴天号铺机器人</h2><span class="bot-handle">@qingtian_tiezibot</span></div><span class="bot-state pending">检测中</span></div><div class="bot-meta"><span>服务</span><b>fakabot.service</b></div><div class="bot-meta"><span>进程 PID</span><b data-bot-pid>—</b></div><div class="bot-meta"><span>开机自启</span><b data-bot-enabled>—</b></div><div class="bot-actions"><button class="btn btn-primary" data-bot-action="start" data-bot="fakabot">启动</button><button class="btn btn-secondary" data-bot-action="restart" data-bot="fakabot">重启</button><button class="btn btn-secondary" data-bot-action="stop" data-bot="fakabot">停止</button><button class="btn btn-secondary" data-bot-logs="fakabot">查看日志</button></div></article>
+          <article class="bot-card" data-bot-card="tg"><div class="bot-card-top"><div><p class="eyebrow">TG SIGN</p><h2>TG 签到机器人</h2><span class="bot-handle">@qishe77</span></div><span class="bot-state pending">检测中</span></div><div class="bot-meta"><span>服务</span><b>signbot.service</b></div><div class="bot-meta"><span>进程 PID</span><b data-bot-pid>—</b></div><div class="bot-meta"><span>开机自启</span><b data-bot-enabled>—</b></div><div class="bot-actions"><button class="btn btn-primary" data-bot-action="start" data-bot="tg">启动</button><button class="btn btn-secondary" data-bot-action="restart" data-bot="tg">重启</button><button class="btn btn-secondary" data-bot-action="stop" data-bot="tg">停止</button><button class="btn btn-secondary" data-bot-logs="tg">查看日志</button></div></article>
+          <article class="bot-card" data-bot-card="mivra"><div class="bot-card-top"><div><p class="eyebrow">MIVRA</p><h2>Mivra 签到机器人</h2><span class="bot-handle">@vpn88</span></div><span class="bot-state pending">检测中</span></div><div class="bot-meta"><span>服务</span><b>mivrabot.service</b></div><div class="bot-meta"><span>进程 PID</span><b data-bot-pid>—</b></div><div class="bot-meta"><span>开机自启</span><b data-bot-enabled>—</b></div><div class="bot-actions"><button class="btn btn-primary" data-bot-action="start" data-bot="mivra">启动</button><button class="btn btn-secondary" data-bot-action="restart" data-bot="mivra">重启</button><button class="btn btn-secondary" data-bot-action="stop" data-bot="mivra">停止</button><button class="btn btn-secondary" data-bot-logs="mivra">查看日志</button></div></article>
+        </div>
+        <article class="panel bot-log-panel"><div class="panel-heading"><div><h2 id="botLogTitle">运行日志</h2><p>只读取所选机器人的 systemd 日志，最多显示最近 100 条</p></div><span class="tag" id="botLogStatus">等待选择</span></div><pre class="bot-logs" id="botLogs">点击任意机器人卡片中的“查看日志”。</pre></article>
+        <p class="bot-updated" id="botsUpdated">状态尚未刷新</p>
+      </section>
 
       <footer class="footer"><span>晴天账号铺 · 独立管理后台</span><span>Build by GitHub Actions</span></footer>
     </main>
