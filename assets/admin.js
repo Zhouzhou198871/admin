@@ -123,14 +123,15 @@ async function loadUsers(){
 }
 
 async function loadOrders(){
- const body=$("#ordersBody");if(!body)return;body.innerHTML='<tr><td colspan="7" class="table-empty">正在读取订单数据…</td></tr>';
+ const body=$("#ordersBody");if(!body)return;body.innerHTML='<tr><td colspan="8" class="table-empty">正在读取订单数据…</td></tr>';
  const q=$("#orderSearch")?.value.trim()||"",status=$("#orderStatus")?.value||"";
  try{
   const data=await legacyAdmin("/shop/orders?trade_no="+encodeURIComponent(q)+"&status="+encodeURIComponent(status)+"&page=1&size=50");
   const orders=dataList(data);
-  body.innerHTML=orders.length?orders.map(order=>'<tr><td class="mono">'+escapeHtml(order.trade_no||order.order_no||order.id||"—")+'</td><td>'+escapeHtml(order.delivery_type===1?"数字商品":order.order_type||"商城订单")+'</td><td>'+escapeHtml(order.user_email||order.email||order.user_id||"—")+'</td><td class="mono">'+escapeHtml(order.product_title||order.title||order.product_id||"—")+'</td><td class="money">'+formatCny(order.total_amount??order.amount??order.total??0)+'</td><td>'+statusPill(orderStatusLabel(order.status))+'</td><td>'+escapeHtml(formatAdminDate(order.created_at))+'</td></tr>').join(""):'<tr><td colspan="7" class="table-empty">暂无符合条件的订单</td></tr>';
+  body.innerHTML=orders.length?orders.map(order=>'<tr><td class="mono">'+escapeHtml(order.trade_no||order.order_no||order.id||"—")+'</td><td>'+escapeHtml(order.delivery_type===1?"数字商品":order.order_type||"商城订单")+'</td><td>'+escapeHtml(order.user_email||order.email||order.user_id||"—")+'</td><td class="mono">'+escapeHtml(order.product_title||order.title||order.product_id||"—")+'</td><td class="money">'+formatCny(order.total_amount??order.amount??order.total??0)+'</td><td>'+statusPill(orderStatusLabel(order.status))+'</td><td>'+escapeHtml(formatAdminDate(order.created_at))+'</td><td><button class="btn btn-secondary btn-small" data-order-detail="'+escapeHtml(order.trade_no||order.order_no||order.id||"")+'">详情</button></td></tr>').join(""):'<tr><td colspan="8" class="table-empty">暂无符合条件的订单</td></tr>';
   $("#ordersCount").textContent="全站订单 "+dataTotal(data,orders).toLocaleString("zh-CN")+" 条";
- }catch(error){body.innerHTML='<tr><td colspan="7" class="table-empty error-text">读取失败：'+escapeHtml(error.message||"请求失败")+'</td></tr>';$("#ordersCount").textContent="读取失败"}
+  body.querySelectorAll("[data-order-detail]").forEach(btn=>btn.addEventListener("click",()=>openOrderDetail(btn.dataset.orderDetail)));
+ }catch(error){body.innerHTML='<tr><td colspan="8" class="table-empty error-text">读取失败：'+escapeHtml(error.message||"请求失败")+'</td></tr>';$("#ordersCount").textContent="读取失败"}
 }
 async function loadProducts(){
  const body=$("#productsBody");if(!body)return;body.innerHTML='<tr><td colspan="7" class="table-empty">正在读取商品目录…</td></tr>';
@@ -146,6 +147,37 @@ async function loadProducts(){
  }catch(error){body.innerHTML='<tr><td colspan="7" class="table-empty error-text">读取失败：'+escapeHtml(error.message||"请求失败")+'</td></tr>';$("#productsCount").textContent="读取失败"}
 }
 
+
+let activeOrder=null,activePurchaseText="";
+async function openOrderDetail(tradeNo){
+ const modal=$("#orderModal");modal.hidden=false;$("#orderModalTitle").textContent="订单 "+tradeNo;$("#orderModalMeta").textContent="正在读取订单详情…";$("#orderModalContent").textContent="正在读取订单商品、客户和物流信息…";$("#orderModalResult").textContent="";activeOrder=null;activePurchaseText="";
+ try{
+  const d=await legacyAdmin("/shop/order/detail?trade_no="+encodeURIComponent(tradeNo));activeOrder=d;
+  const items=d.items||[];
+  $("#orderModalMeta").textContent=(d.user_email||"客户信息未记录")+" · "+orderStatusLabel(d.status);
+  $("#orderModalContent").textContent=[
+   "订单号："+(d.trade_no||tradeNo),
+   "客户："+(d.user_email||d.user_id||"—"),
+   "订单金额："+formatCny(d.total_amount??d.amount??0),
+   "订单状态："+orderStatusLabel(d.status),
+   "创建时间："+formatAdminDate(d.created_at),
+   "收件人："+(d.receiver_name||"—"),
+   "联系电话："+(d.receiver_phone||"—"),
+   "收货地址："+(d.receiver_address||"—"),
+   "物流公司："+(d.tracking_company||"—"),
+   "物流单号："+(d.tracking_no||"—"),
+   "",
+   "商品明细：",
+   ...items.map(x=>"· "+(x.title||("商品 #"+x.product_id))+" × "+Number(x.qty||1)+" / "+formatCny(x.price))
+  ].join(String.fromCharCode(10));
+  $("#orderModalStatus").value=String(d.status??0);$("#orderTrackingCompany").value=d.tracking_company||"";$("#orderTrackingNo").value=d.tracking_no||"";
+  try{const p=await legacyAdmin("/shop/order/purchase?trade_no="+encodeURIComponent(tradeNo));activePurchaseText=p.text||""}catch{}
+ }catch(e){$("#orderModalContent").textContent="读取失败："+(e.message||"接口错误")}
+}
+$("#orderModalClose")?.addEventListener("click",()=>$("#orderModal").hidden=true);
+$("#orderStatusSave")?.addEventListener("click",async()=>{if(!activeOrder)return;const status=Number($("#orderModalStatus").value);if(!confirm("确认将订单状态更新为「"+orderStatusLabel(status)+"」？"))return;try{await legacyAdmin("/shop/order/status",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({trade_no:activeOrder.trade_no,status})});toast("订单状态已更新");$("#orderModal").hidden=true;loadOrders()}catch(e){$("#orderModalResult").textContent=e.message||"更新失败"}});
+$("#orderShipBtn")?.addEventListener("click",async()=>{if(!activeOrder)return;const tracking_no=$("#orderTrackingNo").value.trim();if(!tracking_no){$("#orderModalResult").textContent="请先填写物流单号";return}if(!confirm("确认发货并将订单状态改为已发货？"))return;try{await legacyAdmin("/shop/order/ship",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({trade_no:activeOrder.trade_no,tracking_no,tracking_company:$("#orderTrackingCompany").value.trim()})});toast("订单已发货");$("#orderModal").hidden=true;loadOrders()}catch(e){$("#orderModalResult").textContent=e.message||"发货失败"}});
+$("#orderPurchaseCopy")?.addEventListener("click",async()=>{if(!activePurchaseText){toast("该订单暂无可复制的采购信息");return}try{await navigator.clipboard.writeText(activePurchaseText);toast("采购信息已复制")}catch{const t=document.createElement("textarea");t.value=activePurchaseText;document.body.appendChild(t);t.select();try{document.execCommand("copy");toast("采购信息已复制")}catch{toast("复制失败，请手动查看")};t.remove()}});
 $("#ordersRefresh")?.addEventListener("click",loadOrders);
 $("#orderSearchBtn")?.addEventListener("click",loadOrders);
 $("#orderStatus")?.addEventListener("change",loadOrders);
