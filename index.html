@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f7fb">
   <title>晴天账号铺 · 管理后台</title>
-  <link rel="stylesheet" href="./assets/admin.css?v=20261121-3">
-  <script src="./assets/admin.js?v=20261121-3" defer></script>
+  <link rel="stylesheet" href="./assets/admin.css?v=20261121-4">
+  <script src="./assets/admin.js?v=20261121-4" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -21,6 +21,8 @@
         <button class="nav-item" data-page="orders"><span class="nav-icon">▤</span>订单管理</button>
         <button class="nav-item" data-page="users"><span class="nav-icon">♙</span>用户管理</button>
         <button class="nav-item" data-page="products"><span class="nav-icon">◇</span>商品与库存</button>
+        <button class="nav-item" data-page="nodes"><span class="nav-icon">⌁</span>节点服务</button>
+        <button class="nav-item" data-page="upstream"><span class="nav-icon">⇄</span>上游采购中心</button>
         <button class="nav-item" data-page="recharge"><span class="nav-icon">＋</span>余额充值</button>
         <button class="nav-item" data-page="bots"><span class="nav-icon">⚙</span>机器人管理</button>
       </nav>
@@ -51,15 +53,15 @@
         </div>
         <div class="section-title"><div><h2>业务概况</h2><p>从晴天号铺生产数据库实时读取</p></div><span class="live-label"><i></i>实时检测</span></div>
         <div class="metric-grid">
-          <article class="metric-card"><div class="metric-top"><span>API 服务</span><span class="metric-icon purple">⌁</span></div><strong id="metricApi">检测中</strong><small id="metricApiHint">正在请求健康检查</small></article>
-          <article class="metric-card"><div class="metric-top"><span>订单数据</span><span class="metric-icon blue">▤</span></div><strong id="metricOrders">—</strong><small>商城订单与节点订单</small></article>
-          <article class="metric-card"><div class="metric-top"><span>用户数据</span><span class="metric-icon green">♙</span></div><strong id="metricUsers">—</strong><small>注册用户总数</small></article>
-          <article class="metric-card"><div class="metric-top"><span>商品库存</span><span class="metric-icon orange">◇</span></div><strong id="metricProducts">—</strong><small>当前商城商品目录</small></article>
+          <button type="button" class="metric-card metric-action" data-go="upstream"><div class="metric-top"><span>API 服务</span><span class="metric-icon purple">⌁</span></div><strong id="metricApi">检测中</strong><small id="metricApiHint">点击查看连接详情</small><span class="metric-detail">查看详情 →</span></button>
+          <button type="button" class="metric-card metric-action" data-go="orders"><div class="metric-top"><span>订单数据</span><span class="metric-icon blue">▤</span></div><strong id="metricOrders">—</strong><small>进入订单中心查看明细</small><span class="metric-detail">查看详情 →</span></button>
+          <button type="button" class="metric-card metric-action" data-go="users"><div class="metric-top"><span>用户数据</span><span class="metric-icon green">♙</span></div><strong id="metricUsers">—</strong><small>进入用户中心查看账户</small><span class="metric-detail">查看详情 →</span></button>
+          <button type="button" class="metric-card metric-action" data-go="products"><div class="metric-top"><span>商品库存</span><span class="metric-icon orange">◇</span></div><strong id="metricProducts">—</strong><small>进入商品中心查看目录</small><span class="metric-detail">查看详情 →</span></button>
         </div>
         <div class="content-grid">
           <article class="panel">
             <div class="panel-heading"><div><h2>快捷操作</h2><p>已接通的管理功能</p></div></div>
-            <button class="action-row" data-go="recharge"><span class="action-icon green">＋</span><span><b>用户余额充值</b><small>按用户邮箱增加 USDT 余额</small></span></button>
+            <button class="action-row" data-go="recharge"><span class="action-icon green">＋</span><span><b>用户余额充值</b><small>按用户邮箱增加人民币等值余额</small></span></button>
             <div class="action-row" data-go="orders"><span class="action-icon blue">▤</span><span><b>订单查询</b><small>查看商城与节点订单</small></span></div>
             <div class="action-row" data-go="users"><span class="action-icon purple">♙</span><span><b>用户管理</b><small>查看注册用户与余额</small></span></div>
           </article>
@@ -83,9 +85,9 @@
             <form id="creditForm">
               <label for="creditEmail">用户邮箱</label>
               <input id="creditEmail" type="email" placeholder="customer@example.com" required>
-              <label for="creditAmount">充值金额 <span>USDT</span></label>
-              <div class="amount-input"><input id="creditAmount" inputmode="decimal" placeholder="例如 10.0000" required><b>USDT</b></div>
-              <div class="quick-amounts"><button type="button" data-amount="5">5</button><button type="button" data-amount="10">10</button><button type="button" data-amount="20">20</button><button type="button" data-amount="50">50</button><button type="button" data-amount="100">100</button></div>
+              <label for="creditAmount">充值金额 <span>CNY</span></label>
+              <div class="amount-input"><input id="creditAmount" inputmode="decimal" placeholder="例如 100.00" required><b>USDT</b></div>
+              <div class="quick-amounts"><button type="button" data-amount="500">500</button><button type="button" data-amount="1000">1000</button><button type="button" data-amount="200">200</button><button type="button" data-amount="50">50</button><button type="button" data-amount="100">100</button></div>
               <button class="btn btn-primary submit-btn" id="creditSubmit" type="submit">确认充值</button>
               <div class="form-result" id="creditResult" role="status" aria-live="polite"></div>
             </form>
@@ -119,11 +121,23 @@
         <div class="notice"><b>数据边界</b><span>此页只读展示商城同步目录，不直接修改上游商品、采购系统或库存，避免影响现有自动同步。</span></div>
         <article class="panel data-panel">
           <div class="table-toolbar"><input id="productSearch" type="search" placeholder="搜索商品名称、商品 ID 或分类"><button class="btn btn-primary" id="productSearchBtn">查询</button></div>
-          <div class="table-wrap"><table class="data-table"><thead><tr><th>商品名称</th><th>分类</th><th>商品 ID</th><th>售价 USDT</th><th>库存</th><th>状态</th><th>同步时间</th></tr></thead><tbody id="productsBody"><tr><td colspan="7" class="table-empty">登录后加载商品目录</td></tr></tbody></table></div>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>商品名称</th><th>分类</th><th>商品 ID</th><th>售价（人民币）</th><th>库存</th><th>状态</th><th>同步时间</th></tr></thead><tbody id="productsBody"><tr><td colspan="7" class="table-empty">登录后加载商品目录</td></tr></tbody></table></div>
           <div class="table-foot"><span id="productsCount">—</span><span>最多显示最近 50 条</span></div>
         </article>
       </section>
 
+      <section class="page" id="page-nodes">
+        <div class="page-heading"><div><p class="eyebrow">NODE SERVICE CENTER</p><h1>节点服务</h1><p class="subheading">节点产品、套餐价格与节点订单状态</p></div><button class="btn btn-secondary" id="nodesRefresh">↻ 刷新数据</button></div>
+        <div class="metric-grid"><article class="metric-card"><div class="metric-top"><span>节点产品</span><span class="metric-icon purple">⌁</span></div><strong id="nodeProductCount">—</strong><small>已启用节点产品</small></article><article class="metric-card"><div class="metric-top"><span>可售套餐</span><span class="metric-icon green">◇</span></div><strong id="nodePackageCount">—</strong><small>当前可购买套餐</small></article><article class="metric-card"><div class="metric-top"><span>节点订单</span><span class="metric-icon blue">▤</span></div><strong id="nodeOrderCount">—</strong><small>当前管理员账号可见订单</small></article><article class="metric-card"><div class="metric-top"><span>计价货币</span><span class="metric-icon orange">¥</span></div><strong>CNY</strong><small>统一人民币显示</small></article></div>
+        <article class="panel data-panel node-data-panel"><div class="panel-heading"><div><h2>节点产品与套餐</h2><p>从生产节点服务目录读取</p></div><span class="tag tag-green">实时目录</span></div><div class="table-wrap"><table class="data-table"><thead><tr><th>节点产品</th><th>协议</th><th>套餐</th><th>价格</th><th>时长</th><th>设备数</th><th>开通能力</th></tr></thead><tbody id="nodeProductsBody"><tr><td colspan="7" class="table-empty">等待加载节点产品</td></tr></tbody></table></div></article>
+        <article class="panel data-panel node-data-panel"><div class="panel-heading"><div><h2>节点订单</h2><p>现有接口仅返回当前管理员账号订单，不冒充全站订单</p></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>订单号</th><th>节点产品</th><th>套餐</th><th>金额</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead><tbody id="nodeOrdersBody"><tr><td colspan="7" class="table-empty">等待加载节点订单</td></tr></tbody></table></div></article>
+      </section>
+      <section class="page" id="page-upstream">
+        <div class="page-heading"><div><p class="eyebrow">SUPPLIER OPERATIONS</p><h1>上游采购中心</h1><p class="subheading">供应商余额、采购订单与 API 连接</p></div><button class="btn btn-secondary" id="upstreamRefresh">↻ 检查连接</button></div>
+        <div class="notice"><b>真实数据状态</b><span>账号铺继续复用既有大号商 API。当前管理端尚未部署上游余额与订单只读代理，因此不会用旧余额或模拟订单填充。</span></div>
+        <div class="content-grid upstream-grid"><article class="panel"><div class="panel-heading"><div><h2>上游账户余额</h2><p>供应商实时可用余额</p></div><span class="tag" id="upstreamBalanceStatus">接口待接通</span></div><div class="upstream-balance-value" id="upstreamBalance">暂不可读取</div><p class="integration-tip" id="upstreamBalanceHint">通过服务端安全代理读取，不在浏览器暴露供应商密钥。</p></article><article class="panel"><div class="panel-heading"><div><h2>上游 API 连接</h2><p>复用现有采购服务，不新建采购系统</p></div><span class="tag" id="upstreamApiStatus">未验证</span></div><div class="info-line"><span>采购方式</span><b>现有大号商 API</b></div><div class="info-line"><span>密钥管理</span><b>仅服务端保存</b></div><div class="info-line"><span>币种</span><b>CNY 人民币</b></div></article></div>
+        <article class="panel data-panel node-data-panel"><div class="panel-heading"><div><h2>上游订单</h2><p>真实供应商订单号、成本与同步时间</p></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>上游订单号</th><th>关联商城订单</th><th>商品</th><th>采购金额</th><th>状态</th><th>下单时间</th></tr></thead><tbody id="upstreamOrdersBody"><tr><td colspan="6" class="table-empty">查询接口尚未接通，不显示模拟数据</td></tr></tbody></table></div></article>
+      </section>
       <section class="page" id="page-bots">
         <div class="page-heading">
           <div><p class="eyebrow">BOT OPERATIONS</p><h1>机器人管理</h1><p class="subheading">实时查看三台机器人进程，支持启动、停止、重启与运行日志</p></div>
