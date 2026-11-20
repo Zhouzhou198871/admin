@@ -60,7 +60,7 @@ function dataList(value){if(Array.isArray(value))return value;if(!value||typeof 
 function dataTotal(value,list){return Number(value?.total??value?.count??value?.total_count??list.length)}
 function cnyValue(value){const n=Number(value);return Number.isFinite(n)?n:0}
 function formatCny(value){return "¥"+cnyValue(value).toFixed(2)}
-function orderStatusLabel(value){const n=Number(value);if(Number.isFinite(n)&&String(value).trim()!=="")return ({0:"待支付",1:"待发货",2:"已发货",3:"已完成",-1:"已取消"})[n]||String(value);return statusText(value)}
+function orderStatusLabel(value){const n=Number(value);if(Number.isFinite(n)&&String(value).trim()!=="")return ({0:"待支付",1:"待发货",2:"已发货",3:"已完成","-1":"已取消"})[n]||String(value);return statusText(value)}
 async function loadOverview(){
  const jobs=await Promise.allSettled([
   legacyAdmin("/shop/overview"),
