@@ -65,7 +65,6 @@ async function loadOverview(){
  const jobs=await Promise.allSettled([
   legacyAdmin("/shop/overview"),
   legacyAdmin("/stats/overview"),
-  legacyAdmin("/users"),
   legacyAdmin("/account_pool/stats"),
   legacyAdmin("/tickets?status=1&page=1&size=1"),
   legacyAdmin("/nodes"),
@@ -77,9 +76,9 @@ async function loadOverview(){
   adminRequest("/api/admin/bots")
  ]);
  const val=i=>jobs[i].status==="fulfilled"?jobs[i].value:null;
- const shop=val(0)||{},stats=val(1)||{},users=val(2)||{},accounts=val(3)||{},tickets=val(4)||{},nodes=dataList(val(5)),plans=dataList(val(6)),ordersData=val(7)||{},productsData=val(8)||{};
- const orders=dataList(ordersData),products=dataList(productsData),notices=dataList(val(9)),mail=val(10)||{},bots=val(11)?.bots||[];
- const userTotal=Number(stats.users_total??dataList(users).length);
+ const shop=val(0)||{},stats=val(1)||{},accounts=val(2)||{},tickets=val(3)||{},nodes=dataList(val(4)),plans=dataList(val(5)),ordersData=val(6)||{},productsData=val(7)||{};
+ const orders=dataList(ordersData),products=dataList(productsData),notices=dataList(val(8)),mail=val(9)||{},bots=val(10)?.bots||[];
+ const userTotal=Number(stats.users_total??0);
  const orderTotal=Number(stats.orders_total??ordersData.total??orders.length);
  const productTotal=Number(shop.products_online??shop.products_total??productsData.total??products.length);
  const stockTotal=Number(shop.stock_total??shop.total_stock??products.reduce((n,p)=>n+Number(p.stock||0),0));
