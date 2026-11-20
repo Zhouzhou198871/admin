@@ -120,7 +120,26 @@
       <footer class="footer"><span>晴天账号铺 · 独立管理后台</span><span>Build by GitHub Actions</span></footer>
     </main>
   </div>
-  <section class="login-screen" id="loginScreen" aria-label="管理员登录"><form class="login-card" id="adminLoginForm"><img src="https://shop.lynli.me/logo.jpg" alt="晴天号铺" class="login-logo"><p class="eyebrow">QINGTIAN ADMIN</p><h1>管理后台登录</h1><p class="login-subtitle">使用晴天号铺原有账号密码登录</p><label for="loginEmail">管理员邮箱</label><input id="loginEmail" type="email" autocomplete="username" value="chulingli1988@outlook.com" required><label for="loginPassword">登录密码</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="输入晴天号铺登录密码" required><button class="btn btn-primary submit-btn" id="loginSubmit" type="submit">登录管理后台 →</button><p class="login-error" id="loginError" role="status"></p></form></section>
+  <section class="login-screen" id="loginScreen" aria-label="管理员登录">
+    <div class="login-layout">
+      <div class="login-brand-panel">
+        <div class="login-brand"><img src="https://shop.lynli.me/logo.jpg" alt="晴天号铺"><span>晴天账号铺<small>ADMINISTRATION</small></span></div>
+        <div class="login-brand-copy"><p>QINGTIAN · MANAGEMENT</p><h2>让每一次运营<br>管理都清晰有序。</h2><span>统一管理账号铺业务与机器人服务</span></div>
+        <div class="login-brand-foot"><i></i> 专属管理入口 · 安全身份校验</div>
+        <div class="login-decoration login-decoration-one"></div><div class="login-decoration login-decoration-two"></div>
+      </div>
+      <form class="login-card" id="adminLoginForm">
+        <div class="login-mobile-brand"><img src="https://shop.lynli.me/logo.jpg" alt="晴天号铺"></div>
+        <p class="eyebrow">ADMIN CONSOLE</p><h1>欢迎登录</h1>
+        <p class="login-subtitle">请使用晴天号铺原有账号密码进入管理后台。</p>
+        <label for="loginEmail">管理员邮箱</label><input id="loginEmail" type="email" autocomplete="username" value="chulingli1988@outlook.com" required>
+        <label for="loginPassword">登录密码</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="请输入登录密码" required>
+        <button class="btn btn-primary submit-btn" id="loginSubmit" type="submit">登录管理后台 <span>→</span></button>
+        <p class="login-error" id="loginError" role="status" aria-live="polite"></p>
+        <div class="login-security"><span>⌑</span><div><b>安全登录</b><small>账号验证通过后，将确认管理员访问权限</small></div></div>
+      </form>
+    </div>
+  </section>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </body>
 </html>
