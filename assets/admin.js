@@ -37,7 +37,7 @@ $("#adminLoginForm").addEventListener("submit",async e=>{
 $("#togglePassword").addEventListener("click",()=>{const input=$("#loginPassword"),button=$("#togglePassword"),show=input.type==="password";input.type=show?"text":"password";button.textContent=show?"隐藏":"显示";button.setAttribute("aria-label",show?"隐藏密码":"显示密码");button.setAttribute("aria-pressed",String(show));});
 
 $("#logoutBtn").addEventListener("click",()=>{localStorage.removeItem(TOKEN_KEY);document.body.classList.remove("authenticated");$("#loginPassword").value="";});
-function showPage(name){if(!pageNames[name])return;document.querySelectorAll(".page").forEach(el=>{const active=el.id==="page-"+name;el.classList.toggle("active",active);el.setAttribute("aria-hidden",String(!active))});document.querySelectorAll(".nav-item").forEach(el=>{const active=el.dataset.page===name;el.classList.toggle("active",active);if(active)el.setAttribute("aria-current","page");else el.removeAttribute("aria-current")});$("#pageCrumb").textContent=pageNames[name];$("#sidebar").classList.remove("open");$("#menuToggle").setAttribute("aria-expanded","false");window.scrollTo({top:0,behavior:"smooth"});if(name==="bots")loadBots()}
+function showPage(name){if(!pageNames[name])return;document.querySelectorAll(".page").forEach(el=>{const active=el.id==="page-"+name;el.classList.toggle("active",active);el.setAttribute("aria-hidden",String(!active))});document.querySelectorAll(".nav-item").forEach(el=>{const active=el.dataset.page===name;el.classList.toggle("active",active);if(active)el.setAttribute("aria-current","page");else el.removeAttribute("aria-current")});$("#pageCrumb").textContent=pageNames[name];$("#sidebar").classList.remove("open");$("#menuToggle").setAttribute("aria-expanded","false");window.scrollTo({top:0,behavior:"smooth"});if(name==="bots")loadBots();if(name==="overview")loadOverview();if(name==="orders")loadOrders();if(name==="users")loadUsers();if(name==="products")loadProducts()}
 document.querySelectorAll(".nav-item").forEach(btn=>btn.addEventListener("click",()=>showPage(btn.dataset.page)));
 document.querySelectorAll("[data-go]").forEach(btn=>btn.addEventListener("click",()=>showPage(btn.dataset.go)));
 $("#menuToggle").addEventListener("click",()=>{const open=$("#sidebar").classList.toggle("open");$("#menuToggle").setAttribute("aria-expanded",String(open))});
@@ -45,6 +45,65 @@ $("#refreshBtn").addEventListener("click",checkApi);
 async function checkApi(){const dot=$("#apiDot"),status=$("#apiStatus"),metric=$("#metricApi"),hint=$("#metricApiHint");dot.parentElement.classList.remove("ok","bad");status.textContent="正在检查 API";metric.textContent="检测中";try{const r=await fetchWithTimeout(API_BASE+"/api/health",{cache:"no-store"},8000);if(!r.ok)throw Error();const d=await r.json();if(!d.ok)throw Error();dot.parentElement.classList.add("ok");status.textContent="API 正常";metric.textContent="正常";hint.textContent="健康检查通过 · "+new Date().toLocaleTimeString("zh-CN",{hour:"2-digit",minute:"2-digit"});$("#apiHost").textContent="Vercel API · 在线"}catch{dot.parentElement.classList.add("bad");status.textContent="API 暂不可用";metric.textContent="未连接";hint.textContent="服务暂时无响应，可稍后刷新";$("#apiHost").textContent="Vercel API · 未连接"}}
 document.querySelectorAll("[data-amount]").forEach(btn=>btn.addEventListener("click",()=>{$("#creditAmount").value=btn.dataset.amount}));
 $("#creditForm").addEventListener("submit",async e=>{e.preventDefault();const email=$("#creditEmail").value.trim().toLowerCase(),amount=$("#creditAmount").value.trim(),result=$("#creditResult"),submit=$("#creditSubmit");result.className="form-result";result.textContent="";if(!/^\d{1,10}(\.\d{1,4})?$/.test(amount)||Number(amount)<=0){result.classList.add("error");result.textContent="金额格式不正确，最多支持 4 位小数。";return}if(!confirm("确认向 "+email+" 充值 "+Number(amount).toFixed(4)+" USDT？此操作会真实增加用户余额。"))return;submit.disabled=true;submit.textContent="正在提交…";try{const data=await adminRequest("/api/admin/credit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,amount_usdt:Number(amount).toFixed(4)})});result.classList.add("success");result.textContent="充值成功。用户："+email+" · 金额："+Number(amount).toFixed(4)+" USDT";$("#creditAmount").value="";toast("余额充值成功")}catch(error){result.classList.add("error");result.textContent=error.message==="unauthorized"?"管理员身份验证已失效，请重新登录。":error.message||"请求失败";if(error.message==="unauthorized"){localStorage.removeItem(TOKEN_KEY);document.body.classList.remove("authenticated")}}finally{submit.disabled=false;submit.innerHTML='确认充值'}});
+
+
+function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;","\\"":"&quot;","'":"&#39;"}[ch]))}
+function formatAdminDate(value){
+ if(value===null||value===undefined||value==="")return "—";
+ const n=Number(value),d=Number.isFinite(n)&&String(value).trim()!==""?new Date(n<1000000000000?n*1000:n):new Date(value);
+ return Number.isNaN(d.getTime())?"—":d.toLocaleString("zh-CN",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});
+}
+function statusText(status){return ({pending:"待处理",reserved:"已预留",delivered:"已交付",refunded:"已退款",failed:"失败",processing:"处理中",paid:"已支付",cancelled:"已取消",expired:"已过期",provisioning:"配置中",active:"可用",inactive:"已停用"})[String(status||"").toLowerCase()]||String(status||"未知")}
+function statusPill(status){const value=String(status||"").toLowerCase();const cls=["delivered","paid","active"].includes(value)?"good":["failed","refunded","cancelled","expired","inactive"].includes(value)?"bad":"wait";return '<span class="status-pill '+cls+'">'+escapeHtml(statusText(value))+'</span>'}
+async function loadOverview(){
+ try{
+  const {overview}=await adminRequest("/api/admin/overview");
+  $("#metricOrders").textContent=Number(overview.orders||0).toLocaleString("zh-CN");
+  $("#metricUsers").textContent=Number(overview.users||0).toLocaleString("zh-CN");
+  $("#metricProducts").textContent=Number(overview.catalog_products||0).toLocaleString("zh-CN");
+  $("#metricOrders").title="商城订单 "+overview.web_orders+" · 节点订单 "+overview.node_orders;
+  const hint=$("#metricApiHint");if(hint)hint.textContent="商品可购买 "+Number(overview.purchasable_products||0).toLocaleString("zh-CN")+" 件";
+ }catch(error){["#metricOrders","#metricUsers","#metricProducts"].forEach(id=>$(id).textContent="—");}
+}
+async function loadUsers(){
+ const body=$("#usersBody");if(!body)return;body.innerHTML='<tr><td colspan="5" class="table-empty">正在读取用户数据…</td></tr>';
+ const q=$("#userSearch")?.value.trim()||"";
+ try{
+  const data=await adminRequest("/api/admin/users?q="+encodeURIComponent(q)+"&limit=50&page=1");
+  body.innerHTML=data.users.length?data.users.map(user=>'<tr><td><b>'+escapeHtml(user.email)+'</b></td><td>'+escapeHtml(user.nickname||"—")+'</td><td class="mono">'+escapeHtml(user.tg_user_id||"—")+'</td><td class="money">'+escapeHtml(Number(user.balance||0).toFixed(4))+' USDT</td><td>'+escapeHtml(formatAdminDate(user.created_at))+'</td></tr>').join(""):'<tr><td colspan="5" class="table-empty">没有找到匹配用户</td></tr>';
+  $("#usersCount").textContent="共 "+Number(data.total||0).toLocaleString("zh-CN")+" 位用户";
+ }catch(error){body.innerHTML='<tr><td colspan="5" class="table-empty error-text">读取失败：'+escapeHtml(error.message||"请求失败")+'</td></tr>';$("#usersCount").textContent="读取失败"}
+}
+async function loadOrders(){
+ const body=$("#ordersBody");if(!body)return;body.innerHTML='<tr><td colspan="7" class="table-empty">正在读取订单数据…</td></tr>';
+ const q=$("#orderSearch")?.value.trim()||"",status=$("#orderStatus")?.value||"";
+ try{
+  const data=await adminRequest("/api/admin/orders?q="+encodeURIComponent(q)+"&status="+encodeURIComponent(status)+"&limit=50");
+  body.innerHTML=data.orders.length?data.orders.map(order=>'<tr><td class="mono">'+escapeHtml(order.order_id)+'</td><td>'+escapeHtml(order.order_type)+'</td><td>'+escapeHtml(order.email||order.user_id||"—")+'</td><td class="mono">'+escapeHtml(order.product_id||"—")+'</td><td class="money">'+escapeHtml(Number(order.amount||0).toFixed(4))+' USDT</td><td>'+statusPill(order.status)+'</td><td>'+escapeHtml(formatAdminDate(order.created_at))+'</td></tr>').join(""):'<tr><td colspan="7" class="table-empty">暂无符合条件的订单</td></tr>';
+  $("#ordersCount").textContent="当前显示 "+data.total_returned+" 条订单";
+ }catch(error){body.innerHTML='<tr><td colspan="7" class="table-empty error-text">读取失败：'+escapeHtml(error.message||"请求失败")+'</td></tr>';$("#ordersCount").textContent="读取失败"}
+}
+async function loadProducts(){
+ const body=$("#productsBody");if(!body)return;body.innerHTML='<tr><td colspan="7" class="table-empty">正在读取商品目录…</td></tr>';
+ const q=$("#productSearch")?.value.trim()||"";
+ try{
+  const data=await adminRequest("/api/admin/products?q="+encodeURIComponent(q)+"&limit=50&page=1");
+  body.innerHTML=data.products.length?data.products.map(product=>{
+   const state=product.purchasable?"可购买":product.is_on_sale?"上架中":"未上架";
+   return '<tr><td><b>'+escapeHtml(product.name)+'</b></td><td>'+escapeHtml(product.category_name||"—")+'</td><td class="mono">'+escapeHtml(product.product_id)+'</td><td class="money">'+escapeHtml(Number(product.price_usdt||0).toFixed(4))+' USDT</td><td>'+escapeHtml(Number(product.stock||0).toLocaleString("zh-CN"))+'</td><td>'+statusPill(product.purchasable?"active":"inactive")+' <small class="muted-inline">'+escapeHtml(state)+'</small></td><td>'+escapeHtml(formatAdminDate(product.updated_at))+'</td></tr>';
+  }).join(""):'<tr><td colspan="7" class="table-empty">没有找到匹配商品</td></tr>';
+  $("#productsCount").textContent="目录共 "+Number(data.total||0).toLocaleString("zh-CN")+" 件商品（当前显示 "+data.products.length+" 件）";
+ }catch(error){body.innerHTML='<tr><td colspan="7" class="table-empty error-text">读取失败：'+escapeHtml(error.message||"请求失败")+'</td></tr>';$("#productsCount").textContent="读取失败"}
+}
+$("#ordersRefresh")?.addEventListener("click",loadOrders);
+$("#orderSearchBtn")?.addEventListener("click",loadOrders);
+$("#orderStatus")?.addEventListener("change",loadOrders);
+$("#usersRefresh")?.addEventListener("click",loadUsers);
+$("#userSearchBtn")?.addEventListener("click",loadUsers);
+$("#userSearch")?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();loadUsers()}});
+$("#productsRefresh")?.addEventListener("click",loadProducts);
+$("#productSearchBtn")?.addEventListener("click",loadProducts);
+$("#productSearch")?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();loadProducts()}});
 
 const botNames={fakabot:"晴天号铺机器人",tg:"TG 签到机器人",mivra:"Mivra 签到机器人"};
 async function loadBots(){
@@ -84,4 +143,4 @@ document.querySelectorAll("[data-bot-logs]").forEach(btn=>btn.addEventListener("
  try{const data=await adminRequest("/api/admin/bots/logs?bot="+encodeURIComponent(bot));$("#botLogs").textContent=data.logs||"暂无日志";$("#botLogStatus").textContent="读取完成"}
  catch(error){$("#botLogs").textContent="日志读取失败："+(error.message||"服务暂不可用");$("#botLogStatus").textContent="读取失败"}
 }));
-(async()=>{await verifyAdmin();checkApi()})();
+(async()=>{const authenticated=await verifyAdmin();checkApi();if(authenticated)loadOverview()})();
