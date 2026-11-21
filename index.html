@@ -237,9 +237,9 @@
             </article>
           </div>
           <article class="panel data-panel">
-            <div class="panel-heading"><div><h2>账号库存明细</h2><p>只展示识别信息，不回显密码与 2FA 密钥</p></div><div class="table-toolbar"><select id="accountPoolStatus"><option value="">全部状态</option><option value="available">可售</option><option value="sold">已售</option></select><button class="btn btn-secondary" id="accountPoolRefresh">刷新库存</button></div></div>
+            <div class="panel-heading"><div><h2>账号库存明细</h2><p>只展示识别信息，不回显密码与 2FA 密钥</p></div><div class="table-toolbar"><input id="accountPoolSearch" type="search" placeholder="搜索账号邮箱、手机号或关联订单"><select id="accountPoolStatus"><option value="">全部状态</option><option value="available">可售</option><option value="sold">已售</option></select><button class="btn btn-primary" id="accountPoolSearchBtn">查询</button><button class="btn btn-secondary" id="accountPoolRefresh">刷新库存</button></div></div>
             <div class="table-wrap"><table class="data-table"><thead><tr><th>邮箱 / 账号</th><th>手机号</th><th>状态</th><th>关联订单</th><th>入库时间</th><th>操作</th></tr></thead><tbody id="accountPoolBody"><tr><td colspan="6" class="table-empty">等待加载账号库存</td></tr></tbody></table></div>
-            <div class="table-foot"><span id="accountPoolCount">—</span><span>单条记录支持恢复可售或删除</span></div>
+            <div class="table-foot"><span id="accountPoolCount">—</span><div class="table-actions"><button class="btn btn-secondary btn-small" id="accountPoolPrev" type="button" disabled>上一页</button><span id="accountPoolPageInfo">第 1 页</span><button class="btn btn-secondary btn-small" id="accountPoolNext" type="button" disabled>下一页</button></div></div>
           </article>
         </div>
       </section>
