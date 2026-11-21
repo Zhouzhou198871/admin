@@ -83,6 +83,7 @@ async function legacyAdmin(path,options={}){return unwrapLegacy(await adminReque
 
 function dataList(value){const v=unwrapLegacy(value);if(Array.isArray(v))return v;if(!v||typeof v!=="object")return [];return v.list||v.items||v.products||v.orders||v.users||v.bots||v.rows||v.records||[]}
 function nodeBotRecords(value){const list=Array.isArray(value)?value:dataList(value);return list.filter(b=>{const key=String(b.key||b.bot||({1:"tg",2:"mivra"})[b.id]||"").toLowerCase();return key==="tg"||key==="safew"||key==="mivra"})}
+function nodeBotIsRunning(bot){return !!bot.online||!!bot.running||bot.status==="active"||bot.status==="running"||bot.status===true||Number(bot.status)===1||bot.state==="active"||bot.state==="running"}
 function dataTotal(value,list){return Number(value?.total??value?.count??value?.total_count??list.length)}
 function cnyValue(value){const n=Number(value);return Number.isFinite(n)?n:0}
 function formatCny(value){return "¥"+cnyValue(value).toFixed(2)}
@@ -217,7 +218,7 @@ async function loadOverview(){
  $("#metricPlans").textContent="节点套餐 "+plans.length.toLocaleString("zh-CN");
  $("#metricNotices").textContent=notices.filter(n=>Number(n.status)===1).length.toLocaleString("zh-CN");
  $("#metricEmail").textContent=mail.smtp_host&&mail.sender_email?"已配置":"待配置";
- $("#metricBots").textContent=bots.filter(b=>b.online).length+" / 2";
+ $("#metricBots").textContent=bots.filter(nodeBotIsRunning).length+" / 2";
  $("#overviewNodeHealth").textContent=onlineNodes.length+" / "+enabledNodes.length+" 在线";
  $("#overviewNodeDetail").textContent=nodes.length+" 个节点配置 · "+(nodes.length-enabledNodes.length)+" 个已停用";
  $("#overviewNodeDot").classList.toggle("is-good",enabledNodes.length>0&&onlineNodes.length===enabledNodes.length);
@@ -775,7 +776,7 @@ async function loadBots(){
  bots.forEach(bot=>{
   const key=bot.key||bot.bot||({1:"tg",2:"mivra"})[bot.id];
   const card=document.querySelector('[data-bot-card="'+(cardMap[key]||key)+'"]');if(!card)return;
-  const state=card.querySelector(".bot-state"),running=!!bot.online||bot.status==="active",enabled=bot.enabled===true||bot.status==="active"||bot.status===true||Number(bot.status)===1,identityOk=bot.identity_ok!==false;
+  const state=card.querySelector(".bot-state"),running=nodeBotIsRunning(bot),enabled=bot.enabled===true||bot.status==="active"||bot.status===true||Number(bot.status)===1,identityOk=bot.identity_ok!==false;
   state.textContent=!identityOk?"身份异常":running?"运行中":enabled?"已启用 · 未运行":"已停用";
   state.title=bot.identity_status||"";
   state.className="bot-state "+(!identityOk?"stopped":running?"running":enabled?"pending":"stopped");
