@@ -614,6 +614,7 @@ async function loadBots(){
  $("#botStatsUpdated").textContent=statsResult.status==="fulfilled"?"真实数据库 · "+new Date().toLocaleTimeString("zh-CN"):"统计接口暂不可用";
  $("#botsUpdated").textContent=stateResult.status==="fulfilled"?"最后更新："+new Date().toLocaleString("zh-CN"):"进程状态读取失败："+(stateResult.reason?.message||"服务暂不可用");
  await loadBotUsers();
+ await loadBotSettings();
 }
 async function loadBotUsers(){
  const body=$("#botUsersBody");if(!body)return;
