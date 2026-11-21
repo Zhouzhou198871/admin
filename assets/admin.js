@@ -382,13 +382,12 @@ async function loadProtocolNodes(){
    card.querySelector("small").textContent=enabled.length?"启用 "+enabled.length+" · 在线 "+online.length:"尚无启用节点";
    card.classList.toggle("pending",!enabled.length);
   });
-  const activeProtocolTypes=new Set(nodes.filter(n=>Number(n.enabled)).map(n=>({shadowsocks:"ss",shadowsocks2022:"ss2022","shadowsocks-2022":"ss2022",socks:"socks5","http/https":"http"}[String(n.protocol||"").toLowerCase()]||String(n.protocol||"").toLowerCase())));
+  const activeProtocolTypes=new Set(nodes.filter(n=>Number(n.enabled)).map(n=>({shadowsocks:"ss",shadowsocks2022:"ss2022","shadowsocks-2022":"ss2022",socks:"socks5","http/https":"http"}[String(n.protocol||"").toLowerCase()]||String(n.protocol||"").toLowerCase())).filter(p=>["vless","vmess","trojan","hysteria2","ss","socks5","http","ss2022"].includes(p)));
   const onlineProtocolNodes=nodes.filter(n=>Number(n.enabled)&&healthById[String(n.id)]?.reachable).length;
   $("#protocolConfiguredCount").textContent=activeProtocolTypes.size+" / 8";
   $("#protocolOnlineCount").textContent=onlineProtocolNodes+" / "+nodes.filter(n=>Number(n.enabled)).length;
   $("#protocolPendingCount").textContent=["socks5","http","ss2022"].filter(p=>!activeProtocolTypes.has(p)).length+" 种";
   $("#protocolMtprotoState").textContent="独立服务待核验";
-  });
   body.querySelectorAll("[data-proto-edit]").forEach(btn=>btn.addEventListener("click",()=>{const n=nodes.find(x=>String(x.id)===btn.dataset.protoEdit);if(n)editProtocolNode(n)}));
   body.querySelectorAll("[data-proto-toggle]").forEach(btn=>btn.addEventListener("click",async()=>{try{await legacyAdmin("/nodes/toggle",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(btn.dataset.protoToggle),enabled:Number(btn.dataset.enabled)})});toast(Number(btn.dataset.enabled)?"协议节点已启用":"协议节点已停用");await loadProtocolNodes()}catch(e){toast("协议状态更新失败："+(e.message||"接口错误"))}}));
   body.querySelectorAll("[data-proto-delete]").forEach(btn=>btn.addEventListener("click",async()=>{if(!confirm("删除该协议节点后，它会从客户订阅中移除。确认删除？"))return;try{await legacyAdmin("/nodes/delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(btn.dataset.protoDelete)})});toast("协议节点已删除");await loadProtocolNodes()}catch(e){toast("删除失败："+(e.message||"接口错误"))}}));
