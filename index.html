@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f5f7fb">
   <title>晴天账号铺 · 管理后台</title>
   <link rel="stylesheet" href="./assets/admin.css?v=20261121-17">
-  <script src="./assets/admin.js?v=20261121-27" defer></script>
+  <script src="./assets/admin.js?v=20261121-28" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -289,6 +289,18 @@
               <p class="field-hint span-two">服务器访问令牌由服务端保管，编辑时自动沿用原令牌，不会发送到浏览器。</p>
               <div class="form-actions span-two"><button class="btn btn-primary" type="submit" id="nodeSaveBtn">保存节点</button><span id="nodeFormResult" class="form-result"></span></div>
             </form>
+          </article>
+          <article class="panel form-panel compact-form domain-manager-panel" id="nodeDomainManagerPanel" hidden>
+            <div class="panel-heading"><div><h2 id="nodeDomainManagerTitle">节点域名管理</h2><p id="nodeDomainCount">读取域名记录</p></div><button type="button" class="btn btn-secondary" id="nodeDomainManagerClose">关闭</button></div>
+            <form id="nodeDomainForm" class="admin-form-grid domain-add-form">
+              <input id="domainServerId" type="hidden">
+              <label class="span-two">新增域名<input id="newNodeDomain" required placeholder="例如：hk1.example.com"></label>
+              <label>优先级排序<input id="newNodeDomainSort" type="number" min="0" value="100"></label>
+              <label class="inline-check"><input id="newNodeDomainPrimary" type="checkbox"> 设为主域名</label>
+              <div class="form-actions span-two"><button class="btn btn-primary" id="nodeDomainAddBtn" type="submit">添加域名</button><span class="field-hint">域名仅填写主机名，不要带 https://、端口或路径</span></div>
+            </form>
+            <div class="toolbar-row domain-check-toolbar"><span class="field-hint">连通性检测端口</span><input id="nodeDomainCheckPort" type="number" min="0" max="65535" value="443"><small>0 = 仅检测 DNS</small></div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>域名</th><th>状态</th><th>检测结果</th><th>排序</th><th>操作</th></tr></thead><tbody id="nodeDomainRows"><tr><td colspan="5" class="table-empty">选择节点后读取域名</td></tr></tbody></table></div>
           </article>
           <article class="panel data-panel"><div class="table-wrap"><table class="data-table"><thead><tr><th>服务器名称</th><th>服务器 IP</th><th>地区</th><th>API 端口</th><th>状态</th><th>操作</th></tr></thead><tbody id="nodesBody"><tr><td colspan="6" class="table-empty">等待加载节点线路</td></tr></tbody></table></div><div class="table-foot"><span id="nodesCount">—</span><span>删除节点前请确认没有依赖中的用户配置</span></div></article>
         </div>
