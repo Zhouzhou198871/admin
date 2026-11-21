@@ -112,12 +112,13 @@ async function loadOverview(){
   legacyAdmin("/config/mail"),
   adminRequest("/api/admin/bots"),
   legacyAdmin("/nodes/health"),
-  legacyAdmin("/chat/users")
+  legacyAdmin("/chat/users"),
+  legacyAdmin("/stats/online")
  ]);
  const val=i=>jobs[i].status==="fulfilled"?jobs[i].value:null;
  const shop=val(0)||{},stats=val(1)||{},accounts=val(2)||{},tickets=val(3)||{},nodes=dataList(val(4)),plans=dataList(val(5)),ordersData=val(6)||{},productsData=val(7)||{};
  const orders=dataList(ordersData),products=dataList(productsData),notices=dataList(val(8)),mail=val(9)||{},bots=val(10)?.bots||[];
- const chatSessions=dataList(val(12));
+ const chatSessions=dataList(val(12)),onlineStats=val(13)||{};
  const userTotal=Number(stats.users_total??0);
  const orderTotal=Number(shop.orders_pending||0)+Number(shop.orders_toship||0)+Number(shop.orders_shipped||0)+Number(shop.orders_done||0);
  const productTotal=Number(shop.products_online??shop.products_total??productsData.total??products.length);
@@ -125,12 +126,19 @@ async function loadOverview(){
  const revenue=Number(stats.income_total??shop.today_amount??0);
  const pendingOrders=Number(shop.orders_pending??0)+Number(shop.orders_toship??0);
  const available=Number(accounts.available??accounts.in_stock??0),sold=Number(accounts.sold??0);
- const pendingSupport=Number(tickets.total??dataList(tickets).length??0);
+ const pendingTickets=Number(tickets.total??dataList(tickets).length??0);
+ const unreadChats=chatSessions.reduce((sum,c)=>sum+Number(c.unread||0),0);
+ const pendingSupport=pendingTickets+unreadChats;
  const nodeHealth=dataList(val(11)),healthById={};nodeHealth.forEach(x=>healthById[String(x.id)]=x);
  const enabledNodes=nodes.filter(n=>Number(n.enabled)!==0);
  const onlineNodes=enabledNodes.filter(n=>healthById[String(n.id)]?.reachable);
  const lowStock=products.filter(p=>Number(p.stock||0)<=5&&Number(p.status??p.is_active??1)!==0).length;
  $("#metricRevenue").textContent=formatCny(revenue);
+ if($("#metricTodayRevenue"))$("#metricTodayRevenue").textContent=formatCny(stats.income_today??0);
+ if($("#metricMonthRevenue"))$("#metricMonthRevenue").textContent=formatCny(stats.income_month??0);
+ if($("#metricPaidUsers"))$("#metricPaidUsers").textContent=Number(stats.paid_users??0).toLocaleString("zh-CN");
+ if($("#metricConversion"))$("#metricConversion").textContent=Number(stats.conversion_rate??0).toFixed(2)+"%";
+ if($("#metricOnlineUsers"))$("#metricOnlineUsers").textContent=Number(onlineStats.online_users??0).toLocaleString("zh-CN");
  $("#metricOrders").textContent=orderTotal.toLocaleString("zh-CN");
  $("#metricNodeOrders").textContent=Number(stats.orders_total??0).toLocaleString("zh-CN");
  $("#metricPendingOrders").textContent="待处理 "+pendingOrders.toLocaleString("zh-CN");
@@ -161,7 +169,7 @@ async function loadOverview(){
  $("#overviewMailDot").classList.toggle("is-good",mailReady);
  $("#overviewMailDot").classList.toggle("is-warn",!mailReady);
  $("#overviewSupportHealth").textContent=pendingSupport.toLocaleString("zh-CN")+" 条待处理";
- $("#overviewSupportDetail").textContent=pendingSupport?"请进入客服工作台及时回复":"当前没有待处理工单";
+ $("#overviewSupportDetail").textContent=pendingSupport?"含 "+pendingTickets+" 条售后工单、"+unreadChats+" 条未读客户消息":"当前没有待处理工单或未读消息";
  $("#overviewSupportDot").classList.toggle("is-good",pendingSupport===0);
  $("#overviewSupportDot").classList.toggle("is-warn",pendingSupport>0);
  $("#todoOrders").textContent=pendingOrders.toLocaleString("zh-CN");
@@ -464,25 +472,54 @@ async function loadAiStatus(){
  try{const d=await legacyAdmin("/config/ai");$("#zhipuModel").textContent=d.model||"GLM-4-Flash";$("#zhipuStatus").textContent=d.configured?"已连接":"未配置";$("#zhipuStatus").className="tag "+(d.configured?"tag-green":"")}
  catch(e){$("#zhipuStatus").textContent="状态读取失败";$("#zhipuStatus").className="tag"}
 }
-async function loadSupport(){
- const users=$("#chatUsersList"),ticketsBody=$("#ticketsBody");if(users)users.innerHTML='<div class="table-empty">正在读取客户会话…</div>';if(ticketsBody)ticketsBody.innerHTML='<tr><td colspan="7" class="table-empty">正在读取工单…</td></tr>';
- const [cr,tr]=await Promise.allSettled([legacyAdmin("/chat/users"),legacyAdmin("/tickets?status="+encodeURIComponent($("#ticketStatus")?.value||"")+"&page=1&size=50")]);loadAiStatus();
- if(cr.status==="fulfilled"){const chats=dataList(cr.value);$("#supportChatCount").textContent=chats.length+" 个会话";users.innerHTML=chats.length?chats.map(c=>'<button class="chat-user" data-chat-id="'+c.ticket_id+'"><b>'+escapeHtml(c.email||("客户 #"+c.user_id))+'</b><small>'+escapeHtml(c.last_message||"暂无消息")+'</small><span>'+escapeHtml(formatAdminDate(c.updated_at))+'</span></button>').join(""):'<div class="table-empty">暂无在线客服会话</div>';users.querySelectorAll("[data-chat-id]").forEach(b=>b.addEventListener("click",()=>loadChatHistory(Number(b.dataset.chatId))))}else users.innerHTML='<div class="table-empty error-text">会话读取失败：'+escapeHtml(cr.reason?.message||"接口错误")+'</div>';
- if(tr.status==="fulfilled"){const d=tr.value,items=dataList(d);ticketsBody.innerHTML=items.length?items.map(t=>'<tr><td class="mono">#'+t.id+'</td><td>'+escapeHtml(t.email||"—")+'</td><td>'+escapeHtml(t.subject||"—")+'</td><td>'+escapeHtml(t.priority||"普通")+'</td><td>'+statusPill(({1:"pending",2:"processing",3:"completed"})[Number(t.status)]||t.status_text||t.status)+'</td><td>'+escapeHtml(formatAdminDate(t.updated_at))+'</td><td><button class="btn btn-secondary btn-small" data-ticket-open="'+t.id+'">查看</button></td></tr>').join(""):'<tr><td colspan="7" class="table-empty">暂无售后工单</td></tr>';ticketsBody.querySelectorAll("[data-ticket-open]").forEach(b=>b.addEventListener("click",()=>openTicket(Number(b.dataset.ticketOpen))))}else ticketsBody.innerHTML='<tr><td colspan="7" class="table-empty error-text">工单读取失败：'+escapeHtml(tr.reason?.message||"接口错误")+'</td></tr>';
+async function loadSupportChats(){
+ const users=$("#chatUsersList");if(!users)return;
+ users.innerHTML='<div class="table-empty">正在读取客户会话…</div>';
+ try{
+  const chats=dataList(await legacyAdmin("/chat/users"));
+  $("#supportChatCount").textContent=chats.length+" 个会话 · "+chats.reduce((n,c)=>n+Number(c.unread||0),0)+" 条未读";
+  users.innerHTML=chats.length?chats.map(c=>{
+   const who=c.nickname||c.email||("客户 #"+c.user_id),unread=Number(c.unread||0);
+   return '<button class="chat-user '+(unread?'has-unread':'')+'" data-chat-id="'+Number(c.ticket_id)+'" data-user-id="'+Number(c.user_id||0)+'" data-user-email="'+escapeHtml(c.email||"")+'"><b>'+escapeHtml(who)+'</b><small class="chat-user-meta">用户 ID：'+escapeHtml(c.user_id||"—")+' · '+escapeHtml(c.email||"未绑定邮箱")+'</small><small>'+escapeHtml(c.last_message||"会话已创建，等待客户发送消息")+'</small><span>'+escapeHtml(formatAdminDate(c.updated_at))+' · '+(Number(c.handoff)?"人工接管":"AI 自动回复")+(unread?' <i class="chat-unread-count">'+unread+' 条未读</i>':'')+'</span></button>';
+  }).join(""):'<div class="table-empty">暂无在线客服会话</div>';
+  users.querySelectorAll("[data-chat-id]").forEach(b=>b.addEventListener("click",()=>loadChatHistory(Number(b.dataset.chatId),Number(b.dataset.userId||0),b.dataset.userEmail||"")));
+  return chats;
+ }catch(e){users.innerHTML='<div class="table-empty error-text">会话读取失败：'+escapeHtml(e.message||"接口错误")+'</div>';$("#supportChatCount").textContent="读取失败";return []}
 }
-let activeChatId=0,activeChatHandoff=0;
-async function loadChatHistory(id){
- activeChatId=id;$("#chatRoomTitle").textContent="客户会话 #"+id;$("#chatRoomMeta").textContent="正在读取消息…";$("#chatMessages").innerHTML='<div class="empty-state">正在读取聊天记录…</div>';$("#chatReplyText").disabled=false;$("#chatReplyBtn").disabled=false;$("#chatHandoffBtn").disabled=false;
- try{const d=await legacyAdmin("/chat/history?id="+id),messages=d.messages||d.items||[];activeChatHandoff=Number(d.handoff||0);$("#chatRoomMeta").textContent=activeChatHandoff?"人工客服接管中":"AI 客服自动回复中";$("#chatHandoffBtn").textContent=activeChatHandoff?"交还 AI":"接管会话";$("#chatMessages").innerHTML=messages.map(m=>'<div class="chat-message '+(m.sender==="admin"?"outgoing":"incoming")+'"><small>'+escapeHtml(m.sender==="user"?"客户":m.sender==="ai"?"AI 客服":"人工客服")+' · '+escapeHtml(formatAdminDate(m.created_at))+'</small><p>'+escapeHtml(m.content)+'</p></div>').join("")||'<div class="empty-state">暂无消息</div>';$("#chatMessages").scrollTop=$("#chatMessages").scrollHeight}catch(e){$("#chatMessages").innerHTML='<div class="empty-state error-text">读取失败：'+escapeHtml(e.message||"接口错误")+'</div>'}
+async function loadSupport(){
+ const ticketsBody=$("#ticketsBody");if(ticketsBody)ticketsBody.innerHTML='<tr><td colspan="7" class="table-empty">正在读取售后工单…</td></tr>';
+ const [chatResult,ticketResult]=await Promise.allSettled([loadSupportChats(),legacyAdmin("/tickets?status="+encodeURIComponent($("#ticketStatus")?.value||"")+"&page=1&size=50")]);
+ loadAiStatus();
+ if(ticketResult.status==="fulfilled"){
+  const d=ticketResult.value,items=dataList(d);
+  ticketsBody.innerHTML=items.length?items.map(t=>'<tr><td class="mono">#'+t.id+'</td><td>'+escapeHtml(t.email||"—")+'</td><td>'+escapeHtml(t.subject||"—")+'</td><td>'+escapeHtml(t.priority||"普通")+'</td><td>'+statusPill(({1:"pending",2:"processing",3:"completed"})[Number(t.status)]||t.status_text||t.status)+'</td><td>'+escapeHtml(formatAdminDate(t.updated_at))+'</td><td><button class="btn btn-secondary btn-small" data-ticket-open="'+t.id+'">查看</button></td></tr>').join(""):'<tr><td colspan="7" class="table-empty">暂无售后工单（在线聊天已单独显示在左侧）</td></tr>';
+  ticketsBody.querySelectorAll("[data-ticket-open]").forEach(b=>b.addEventListener("click",()=>openTicket(Number(b.dataset.ticketOpen))));
+ }else if(ticketsBody)ticketsBody.innerHTML='<tr><td colspan="7" class="table-empty error-text">工单读取失败：'+escapeHtml(ticketResult.reason?.message||"接口错误")+'</td></tr>';
+}
+let activeChatId=0,activeChatHandoff=0,activeChatUserId=0,activeChatEmail="";
+async function loadChatHistory(id,userId=activeChatUserId,email=activeChatEmail){
+ activeChatId=id;activeChatUserId=userId||0;activeChatEmail=email||"";
+ $("#chatRoomTitle").textContent="客户会话 #"+id;$("#chatRoomMeta").textContent="用户 ID："+(activeChatUserId||"—")+" · "+(activeChatEmail||"未绑定邮箱")+" · 正在读取消息…";
+ $("#chatMessages").innerHTML='<div class="empty-state">正在读取聊天记录…</div>';$("#chatReplyText").disabled=false;$("#chatReplyBtn").disabled=false;$("#chatHandoffBtn").disabled=false;
+ try{
+  const d=await legacyAdmin("/chat/history?id="+id),messages=d.messages||d.items||[];
+  activeChatHandoff=Number(d.handoff||0);
+  $("#chatRoomMeta").textContent=(activeChatHandoff?"人工客服接管中":"AI 客服自动回复中")+" · 用户 ID："+(activeChatUserId||"—")+" · "+(activeChatEmail||"未绑定邮箱");
+  $("#chatHandoffBtn").textContent=activeChatHandoff?"交还 AI":"接管会话";
+  $("#chatMessages").innerHTML=messages.map(m=>'<div class="chat-message '+(m.sender==="admin"?"outgoing":"incoming")+'"><small>'+escapeHtml(m.sender==="user"?"客户":m.sender==="ai"?"AI 客服":"人工客服")+' · '+escapeHtml(formatAdminDate(m.created_at))+'</small><p>'+escapeHtml(m.content)+'</p></div>').join("")||'<div class="empty-state">暂无消息</div>';
+  $("#chatMessages").scrollTop=$("#chatMessages").scrollHeight;
+ }catch(e){$("#chatMessages").innerHTML='<div class="empty-state error-text">读取失败：'+escapeHtml(e.message||"接口错误")+'</div>'}
 }
 $("#chatReplyForm")?.addEventListener("submit",async e=>{e.preventDefault();const content=$("#chatReplyText").value.trim();if(!activeChatId||!content)return;$("#chatReplyBtn").disabled=true;try{await legacyAdmin("/chat/reply",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:activeChatId,content})});$("#chatReplyText").value="";toast("客服回复已发送");loadChatHistory(activeChatId)}catch(e){toast("发送失败："+e.message)}finally{$("#chatReplyBtn").disabled=false}});
 $("#chatHandoffBtn")?.addEventListener("click",async()=>{if(!activeChatId)return;const next=activeChatHandoff?0:1;try{await legacyAdmin("/chat/handoff",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:activeChatId,handoff:next})});toast(next?"已接管客户会话":"已交还 AI 客服");loadChatHistory(activeChatId)}catch(e){toast("操作失败："+e.message)}});
+
 async function openTicket(id){
  try{const d=await legacyAdmin("/ticket/detail?id="+id);const modal=$("#ticketModal");$("#ticketModalTitle").textContent=d.subject||("售后工单 #"+id);$("#ticketModalMeta").textContent=(d.email||"客户")+" · "+orderStatusLabel(d.status);$("#ticketModalContent").textContent=d.content||"—";$("#ticketModalReply").value=d.reply||"";$("#ticketModalStatus").value=String(d.status??1);$("#ticketModal").dataset.ticketId=id;$("#ticketModal").hidden=false}catch(e){toast("读取工单失败："+e.message)}
 }
 $("#ticketModalClose")?.addEventListener("click",()=>$("#ticketModal").hidden=true);
 $("#ticketModalForm")?.addEventListener("submit",async e=>{e.preventDefault();const id=Number($("#ticketModal").dataset.ticketId),reply=$("#ticketModalReply").value.trim(),status=Number($("#ticketModalStatus").value);if(!id||!reply)return;try{await legacyAdmin("/ticket/reply",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,reply})});await legacyAdmin("/ticket/status",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,status})});toast("工单回复与状态已保存");$("#ticketModal").hidden=true;loadSupport()}catch(e){toast("回复失败："+e.message)}});
 $("#ticketStatus")?.addEventListener("change",loadSupport);$("#supportRefresh")?.addEventListener("click",loadSupport);
+setInterval(()=>{if($("#page-support")?.classList.contains("active")){loadSupportChats();if(activeChatId)loadChatHistory(activeChatId)}},8000);
 async function loadEmail(){
  const list=$("#emailTemplatesList");if(!list)return;list.innerHTML='<div class="table-empty">正在读取邮件模板…</div>';
  try{const [t,c]=await Promise.all([legacyAdmin("/mail/templates"),legacyAdmin("/config/mail")]);const templates=dataList(t);list.innerHTML=templates.length?templates.map(x=>'<div class="template-item"><div><b>'+escapeHtml(x.name||x.key)+'</b><small>'+escapeHtml(x.subject||"无主题")+'</small></div><div class="table-actions"><button class="btn btn-secondary btn-small" data-template-use="'+escapeHtml(x.key)+'">载入</button><button class="btn btn-secondary btn-small" data-template-edit="'+escapeHtml(x.key)+'">编辑</button><button class="btn btn-danger btn-small" data-template-delete="'+escapeHtml(x.key)+'">删除</button></div></div>').join(""):'<div class="table-empty">暂无模板，可创建常用邮件模板</div>';list.querySelectorAll("[data-template-use]").forEach(b=>b.addEventListener("click",()=>{const x=templates.find(y=>y.key===b.dataset.templateUse);if(x){$("#emailSubject").value=x.subject||"";$("#emailBody").value=x.body||"";toast("模板已载入")}}));list.querySelectorAll("[data-template-edit]").forEach(b=>b.addEventListener("click",()=>editEmailTemplate(templates.find(y=>y.key===b.dataset.templateEdit))));list.querySelectorAll("[data-template-delete]").forEach(b=>b.addEventListener("click",async()=>{if(!confirm("确定删除这个邮件模板？"))return;try{await legacyAdmin("/mail/templates/delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key:b.dataset.templateDelete})});toast("模板已删除");loadEmail()}catch(e){toast("删除失败："+e.message)}}));$("#mailSmtpHost").value=c.smtp_host||"";$("#mailSmtpPort").value=c.smtp_port||465;$("#mailSmtpUser").value=c.smtp_user||"";$("#mailSmtpPass").value="";$("#mailSenderEmail").value=c.sender_email||"";$("#mailSenderName").value=c.sender_name||"";$("#mailConfigStatus").textContent=c.smtp_host&&c.sender_email?"已配置":"待完善";$("#emailSystemHint")&&($("#emailSystemHint").textContent=(c.smtp_host?"SMTP 已配置 · "+(c.sender_email||"发件地址未设置"):"SMTP 配置待完善"))}

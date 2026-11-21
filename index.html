@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f5f7fb">
   <title>晴天账号铺 · 管理后台</title>
   <link rel="stylesheet" href="./assets/admin.css?v=20261121-17">
-  <script src="./assets/admin.js?v=20261121-25" defer></script>
+  <script src="./assets/admin.js?v=20261121-26" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -51,6 +51,11 @@
         <div class="section-title"><div><h2>核心经营指标</h2><p>点击任一指标进入对应管理明细</p></div><span class="live-label"><i></i>实时数据</span></div>
         <div class="metric-grid overview-metrics">
           <button type="button" class="metric-card metric-action" data-go="orders"><div class="metric-top"><span>节点服务累计收入</span><span class="metric-icon green">¥</span></div><strong id="metricRevenue">¥—</strong><small>累计业务收入（按接口实际统计）</small><span class="metric-detail">查看销售明细 →</span></button>
+          <button type="button" class="metric-card metric-action" data-go="orders"><div class="metric-top"><span>今日节点收入</span><span class="metric-icon green">¥</span></div><strong id="metricTodayRevenue">¥—</strong><small>今日已支付订单</small><span class="metric-detail">查看今日订单 →</span></button>
+          <button type="button" class="metric-card metric-action" data-go="orders"><div class="metric-top"><span>本月节点收入</span><span class="metric-icon green">¥</span></div><strong id="metricMonthRevenue">¥—</strong><small>近 30 天已支付订单</small><span class="metric-detail">查看收入明细 →</span></button>
+          <button type="button" class="metric-card metric-action" data-go="users"><div class="metric-top"><span>付费用户</span><span class="metric-icon purple">♙</span></div><strong id="metricPaidUsers">—</strong><small>至少有一笔已支付订单</small><span class="metric-detail">查看付费客户 →</span></button>
+          <button type="button" class="metric-card metric-action" data-go="users"><div class="metric-top"><span>付费转化率</span><span class="metric-icon blue">％</span></div><strong id="metricConversion">—</strong><small>付费用户 / 全站用户</small><span class="metric-detail">经营转化指标</span></button>
+          <button type="button" class="metric-card metric-action" data-go="users"><div class="metric-top"><span>实时在线用户</span><span class="metric-icon orange">◉</span></div><strong id="metricOnlineUsers">—</strong><small>最近 5 分钟活跃用户</small><span class="metric-detail">查看用户管理 →</span></button>
           <button type="button" class="metric-card metric-action" data-go="orders"><div class="metric-top"><span>商城订单</span><span class="metric-icon blue">▤</span></div><strong id="metricOrders">—</strong><small id="metricPendingOrders">待处理 —</small><span class="metric-detail">进入订单中心 →</span></button>
           <button type="button" class="metric-card metric-action" data-go="users"><div class="metric-top"><span>注册用户</span><span class="metric-icon purple">♙</span></div><strong id="metricUsers">—</strong><small>全站用户账户</small><span class="metric-detail">查看用户明细 →</span></button>
           <button type="button" class="metric-card metric-action" data-go="nodes" data-node-tab="orders"><div class="metric-top"><span>节点服务订单</span><span class="metric-icon blue">▤</span></div><strong id="metricNodeOrders">—</strong><small>全站套餐订购记录</small><span class="metric-detail">查看节点订单 →</span></button>
