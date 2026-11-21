@@ -418,6 +418,20 @@ async function loadNodeServers(){
  try{const d=await legacyAdmin("/servers"),nodes=dataList(d);body.innerHTML=nodes.length?nodes.map(n=>'<tr><td><b>'+escapeHtml(n.name)+'</b></td><td class="mono">'+escapeHtml(n.ip||"—")+'</td><td><span class="node-primary-domain">'+escapeHtml(n.domain||"未设置")+'</span></td><td>'+escapeHtml(n.region_name||n.region||"—")+'</td><td>'+Number(n.api_port||0)+'</td><td>'+statusPill(Number(n.enabled)?"active":"inactive")+'</td><td><div class="table-actions"><button class="btn btn-secondary btn-small" data-node-domains="'+n.id+'" data-node-name="'+escapeHtml(n.name)+'">管理域名</button><button class="btn btn-secondary btn-small" data-node-edit="'+n.id+'">编辑</button><button class="btn btn-secondary btn-small" data-node-toggle="'+n.id+'" data-enabled="'+(Number(n.enabled)?0:1)+'">'+(Number(n.enabled)?"停用":"启用")+'</button><button class="btn btn-danger btn-small" data-node-delete="'+n.id+'">删除</button></div></td></tr>').join(""):'<tr><td colspan="7" class="table-empty">暂无节点服务器配置</td></tr>';$("#nodesCount").textContent="共 "+nodes.length+" 台节点服务器";body.querySelectorAll("[data-node-edit]").forEach(b=>b.addEventListener("click",()=>{const n=nodes.find(x=>String(x.id)===b.dataset.nodeEdit);if(n)editNode(n)}));body.querySelectorAll("[data-node-domains]").forEach(b=>b.addEventListener("click",()=>openNodeDomains(Number(b.dataset.nodeDomains),b.dataset.nodeName||"节点")));body.querySelectorAll("[data-node-toggle]").forEach(b=>b.addEventListener("click",async()=>{const n=nodes.find(x=>String(x.id)===b.dataset.nodeToggle);if(!n)return;try{await legacyAdmin("/servers/save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...n,enabled:Number(b.dataset.enabled)})});toast("节点服务器状态已更新");loadNodeServers()}catch(e){toast("操作失败："+e.message)}}));body.querySelectorAll("[data-node-delete]").forEach(b=>b.addEventListener("click",async()=>{if(!confirm("确认删除该节点服务器配置？其域名记录也会一并删除。"))return;try{await legacyAdmin("/servers/delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(b.dataset.nodeDelete)})});toast("节点服务器配置已删除");loadNodeServers()}catch(e){toast("删除失败："+e.message)}}))}
  catch(e){body.innerHTML='<tr><td colspan="7" class="table-empty error-text">节点服务器读取失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>'}
 }
+async function loadNodeHealth(){
+ const body=$("#nodeHealthBody");if(!body)return;
+ body.innerHTML='<tr><td colspan="5" class="table-empty">正在并发检测节点业务、API 与管理端口…</td></tr>';
+ try{
+  const d=await legacyAdmin("/servers/health"),items=d.items||d.data?.items||[],total=Number(d.total??items.length);
+  body.innerHTML=items.length?items.map(x=>{
+   const c=x.checks||{},cell=k=>{const v=c[k];return v?'<span class="'+(v.ok?'tag-green':'tag-red')+'">'+(v.ok?'可达':'异常')+(v.ok?' · '+Number(v.latency_ms||0)+'ms':' · '+escapeHtml(v.error||'连接失败'))+'</span>':'<span class="tag">未配置</span>'};
+   return '<tr><td><b>'+escapeHtml(x.name||"—")+'</b></td><td>'+cell("service")+'</td><td>'+cell("api")+'</td><td>'+cell("admin")+'</td><td>'+statusPill(x.healthy?"active":"unreachable")+'</td></tr>';
+  }).join(""):'<tr><td colspan="5" class="table-empty">暂无节点服务器</td></tr>';
+  $("#nodeHealthCount").textContent="已检查 "+total+" 台 · "+items.filter(x=>x.healthy).length+" 台全部端口正常";
+  $("#nodeHealthUpdated").textContent="检测时间："+formatAdminDate(d.updated_at||Math.floor(Date.now()/1000));
+ }catch(e){body.innerHTML='<tr><td colspan="5" class="table-empty error-text">节点健康检查失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';$("#nodeHealthCount").textContent="检查失败"}
+}
+$("#nodeHealthRefresh")?.addEventListener("click",loadNodeHealth);
 async function openNodeDomains(serverId,serverName){
  $("#domainServerId").value=serverId;$("#nodeDomainManagerTitle").textContent=serverName+" · 域名管理";$("#nodeDomainManagerPanel").hidden=false;$("#nodeDomainManagerPanel").scrollIntoView({behavior:"smooth",block:"start"});await loadNodeDomains();
 }
@@ -523,7 +537,7 @@ $("#applyRobotPrice")?.addEventListener("click",()=>{
  const raw=$("#robotPriceTemplate").value;if(!raw){toast("先选择机器人套餐价格");return}
  const [gb,price]=raw.split("|");$("#planTraffic").value=gb;$("#planMonthPrice").value=Number(price).toFixed(2);$("#planQuarterPrice").value="";$("#planHalfPrice").value="";$("#planYearPrice").value="";$("#planType").value="monthly";$("#planName").value=gb+"GB·月付";$("#planContent").value="30天 / "+gb+"GB（采用机器人现行价）";toast("已填入机器人当前套餐价格，保存后才会生效");
 });
-async function loadNodes(){await Promise.allSettled([loadPlans(),loadNodeServers(),loadNodeOrders(),loadProtocolNodes()])}
+async function loadNodes(){await Promise.allSettled([loadPlans(),loadNodeServers(),loadNodeHealth(),loadNodeOrders(),loadProtocolNodes()])}
 async function loadAiStatus(){
  try{const d=await legacyAdmin("/config/ai");$("#zhipuModel").textContent=d.model||"GLM-4-Flash";$("#zhipuStatus").textContent=d.configured?"已连接":"未配置";$("#zhipuStatus").className="tag "+(d.configured?"tag-green":"")}
  catch(e){$("#zhipuStatus").textContent="状态读取失败";$("#zhipuStatus").className="tag"}
@@ -850,7 +864,7 @@ async function loadAuditLogs(resetPage=true){
  const q=$("#auditSearch")?.value.trim()||"",params=new URLSearchParams({q,page:String(auditPage),size:String(auditPageSize)});
  try{
   const d=await legacyAdmin("/logs?"+params.toString()),items=dataList(d),total=Number(d.total??items.length),pages=Math.max(1,Number(d.pages??Math.ceil(total/auditPageSize)));
-  body.innerHTML=items.length?items.map(x=>'<tr><td>'+escapeHtml(formatAdminDate(x.created_at))+'</td><td><b>'+escapeHtml(x.admin||"—")+'</b></td><td>'+escapeHtml(x.action||"—")+'</td><td>'+escapeHtml(x.target||"—")+'</td><td>'+escapeHtml(x.detail||"—")+'</td><td class="mono">'+escapeHtml(x.ip||"—")+'</td></tr>').join(""):'<tr><td colspan="6" class="table-empty">暂无匹配的操作记录</td></tr>';
+  body.innerHTML=items.length?items.map(x=>'<tr><td>'+escapeHtml(formatAdminDate(x.created_at))+'</td><td><b>'+escapeHtml(x.admin_display||x.admin||"—")+'</b></td><td>'+escapeHtml(x.action||"—")+'</td><td>'+escapeHtml(x.target||"—")+'</td><td>'+escapeHtml(x.detail||"—")+'</td><td class="mono">'+escapeHtml(x.ip||"—")+'</td></tr>').join(""):'<tr><td colspan="6" class="table-empty">暂无匹配的操作记录</td></tr>';
   $("#auditCount").textContent="共 "+total.toLocaleString("zh-CN")+" 条审计记录";
   if($("#auditPrev"))$("#auditPrev").disabled=auditPage<=1;
   if($("#auditNext"))$("#auditNext").disabled=auditPage>=pages;
