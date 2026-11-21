@@ -646,12 +646,44 @@ async function loadBotUsers(){
  }catch(e){body.innerHTML='<tr><td colspan="8" class="table-empty error-text">读取机器人用户失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';$("#botUsersCount").textContent="读取失败"}
 }
 
+function updateBotBroadcastFields(){
+ const media=$("#botBroadcastMediaType")?.value||"text",target=$("#botBroadcastTarget")?.value||"all";
+ if($("#botBroadcastFileWrap"))$("#botBroadcastFileWrap").hidden=media==="text";
+ if($("#botBroadcastMediaUrlWrap"))$("#botBroadcastMediaUrlWrap").hidden=media==="text";
+ if($("#botBroadcastChatWrap"))$("#botBroadcastChatWrap").hidden=target!=="chat";
+ if($("#botBroadcastSubmit"))$("#botBroadcastSubmit").textContent=target==="chat"?"发送到指定群组 / 频道":"发送给该机器人全部用户";
+}
+$("#botBroadcastTarget")?.addEventListener("change",updateBotBroadcastFields);
+$("#botBroadcastMediaType")?.addEventListener("change",updateBotBroadcastFields);
+updateBotBroadcastFields();
 $("#botBroadcastForm")?.addEventListener("submit",async e=>{
- e.preventDefault();const bot=$("#botBroadcastBot").value,text=$("#botBroadcastText").value.trim(),btn=$("#botBroadcastSubmit"),result=$("#botBroadcastResult");
- if(!text)return; if(!confirm("确认向"+(bot==="safew"?"节点签到机器人":"节点综合机器人")+"的全部未封禁用户发送这条消息？"))return;
- btn.disabled=true;result.textContent="正在创建群发任务…";
- try{const r=await legacyAdmin("/bots/matrix/action",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({bot,action:"broadcast",text})});result.className="form-result success";result.textContent=r.msg||"群发任务已创建";$("#botBroadcastText").value=""}
- catch(err){result.className="form-result error";result.textContent=err.message||"群发失败"}
+ e.preventDefault();const bot=$("#botBroadcastBot").value,text=$("#botBroadcastText").value.trim(),btn=$("#botBroadcastSubmit"),result=$("#botBroadcastResult"),target=$("#botBroadcastTarget").value,media_type=$("#botBroadcastMediaType").value;
+ const chat_id=$("#botBroadcastChatId")?.value.trim()||"";
+ if(!text&&!($("#botBroadcastFile")?.files?.[0])&&!$("#botBroadcastMediaUrl")?.value.trim())return;
+ if(target==="chat"&&!chat_id){result.className="form-result error";result.textContent="请填写群组或频道 Chat ID";return}
+ const label=bot==="safew"?"节点签到机器人":"节点综合机器人";
+ if(!confirm(target==="chat"?"确认向指定 Chat ID 发送消息？":"确认向"+label+"的全部未封禁用户发送？"))return;
+ btn.disabled=true;result.textContent="正在准备消息…";
+ try{
+  let media_url=$("#botBroadcastMediaUrl")?.value.trim()||"";
+  const file=$("#botBroadcastFile")?.files?.[0];
+  if(media_type!=="text"&&file){
+   if(file.size>20*1024*1024)throw new Error("媒体文件不能超过 20MB");
+   const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error("读取媒体文件失败"));reader.readAsDataURL(file)});
+   result.textContent="正在上传媒体文件…";
+   const uploaded=await legacyAdmin("/upload",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:file.name,data})});
+   media_url=uploaded.url||"";
+   if(!media_url)throw new Error("媒体上传未返回可用地址");
+  }
+  if(media_type!=="text"&&!media_url)throw new Error("请上传媒体文件或填写媒体 URL / File ID");
+  const action=target==="chat"?"send_chat":"broadcast";
+  const payload={bot,action,text,media_type:media_type==="text"?"":media_type,media_url};
+  if(target==="chat")payload.chat_id=chat_id;
+  result.textContent="正在提交发送任务…";
+  const r=await legacyAdmin("/bots/matrix/action",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+  result.className="form-result success";result.textContent=r.msg||"发送任务已提交";
+  $("#botBroadcastText").value="";if($("#botBroadcastFile"))$("#botBroadcastFile").value="";if($("#botBroadcastMediaUrl"))$("#botBroadcastMediaUrl").value="";
+ }catch(err){result.className="form-result error";result.textContent=err.message||"发送失败"}
  finally{btn.disabled=false}
 });
 $("#botUserFilter")?.addEventListener("change",()=>{const el=$("#botBroadcastBot");if(el)el.value=$("#botUserFilter").value});
