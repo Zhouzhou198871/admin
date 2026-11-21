@@ -554,3 +554,5 @@ html,body{min-height:100%;height:auto;overflow-x:hidden;overflow-y:auto}
 .api-key-onetime code{font-size:11px;overflow-wrap:anywhere;flex:1;min-width:180px}
 .api-management-grid .form-panel,.api-management-grid .panel{min-width:0}
 @media(max-width:1000px){.api-management-grid{grid-template-columns:1fr}.nav{max-height:calc(100vh - 190px)}}
+
+.nav-item[hidden]{display:none!important}
