@@ -300,7 +300,7 @@
               <label class="inline-check"><input id="newNodeDomainPrimary" type="checkbox"> 设为主域名</label>
               <div class="form-actions span-two"><button class="btn btn-primary" id="nodeDomainAddBtn" type="submit">添加域名</button><span class="field-hint">域名仅填写主机名，不要带 https://、端口或路径</span></div>
             </form>
-            <div class="toolbar-row domain-check-toolbar"><span class="field-hint">连通性检测端口</span><input id="nodeDomainCheckPort" type="number" min="0" max="65535" value="443"><small>0 = 仅检测 DNS</small></div>
+            <div class="toolbar-row domain-check-toolbar"><span class="field-hint">连通性检测端口</span><input id="nodeDomainCheckPort" type="number" min="0" max="65535" value="443"><small>0 = 仅检测 DNS</small><button class="btn btn-secondary" id="nodeDomainCheckAll" type="button">批量检测全部域名</button></div>
             <div class="table-wrap"><table class="data-table"><thead><tr><th>域名</th><th>状态</th><th>检测结果</th><th>排序</th><th>操作</th></tr></thead><tbody id="nodeDomainRows"><tr><td colspan="5" class="table-empty">选择节点后读取域名</td></tr></tbody></table></div>
           </article>
           <article class="panel data-panel"><div class="table-wrap"><table class="data-table"><thead><tr><th>服务器名称</th><th>服务器 IP</th><th>地区</th><th>API 端口</th><th>状态</th><th>操作</th></tr></thead><tbody id="nodesBody"><tr><td colspan="6" class="table-empty">等待加载节点线路</td></tr></tbody></table></div><div class="table-foot"><span id="nodesCount">—</span><span>删除节点前请确认没有依赖中的用户配置</span></div></article>
