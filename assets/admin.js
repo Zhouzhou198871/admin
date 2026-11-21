@@ -431,7 +431,17 @@ async function loadNodeHealth(){
   $("#nodeHealthUpdated").textContent="检测时间："+formatAdminDate(d.updated_at||Math.floor(Date.now()/1000));
  }catch(e){body.innerHTML='<tr><td colspan="5" class="table-empty error-text">节点健康检查失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';$("#nodeHealthCount").textContent="检查失败"}
 }
-$("#nodeHealthRefresh")?.addEventListener("click",loadNodeHealth);
+async function loadNodeHealthHistory(){
+ const body=$("#nodeHealthHistoryBody");if(!body)return;
+ body.innerHTML='<tr><td colspan="6" class="table-empty">正在读取最近 24 小时巡检记录…</td></tr>';
+ try{
+  const d=await legacyAdmin("/servers/health/history?hours=24&limit=100"),items=d.items||[];
+  const state=(v)=>Number(v)?'<span class="tag-green">正常</span>':'<span class="tag-red">异常</span>';
+  body.innerHTML=items.length?items.map(x=>'<tr><td>'+escapeHtml(formatAdminDate(x.checked_at))+'</td><td>'+escapeHtml(x.name||("节点 #"+x.server_id))+'</td><td>'+state(x.service_ok)+' '+Number(x.service_latency_ms||0)+'ms</td><td>'+state(x.api_ok)+' '+Number(x.api_latency_ms||0)+'ms</td><td>'+state(x.admin_ok)+' '+Number(x.admin_latency_ms||0)+'ms</td><td>'+escapeHtml([x.service_error,x.api_error,x.admin_error].filter(Boolean).join("；")||"—")+'</td></tr>').join(""):'<tr><td colspan="6" class="table-empty">最近 24 小时暂无巡检记录</td></tr>';
+  $("#nodeHealthHistoryCount").textContent="最近 24 小时共 "+Number(d.total||items.length)+" 条记录";
+ }catch(e){body.innerHTML='<tr><td colspan="6" class="table-empty error-text">巡检历史读取失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>'}
+}
+$("#nodeHealthRefresh")?.addEventListener("click",()=>Promise.allSettled([loadNodeHealth(),loadNodeHealthHistory()]));
 async function openNodeDomains(serverId,serverName){
  $("#domainServerId").value=serverId;$("#nodeDomainManagerTitle").textContent=serverName+" · 域名管理";$("#nodeDomainManagerPanel").hidden=false;$("#nodeDomainManagerPanel").scrollIntoView({behavior:"smooth",block:"start"});await loadNodeDomains();
 }
@@ -537,7 +547,7 @@ $("#applyRobotPrice")?.addEventListener("click",()=>{
  const raw=$("#robotPriceTemplate").value;if(!raw){toast("先选择机器人套餐价格");return}
  const [gb,price]=raw.split("|");$("#planTraffic").value=gb;$("#planMonthPrice").value=Number(price).toFixed(2);$("#planQuarterPrice").value="";$("#planHalfPrice").value="";$("#planYearPrice").value="";$("#planType").value="monthly";$("#planName").value=gb+"GB·月付";$("#planContent").value="30天 / "+gb+"GB（采用机器人现行价）";toast("已填入机器人当前套餐价格，保存后才会生效");
 });
-async function loadNodes(){await Promise.allSettled([loadPlans(),loadNodeServers(),loadNodeHealth(),loadNodeOrders(),loadProtocolNodes()])}
+async function loadNodes(){await Promise.allSettled([loadPlans(),loadNodeServers(),loadNodeHealth(),loadNodeHealthHistory(),loadNodeOrders(),loadProtocolNodes()])}
 async function loadAiStatus(){
  try{const d=await legacyAdmin("/config/ai");$("#zhipuModel").textContent=d.model||"GLM-4-Flash";$("#zhipuStatus").textContent=d.configured?"已连接":"未配置";$("#zhipuStatus").className="tag "+(d.configured?"tag-green":"")}
  catch(e){$("#zhipuStatus").textContent="状态读取失败";$("#zhipuStatus").className="tag"}
