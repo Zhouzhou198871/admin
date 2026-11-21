@@ -626,12 +626,32 @@ async function loadBotUsers(){
    const traffic=(Number(u.traffic_mb||0)/1024).toFixed(2)+" GB";
    const expire=Number(u.expire||0)>0?formatAdminDate(u.expire):"未开通";
    const status=Number(u.banned)?"已封禁":Number(u.activated)?"正常":"未激活";
-   return '<tr><td class="mono">'+escapeHtml(u.tg_id||u.user_id||"—")+'</td><td><b>'+escapeHtml(u.nickname||[u.first_name,u.last_name].filter(Boolean).join(" ")||"—")+'</b><small class="muted-inline">@'+escapeHtml(String(u.username||"未设置").replace(/^@/,""))+'</small></td><td>'+traffic+'</td><td>'+escapeHtml(expire)+'</td><td>'+Number(u.balance||0).toFixed(2)+' USDT</td><td>'+statusPill(status)+'</td><td>'+escapeHtml(u.last_sign||"—")+'</td><td><button class="btn btn-secondary btn-small" data-bot-user-detail="'+index+'">查看详情</button></td></tr>';
+   const uid=String(u.tg_id||u.user_id||"");const banAction=Number(u.banned)?"unban":"ban";const banLabel=Number(u.banned)?"解封":"封禁";
+   return '<tr><td class="mono">'+escapeHtml(uid||"—")+'</td><td><b>'+escapeHtml(u.nickname||[u.first_name,u.last_name].filter(Boolean).join(" ")||"—")+'</b><small class="muted-inline">@'+escapeHtml(String(u.username||"未设置").replace(/^@/,""))+'</small></td><td>'+traffic+'</td><td>'+escapeHtml(expire)+'</td><td>'+Number(u.balance||0).toFixed(2)+' USDT</td><td>'+statusPill(status)+'</td><td>'+escapeHtml(u.last_sign||"—")+'</td><td><div class="table-actions"><button class="btn btn-secondary btn-small" data-bot-user-detail="'+index+'">详情</button><button class="btn btn-secondary btn-small" data-bot-user-action="'+banAction+'" data-uid="'+escapeHtml(uid)+'">'+banLabel+'</button><button class="btn btn-secondary btn-small" data-bot-user-action="grant" data-uid="'+escapeHtml(uid)+'">赠送</button><button class="btn btn-secondary btn-small" data-bot-user-action="send_msg" data-uid="'+escapeHtml(uid)+'">私信</button><button class="btn btn-danger btn-small" data-bot-user-action="kick" data-uid="'+escapeHtml(uid)+'">踢出</button></div></td></tr>';
   }).join(""):'<tr><td colspan="7" class="table-empty">该机器人暂无用户记录</td></tr>';
   $("#botUsersCount").textContent="当前机器人 "+users.length.toLocaleString("zh-CN")+" 位用户";
   body.querySelectorAll("[data-bot-user-detail]").forEach(btn=>btn.addEventListener("click",()=>openBotUserDetail(users[Number(btn.dataset.botUserDetail)],bot)));
+  body.querySelectorAll("[data-bot-user-action]").forEach(btn=>btn.addEventListener("click",async()=>{
+   const action=btn.dataset.botUserAction,uid=btn.dataset.uid;let payload={bot,action,uid};
+   if(action==="grant"){const gb=Number(prompt("赠送流量（GB，可填 0）","10"));if(!Number.isFinite(gb)||gb<0)return;const days=Number(prompt("延长天数（可填 0）","7"));if(!Number.isFinite(days)||days<0||(!gb&&!days))return;payload.gb=gb;payload.days=days}
+   if(action==="send_msg"){const text=prompt("发送给该用户的私信内容");if(!text)return;payload.text=text}
+   if(action==="kick"&&!confirm("确认尝试将该用户从机器人管理的群组中移出？"))return;
+   if(action==="ban"&&!confirm("确认封禁该用户？"))return;
+   try{await legacyAdmin("/bots/matrix/action",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});toast(action==="grant"?"流量/时长已提交":action==="send_msg"?"私信已提交":action==="ban"?"用户已封禁":action==="unban"?"用户已解封":"已提交踢出操作");await loadBotUsers()}
+   catch(err){toast("操作失败："+(err.message||"接口错误"))}
+  }));
  }catch(e){body.innerHTML='<tr><td colspan="8" class="table-empty error-text">读取机器人用户失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';$("#botUsersCount").textContent="读取失败"}
 }
+
+$("#botBroadcastForm")?.addEventListener("submit",async e=>{
+ e.preventDefault();const bot=$("#botBroadcastBot").value,text=$("#botBroadcastText").value.trim(),btn=$("#botBroadcastSubmit"),result=$("#botBroadcastResult");
+ if(!text)return; if(!confirm("确认向"+(bot==="safew"?"节点签到机器人":"节点综合机器人")+"的全部未封禁用户发送这条消息？"))return;
+ btn.disabled=true;result.textContent="正在创建群发任务…";
+ try{const r=await legacyAdmin("/bots/matrix/action",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({bot,action:"broadcast",text})});result.className="form-result success";result.textContent=r.msg||"群发任务已创建";$("#botBroadcastText").value=""}
+ catch(err){result.className="form-result error";result.textContent=err.message||"群发失败"}
+ finally{btn.disabled=false}
+});
+$("#botUserFilter")?.addEventListener("change",()=>{const el=$("#botBroadcastBot");if(el)el.value=$("#botUserFilter").value});
 async function loadBotChats(){
  const body=$("#botChatsBody");if(!body)return;const bot=$("#botUserFilter")?.value||"safew";
  body.innerHTML='<tr><td colspan="3" class="table-empty">正在读取频道/群组配置…</td></tr>';
