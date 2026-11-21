@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f5f7fb">
   <title>晴天账号铺 · 管理后台</title>
   <link rel="stylesheet" href="./assets/admin.css?v=20261121-19">
-  <script src="./assets/admin.js?v=20261121-42" defer></script>
+  <script src="./assets/admin.js?v=20261121-43" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -294,6 +294,12 @@
           </article>
           <article class="panel form-panel compact-form domain-manager-panel" id="nodeDomainManagerPanel" hidden>
             <div class="panel-heading"><div><h2 id="nodeDomainManagerTitle">节点域名管理</h2><p id="nodeDomainCount">读取域名记录</p></div><button type="button" class="btn btn-secondary" id="nodeDomainManagerClose">关闭</button></div>
+            <div class="admin-form-grid domain-add-form">
+              <label>DNSHE API Key<input id="dnsheApiKey" type="password" autocomplete="new-password" placeholder="填写 DNSHE API Key"></label>
+              <label>DNSHE API Secret<input id="dnsheApiSecret" type="password" autocomplete="new-password" placeholder="填写 DNSHE API Secret"></label>
+              <div class="form-actions span-two"><button class="btn btn-secondary" id="dnsheConfigSave" type="button">保存并验证</button><span id="dnsheConfigStatus" class="form-result">读取 DNSHE 授权状态…</span></div>
+              <p class="field-hint span-two">密钥仅保存在服务端，不会回显到浏览器；配置后可通过 DNSHE API 管理节点解析记录。</p>
+            </div>
             <form id="nodeDomainForm" class="admin-form-grid domain-add-form">
               <input id="domainServerId" type="hidden">
               <label class="span-two">新增域名<input id="newNodeDomain" required placeholder="例如：hk1.example.com"></label>
@@ -307,10 +313,10 @@
           <article class="panel data-panel"><div class="table-wrap"><table class="data-table"><thead><tr><th>服务器名称</th><th>服务器 IP</th><th>地区</th><th>API 端口</th><th>状态</th><th>操作</th></tr></thead><tbody id="nodesBody"><tr><td colspan="6" class="table-empty">等待加载节点线路</td></tr></tbody></table></div><div class="table-foot"><span id="nodesCount">—</span><span>删除节点前请确认没有依赖中的用户配置</span></div></article>
           <article class="panel data-panel">
             <div class="panel-heading"><div><h2>节点健康监控</h2><p id="nodeHealthUpdated">按节点实际配置检测入口与扩展端口，不以单一在线状态代替真实健康度</p></div><button class="btn btn-secondary" id="nodeHealthRefresh" type="button">重新检测</button></div>
-            <div class="table-wrap"><table class="data-table"><thead><tr><th>节点</th><th>入口端口（443）</th><th>API 端口</th><th>管理端口</th><th>综合状态</th></tr></thead><tbody id="nodeHealthBody"><tr><td colspan="5" class="table-empty">进入节点管理后执行检测</td></tr></tbody></table></div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>节点</th><th>入口端口（443）</th><th>扩展端口 A</th><th>扩展端口 B</th><th>综合状态</th></tr></thead><tbody id="nodeHealthBody"><tr><td colspan="5" class="table-empty">进入节点管理后执行检测</td></tr></tbody></table></div>
             <div class="table-foot"><span id="nodeHealthCount">等待检测</span><span>检测为 TCP 连通性，不代表协议握手或用户实际可用性</span></div>
             <div class="panel-heading" style="margin-top:18px"><div><h3>最近 24 小时巡检历史</h3><p>每 5 分钟自动采样，保留 30 天</p></div><span id="nodeHealthHistoryCount">等待历史数据</span></div>
-            <div class="table-wrap"><table class="data-table"><thead><tr><th>检测时间</th><th>节点</th><th>业务端口</th><th>API 端口</th><th>管理端口</th><th>异常详情</th></tr></thead><tbody id="nodeHealthHistoryBody"><tr><td colspan="6" class="table-empty">等待读取巡检历史</td></tr></tbody></table></div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>检测时间</th><th>节点</th><th>入口端口</th><th>扩展端口 A</th><th>扩展端口 B</th><th>异常详情</th></tr></thead><tbody id="nodeHealthHistoryBody"><tr><td colspan="6" class="table-empty">等待读取巡检历史</td></tr></tbody></table></div>
           </article>
         </div>
 
