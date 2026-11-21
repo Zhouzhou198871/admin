@@ -424,7 +424,7 @@ async function loadNodeHealth(){
  try{
   const d=await legacyAdmin("/servers/health"),items=d.items||d.data?.items||[],total=Number(d.total??items.length);
   body.innerHTML=items.length?items.map(x=>{
-   const c=x.checks||{},ports=x.ports||{},cell=k=>{const v=c[k],port=Number(ports[k]||0);return v?'<span class="'+(v.ok?'tag-green':'tag-red')+'">'+(v.ok?'可达':'异常')+(port?' · :'+port:'')+(v.ok?' · '+Number(v.latency_ms||0)+'ms':' · '+escapeHtml(v.error||'连接失败'))+'</span>':'<span class="tag">未配置</span>'};
+   const c=x.checks||{},ports=x.ports||{},cell=k=>{const v=c[k],port=Number(ports[k]||0);return v?'<span class="'+(v.ok?'tag-green':'tag-red')+'">'+(v.ok?'可达':'异常')+(port?' · 端口 '+port:'')+(v.ok?' · '+Number(v.latency_ms||0)+'ms':' · '+escapeHtml(v.error||'连接失败'))+'</span>':'<span class="tag">未配置</span>'};
    return '<tr><td><b>'+escapeHtml(x.name||"—")+'</b></td><td>'+cell("service")+'</td><td>'+cell("api")+'</td><td>'+cell("admin")+'</td><td>'+statusPill(x.healthy?"active":"unreachable")+'</td></tr>';
   }).join(""):'<tr><td colspan="5" class="table-empty">暂无节点服务器</td></tr>';
   $("#nodeHealthCount").textContent="已检查 "+total+" 台 · "+items.filter(x=>x.healthy).length+" 台全部端口正常";
@@ -442,8 +442,31 @@ async function loadNodeHealthHistory(){
  }catch(e){body.innerHTML='<tr><td colspan="6" class="table-empty error-text">巡检历史读取失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>'}
 }
 $("#nodeHealthRefresh")?.addEventListener("click",()=>Promise.allSettled([loadNodeHealth(),loadNodeHealthHistory()]));
+async function loadDnsheConfig(){
+ const status=$("#dnsheConfigStatus");if(!status)return;
+ try{
+  const d=await legacyAdmin("/config/dnshe"),x=d.data||d;
+  status.textContent=x.configured?"DNSHE API 已配置（Key 尾号 "+(x.key_hint||"****")+"）":"DNSHE API 尚未配置";
+  status.className="form-result "+(x.configured?"success":"");
+  $("#dnsheApiKey").value="";$("#dnsheApiSecret").value="";
+ }catch(e){status.textContent="DNSHE 配置读取失败："+(e.message||"接口错误");status.className="form-result error"}
+}
+async function saveDnsheConfig(){
+ const key=$("#dnsheApiKey").value.trim(),secret=$("#dnsheApiSecret").value.trim(),btn=$("#dnsheConfigSave"),status=$("#dnsheConfigStatus");
+ if(!key||!secret){toast("请同时填写 DNSHE API Key 和 API Secret");return}
+ btn.disabled=true;btn.textContent="验证并保存…";
+ try{
+  const d=await legacyAdmin("/config/dnshe",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({api_key:key,api_secret:secret})}),x=d.data||d;
+  $("#dnsheApiKey").value="";$("#dnsheApiSecret").value="";
+  status.textContent=x.verified?"DNSHE 授权已验证":"已保存，但 DNSHE API 验证失败："+(x.verify_error||"请检查密钥");
+  status.className="form-result "+(x.verified?"success":"error");
+  toast(x.verified?"DNSHE API 授权验证成功":"授权已保存，验证未通过");
+ }catch(e){status.textContent=e.message||"DNSHE 授权保存失败";status.className="form-result error";toast("DNSHE 授权保存失败")}
+ finally{btn.disabled=false;btn.textContent="保存并验证"}
+}
+$("#dnsheConfigSave")?.addEventListener("click",saveDnsheConfig);
 async function openNodeDomains(serverId,serverName){
- $("#domainServerId").value=serverId;$("#nodeDomainManagerTitle").textContent=serverName+" · 域名管理";$("#nodeDomainManagerPanel").hidden=false;$("#nodeDomainManagerPanel").scrollIntoView({behavior:"smooth",block:"start"});await loadNodeDomains();
+ $("#domainServerId").value=serverId;$("#nodeDomainManagerTitle").textContent=serverName+" · 域名管理";$("#nodeDomainManagerPanel").hidden=false;$("#nodeDomainManagerPanel").scrollIntoView({behavior:"smooth",block:"start"});await Promise.all([loadNodeDomains(),loadDnsheConfig()]);
 }
 async function loadNodeDomains(){
  const body=$("#nodeDomainRows"),sid=Number($("#domainServerId").value||0);if(!body||!sid)return;
