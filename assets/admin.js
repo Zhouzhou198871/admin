@@ -81,7 +81,8 @@ function unwrapLegacy(value){let v=value;for(let i=0;i<4;i++){if(!v||typeof v!==
 async function legacyAdmin(path,options={}){return unwrapLegacy(await adminRequest("/api/admin/legacy"+path,options))}
 
 
-function dataList(value){const v=unwrapLegacy(value);if(Array.isArray(v))return v;if(!v||typeof v!=="object")return [];return v.list||v.items||v.products||v.orders||v.users||v.rows||v.records||[]}\nfunction nodeBotRecords(value){const list=Array.isArray(value)?value:dataList(value);return list.filter(b=>{const key=String(b.key||b.bot||({1:"tg",2:"mivra"})[b.id]||"").toLowerCase();return key==="tg"||key==="safew"||key==="mivra"})}
+function dataList(value){const v=unwrapLegacy(value);if(Array.isArray(v))return v;if(!v||typeof v!=="object")return [];return v.list||v.items||v.products||v.orders||v.users||v.bots||v.rows||v.records||[]}
+function nodeBotRecords(value){const list=Array.isArray(value)?value:dataList(value);return list.filter(b=>{const key=String(b.key||b.bot||({1:"tg",2:"mivra"})[b.id]||"").toLowerCase();return key==="tg"||key==="safew"||key==="mivra"})}
 function dataTotal(value,list){return Number(value?.total??value?.count??value?.total_count??list.length)}
 function cnyValue(value){const n=Number(value);return Number.isFinite(n)?n:0}
 function formatCny(value){return "¥"+cnyValue(value).toFixed(2)}
