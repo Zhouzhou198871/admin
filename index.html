@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f5f7fb">
   <title>晴天账号铺 · 管理后台</title>
   <link rel="stylesheet" href="./assets/admin.css?v=20261121-19">
-  <script src="./assets/admin.js?v=20261121-43" defer></script>
+  <script src="./assets/admin.js?v=20261121-44" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -297,7 +297,7 @@
             <div class="admin-form-grid domain-add-form">
               <label>DNSHE API Key<input id="dnsheApiKey" type="password" autocomplete="new-password" placeholder="填写 DNSHE API Key"></label>
               <label>DNSHE API Secret<input id="dnsheApiSecret" type="password" autocomplete="new-password" placeholder="填写 DNSHE API Secret"></label>
-              <div class="form-actions span-two"><button class="btn btn-secondary" id="dnsheConfigSave" type="button">保存并验证</button><span id="dnsheConfigStatus" class="form-result">读取 DNSHE 授权状态…</span></div>
+              <div class="form-actions span-two"><button class="btn btn-secondary" id="dnsheConfigSave" type="button">保存并验证</button><button class="btn btn-primary" id="dnsheSyncSingapore" type="button" disabled>修复新加坡解析</button><span id="dnsheConfigStatus" class="form-result">读取 DNSHE 授权状态…</span></div>
               <p class="field-hint span-two">密钥仅保存在服务端，不会回显到浏览器；配置后可通过 DNSHE API 管理节点解析记录。</p>
             </div>
             <form id="nodeDomainForm" class="admin-form-grid domain-add-form">
