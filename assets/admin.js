@@ -181,7 +181,7 @@ async function loadOverview(){
  const failed=jobs.map((x,i)=>x.status==="rejected"?i:-1).filter(i=>i>=0);
  if(failed.length)$("#apiStatus").textContent="部分业务数据待接通";
 }
-async let userPage=1;
+let userPage=1;
 const userPageSize=50;
 async function loadUsers(resetPage=true){
  const body=$("#usersBody");if(!body)return;
