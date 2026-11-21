@@ -146,23 +146,24 @@
         <p class="field-hint">微信支付当前没有商户配置记录；支付宝与 USDT 读取现有收款配置。未完成商户绑定的渠道不会显示为可收款，也不会被客服 AI 宣称已开通。</p>
       </section>
 <section class="page" id="page-api">
-        <div class="page-heading"><div><p class="eyebrow">API ACCESS CONTROL</p><h1>API 管理</h1><p class="subheading">开发者密钥、调用权限、封禁停用、申请审核与调用日志统一管理</p></div><button class="btn btn-secondary" id="apiManagementRefresh">↻ 刷新数据</button></div>
-        <div class="notice"><b>密钥安全</b><span>已签发密钥只展示首尾提示；新建或批准时的完整密钥只显示一次，请立即复制保存。停用会立即阻断后续 API 调用。</span></div>
+        <div class="page-heading"><div><p class="eyebrow">API ACCESS CONTROL</p><h1>API 管理</h1><p class="subheading">真实账户 API 密钥签发、撤销与调用记录</p></div><button class="btn btn-secondary" id="apiManagementRefresh">↻ 刷新数据</button></div>
+        <div class="notice"><b>密钥安全</b><span>仅展示密钥前缀；完整密钥只在创建时显示一次。撤销后立即失效且不可恢复。</span></div>
         <div class="content-grid api-management-grid">
-          <article class="panel form-panel"><div class="panel-heading"><div><h2>签发 API Key</h2><p>为指定应用创建独立调用凭据</p></div><span class="tag tag-green">服务端校验</span></div>
+          <article class="panel form-panel"><div class="panel-heading"><div><h2>为用户签发 API Key</h2><p>沿用商城账户余额门槛与密钥数量限制</p></div><span class="tag tag-green">服务端校验</span></div>
             <form id="apiKeyCreateForm" class="admin-form-grid">
-              <label class="span-two">应用名称<input id="apiKeyName" maxlength="128" required placeholder="例如：自动化订单系统"></label>
-              <label>调用权限<select id="apiKeyScopes"><option value="read">只读</option><option value="read,write">读写</option></select></label>
-              <label>每分钟限流<input id="apiKeyRate" type="number" min="1" max="6000" value="60" required></label>
+              <label class="span-two">用户邮箱<input id="apiKeyEmail" type="email" required placeholder="customer@example.com"></label>
+              <label class="span-two">密钥备注<input id="apiKeyName" maxlength="40" required placeholder="例如：自动化订单系统"></label>
+              <p class="field-hint span-two">签发条件：账户余额不少于 ¥200；每个用户最多 5 把有效密钥。</p>
               <div class="form-actions span-two"><button class="btn btn-primary" type="submit" id="apiKeyCreateBtn">创建 API Key</button><span id="apiKeyCreateStatus" class="form-result"></span></div>
             </form>
             <div id="apiKeyOneTime" class="api-key-onetime" hidden><b>新密钥（仅显示本次）</b><code id="apiKeyOneTimeValue"></code><button class="btn btn-secondary btn-small" id="apiKeyCopy" type="button">复制密钥</button></div>
           </article>
-          <article class="panel data-panel"><div class="panel-heading"><div><h2>API 使用概况</h2><p>密钥和调用记录实时统计</p></div></div><div class="api-stat-grid"><div><small>已签发密钥</small><strong id="apiKeyTotal">—</strong></div><div><small>正常启用</small><strong id="apiKeyEnabled">—</strong></div><div><small>已封禁 / 停用</small><strong id="apiKeyDisabled">—</strong></div><div><small>待审核申请</small><strong id="apiApplyPending">—</strong></div></div></article>
+          <article class="panel data-panel"><div class="panel-heading"><div><h2>API 使用概况</h2><p>统计现有账户 API 密钥与实际调用</p></div></div><div class="api-stat-grid"><div><small>全部密钥</small><strong id="apiKeyTotal">—</strong></div><div><small>有效密钥</small><strong id="apiKeyEnabled">—</strong></div><div><small>已撤销密钥</small><strong id="apiKeyDisabled">—</strong></div><div><small>调用记录</small><strong id="apiUsageTotal">—</strong></div></div>
+            <div class="notice" style="margin-top:14px"><b>调用方式</b><span>请求 <code>GET /api/v1/account</code>，使用 <code>Authorization: Bearer API_KEY</code>。仅返回账户邮箱、昵称和人民币余额。</span></div>
+          </article>
         </div>
-        <article class="panel data-panel"><div class="panel-heading"><div><h2>API 密钥管理</h2><p>可立即封禁 / 解封，或永久撤销不再使用的密钥</p></div><input id="apiKeySearch" type="search" placeholder="搜索应用名称或 Key 尾号"></div><div class="table-wrap"><table class="data-table"><thead><tr><th>ID</th><th>应用名称</th><th>密钥标识</th><th>权限</th><th>限流</th><th>调用量</th><th>状态</th><th>最近使用</th><th>操作</th></tr></thead><tbody id="apiKeysBody"><tr><td colspan="9" class="table-empty">正在读取 API 密钥</td></tr></tbody></table></div><div class="table-foot"><span id="apiKeysCount">—</span><span>密钥明文不会再次返回</span></div></article>
-        <article class="panel data-panel"><div class="panel-heading"><div><h2>开发者接入申请</h2><p>审核通过后自动签发 API Key</p></div><select id="apiApplyFilter"><option value="">全部申请</option><option value="0">待审核</option><option value="1">已批准</option><option value="2">已拒绝</option></select></div><div class="table-wrap"><table class="data-table"><thead><tr><th>应用</th><th>联系人</th><th>用途</th><th>主页</th><th>状态</th><th>申请时间</th><th>操作</th></tr></thead><tbody id="apiApplicationsBody"><tr><td colspan="7" class="table-empty">正在读取申请</td></tr></tbody></table></div></article>
-        <article class="panel data-panel"><div class="panel-heading"><div><h2>API 调用日志</h2><p>最近调用路径、来源 IP、响应状态和时间</p></div><button class="btn btn-secondary btn-small" id="apiLogsClear" type="button">清理 7 天前日志</button></div><div class="table-wrap"><table class="data-table"><thead><tr><th>时间</th><th>请求路径</th><th>方法</th><th>来源 IP</th><th>响应码</th></tr></thead><tbody id="apiLogsBody"><tr><td colspan="5" class="table-empty">正在读取调用日志</td></tr></tbody></table></div><div class="table-foot"><span id="apiLogsCount">—</span><span>只清理 7 天前日志</span></div></article>
+        <article class="panel data-panel"><div class="panel-heading"><div><h2>API 密钥管理</h2><p>查看所属用户、备注、调用量和状态；撤销操作不可恢复</p></div><input id="apiKeySearch" type="search" placeholder="搜索用户邮箱、备注或 Key 前缀"></div><div class="table-wrap"><table class="data-table"><thead><tr><th>用户</th><th>密钥备注</th><th>Key 前缀</th><th>调用量</th><th>状态</th><th>最近使用</th><th>操作</th></tr></thead><tbody id="apiKeysBody"><tr><td colspan="7" class="table-empty">正在读取 API 密钥</td></tr></tbody></table></div><div class="table-foot"><span id="apiKeysCount">—</span><span>不读取或展示密钥哈希与完整密钥</span></div></article>
+        <article class="panel data-panel"><div class="panel-heading"><div><h2>API 调用日志</h2><p>仅展示服务端实际记录的调用，不显示不存在的来源 IP 字段</p></div><span id="apiLogsCount" class="tag">—</span></div><div class="table-wrap"><table class="data-table"><thead><tr><th>时间</th><th>用户</th><th>请求路径</th><th>方法</th><th>响应码</th></tr></thead><tbody id="apiLogsBody"><tr><td colspan="5" class="table-empty">正在读取调用日志</td></tr></tbody></table></div></article>
       </section>
       <section class="page" id="page-recharge">
         <div class="page-heading"><div><p class="eyebrow">BALANCE MANAGEMENT</p><h1>余额充值</h1><p class="subheading">通过现有管理 API 为指定用户增加人民币等值余额</p></div></div>
