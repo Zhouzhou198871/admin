@@ -6,9 +6,9 @@
   <meta name="theme-color" content="#f5f7fb">
   <title>晴天账号铺 · 管理后台</title>
   <link rel="icon" href="https://shop.lynli.me/logo.jpg" type="image/jpeg">
-  <link rel="stylesheet" href="./assets/admin.css?v=20261122-01">
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
-  <script src="./assets/admin.js?v=20261122-01" defer></script>
+  <link rel="stylesheet" href="./assets/admin.css?v=20261122-02">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0,0">
+  <script src="./assets/admin.js?v=20261122-02" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -20,13 +20,13 @@
       <div class="nav-label">管理导航</div>
       <nav class="nav" aria-label="管理模块">
         <section class="nav-group" data-nav-group="workspace">
-          <button class="nav-group-toggle" type="button" aria-expanded="true"><span>工作台</span><i data-lucide="chevron-down" class="nav-chevron" aria-hidden="true"></i></button>
+          <button class="nav-group-toggle" type="button" aria-expanded="true"><span>工作台</span><span class="material-symbols-rounded nav-chevron" aria-hidden="true">expand_more</span></button>
           <div class="nav-group-items">
             <button class="nav-item active" data-page="overview"><span class="nav-icon">▦</span>经营总览</button>
           </div>
         </section>
         <section class="nav-group" data-nav-group="business">
-          <button class="nav-group-toggle" type="button" aria-expanded="false"><span>业务运营</span><i data-lucide="chevron-down" class="nav-chevron" aria-hidden="true"></i></button>
+          <button class="nav-group-toggle" type="button" aria-expanded="false"><span>业务运营</span><span class="material-symbols-rounded nav-chevron" aria-hidden="true">expand_more</span></button>
           <div class="nav-group-items" hidden>
             <button class="nav-item" data-page="orders"><span class="nav-icon">▤</span>订单管理</button>
             <button class="nav-item" data-page="users"><span class="nav-icon">♙</span>用户管理</button>
@@ -35,21 +35,21 @@
           </div>
         </section>
         <section class="nav-group" data-nav-group="service">
-          <button class="nav-group-toggle" type="button" aria-expanded="false"><span>客户服务</span><i data-lucide="chevron-down" class="nav-chevron" aria-hidden="true"></i></button>
+          <button class="nav-group-toggle" type="button" aria-expanded="false"><span>客户服务</span><span class="material-symbols-rounded nav-chevron" aria-hidden="true">expand_more</span></button>
           <div class="nav-group-items" hidden>
             <button class="nav-item" data-page="support"><span class="nav-icon">◉</span>在线客服</button>
             <button class="nav-item" data-page="email"><span class="nav-icon">✉</span>邮件系统</button>
           </div>
         </section>
         <section class="nav-group" data-nav-group="nodes">
-          <button class="nav-group-toggle" type="button" aria-expanded="false"><span>节点与机器人</span><i data-lucide="chevron-down" class="nav-chevron" aria-hidden="true"></i></button>
+          <button class="nav-group-toggle" type="button" aria-expanded="false"><span>节点与机器人</span><span class="material-symbols-rounded nav-chevron" aria-hidden="true">expand_more</span></button>
           <div class="nav-group-items" hidden>
             <button class="nav-item" data-page="nodes"><span class="nav-icon">⌁</span>节点服务</button>
             <button class="nav-item" data-page="bots"><span class="nav-icon">⚙</span>机器人管理</button>
           </div>
         </section>
         <section class="nav-group" data-nav-group="finance">
-          <button class="nav-group-toggle" type="button" aria-expanded="false"><span>财务与 API</span><i data-lucide="chevron-down" class="nav-chevron" aria-hidden="true"></i></button>
+          <button class="nav-group-toggle" type="button" aria-expanded="false"><span>财务与 API</span><span class="material-symbols-rounded nav-chevron" aria-hidden="true">expand_more</span></button>
           <div class="nav-group-items" hidden>
             <button class="nav-item" data-page="payments"><span class="nav-icon">￥</span>支付系统</button>
             <button class="nav-item" data-page="recharge"><span class="nav-icon">＋</span>余额充值</button>
@@ -57,7 +57,7 @@
           </div>
         </section>
         <section class="nav-group" data-nav-group="security">
-          <button class="nav-group-toggle" type="button" aria-expanded="false"><span>系统安全</span><i data-lucide="chevron-down" class="nav-chevron" aria-hidden="true"></i></button>
+          <button class="nav-group-toggle" type="button" aria-expanded="false"><span>系统安全</span><span class="material-symbols-rounded nav-chevron" aria-hidden="true">expand_more</span></button>
           <div class="nav-group-items" hidden>
             <button class="nav-item" data-page="admins"><span class="nav-icon">♙</span>管理员与权限</button>
             <button class="nav-item" data-page="audit"><span class="nav-icon">▤</span>安全审计</button>
@@ -72,7 +72,7 @@
 
     <main class="main">
       <header class="topbar">
-        <button class="mobile-menu" id="menuToggle" aria-label="打开菜单" aria-expanded="false"><i data-lucide="menu" aria-hidden="true"></i></button>
+        <button class="mobile-menu" id="menuToggle" aria-label="打开菜单" aria-expanded="false"><span class="material-symbols-rounded" aria-hidden="true">menu</span></button>
         <div class="breadcrumbs"><span>管理后台</span><i>/</i><b id="pageCrumb">总览</b></div>
         <div class="top-actions">
           <span class="system-status"><i id="apiDot"></i><span id="apiStatus">正在检查 API</span></span>
