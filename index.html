@@ -309,6 +309,8 @@
             <div class="panel-heading"><div><h2>节点健康监控</h2><p id="nodeHealthUpdated">业务端口、节点 API 与管理端口分别检测，不以单一在线状态代替真实健康度</p></div><button class="btn btn-secondary" id="nodeHealthRefresh" type="button">重新检测</button></div>
             <div class="table-wrap"><table class="data-table"><thead><tr><th>节点</th><th>业务端口（443）</th><th>API 端口</th><th>管理端口</th><th>综合状态</th></tr></thead><tbody id="nodeHealthBody"><tr><td colspan="5" class="table-empty">进入节点管理后执行检测</td></tr></tbody></table></div>
             <div class="table-foot"><span id="nodeHealthCount">等待检测</span><span>检测为 TCP 连通性，不代表协议握手或用户实际可用性</span></div>
+            <div class="panel-heading" style="margin-top:18px"><div><h3>最近 24 小时巡检历史</h3><p>每 5 分钟自动采样，保留 30 天</p></div><span id="nodeHealthHistoryCount">等待历史数据</span></div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>检测时间</th><th>节点</th><th>业务端口</th><th>API 端口</th><th>管理端口</th><th>异常详情</th></tr></thead><tbody id="nodeHealthHistoryBody"><tr><td colspan="6" class="table-empty">等待读取巡检历史</td></tr></tbody></table></div>
           </article>
         </div>
 
