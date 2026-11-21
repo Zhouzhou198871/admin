@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f7fb">
   <title>晴天账号铺 · 管理后台</title>
-  <link rel="stylesheet" href="./assets/admin.css?v=20261121-19">
-  <script src="./assets/admin.js?v=20261121-44" defer></script>
+  <link rel="stylesheet" href="./assets/admin.css?v=20261121-20">
+  <script src="./assets/admin.js?v=20261121-45" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -15,21 +15,52 @@
         <img class="brand-mark" src="https://shop.lynli.me/logo.jpg" alt="晴天号铺图标">
         <span><b>晴天账号铺</b><small>ADMIN CONSOLE</small></span>
       </a>
-      <div class="nav-label">工作台</div>
-      <nav class="nav">
-        <button class="nav-item active" data-page="overview"><span class="nav-icon">▦</span>总览</button>
-        <button class="nav-item" data-page="orders"><span class="nav-icon">▤</span>订单管理</button>
-        <button class="nav-item" data-page="users"><span class="nav-icon">♙</span>用户管理</button>
-        <button class="nav-item" data-page="products"><span class="nav-icon">◇</span>商品与库存</button>
-        <button class="nav-item" data-page="support"><span class="nav-icon">◉</span>在线客服</button>
-        <button class="nav-item" data-page="email"><span class="nav-icon">✉</span>邮件系统</button>
-        <button class="nav-item" data-page="notices"><span class="nav-icon">▣</span>公告管理</button>
-        <button class="nav-item" data-page="nodes"><span class="nav-icon">⌁</span>节点服务</button>
-        <button class="nav-item" data-page="payments"><span class="nav-icon">￥</span>支付系统</button>
-        <button class="nav-item" data-page="recharge"><span class="nav-icon">＋</span>余额充值</button>
-        <button class="nav-item" data-page="bots"><span class="nav-icon">⚙</span>机器人管理</button>
-        <button class="nav-item" data-page="admins"><span class="nav-icon">♙</span>管理员与权限</button>
-        <button class="nav-item" data-page="audit"><span class="nav-icon">▤</span>安全审计</button>
+      <div class="nav-label">管理导航</div>
+      <nav class="nav" aria-label="管理模块">
+        <section class="nav-group" data-nav-group="workspace">
+          <button class="nav-group-toggle" type="button" aria-expanded="true"><span>工作台</span><i>⌄</i></button>
+          <div class="nav-group-items">
+            <button class="nav-item active" data-page="overview"><span class="nav-icon">▦</span>经营总览</button>
+          </div>
+        </section>
+        <section class="nav-group" data-nav-group="business">
+          <button class="nav-group-toggle" type="button" aria-expanded="false"><span>业务运营</span><i>⌄</i></button>
+          <div class="nav-group-items" hidden>
+            <button class="nav-item" data-page="orders"><span class="nav-icon">▤</span>订单管理</button>
+            <button class="nav-item" data-page="users"><span class="nav-icon">♙</span>用户管理</button>
+            <button class="nav-item" data-page="products"><span class="nav-icon">◇</span>商品与库存</button>
+            <button class="nav-item" data-page="notices"><span class="nav-icon">▣</span>公告管理</button>
+          </div>
+        </section>
+        <section class="nav-group" data-nav-group="service">
+          <button class="nav-group-toggle" type="button" aria-expanded="false"><span>客户服务</span><i>⌄</i></button>
+          <div class="nav-group-items" hidden>
+            <button class="nav-item" data-page="support"><span class="nav-icon">◉</span>在线客服</button>
+            <button class="nav-item" data-page="email"><span class="nav-icon">✉</span>邮件系统</button>
+          </div>
+        </section>
+        <section class="nav-group" data-nav-group="nodes">
+          <button class="nav-group-toggle" type="button" aria-expanded="false"><span>节点与机器人</span><i>⌄</i></button>
+          <div class="nav-group-items" hidden>
+            <button class="nav-item" data-page="nodes"><span class="nav-icon">⌁</span>节点服务</button>
+            <button class="nav-item" data-page="bots"><span class="nav-icon">⚙</span>机器人管理</button>
+          </div>
+        </section>
+        <section class="nav-group" data-nav-group="finance">
+          <button class="nav-group-toggle" type="button" aria-expanded="false"><span>财务与 API</span><i>⌄</i></button>
+          <div class="nav-group-items" hidden>
+            <button class="nav-item" data-page="payments"><span class="nav-icon">￥</span>支付系统</button>
+            <button class="nav-item" data-page="recharge"><span class="nav-icon">＋</span>余额充值</button>
+            <button class="nav-item" data-page="api"><span class="nav-icon">⌘</span>API 管理</button>
+          </div>
+        </section>
+        <section class="nav-group" data-nav-group="security">
+          <button class="nav-group-toggle" type="button" aria-expanded="false"><span>系统安全</span><i>⌄</i></button>
+          <div class="nav-group-items" hidden>
+            <button class="nav-item" data-page="admins"><span class="nav-icon">♙</span>管理员与权限</button>
+            <button class="nav-item" data-page="audit"><span class="nav-icon">▤</span>安全审计</button>
+          </div>
+        </section>
       </nav>
       <div class="sidebar-bottom">
         <div class="secure-note"><span class="secure-dot"></span><span><b>独立管理端</b><small>与商城前台分离</small></span></div>
@@ -112,7 +143,26 @@
         <article class="panel data-panel"><div class="panel-heading"><div><h2>实际支付统计</h2><p>只统计已支付订单，不包含待支付订单</p></div><span class="tag" id="paymentStatsUpdated">—</span></div><div class="table-wrap"><table class="data-table"><thead><tr><th>支付方式</th><th>已支付订单</th><th>已收金额（CNY）</th></tr></thead><tbody id="paymentStatsBody"><tr><td colspan="3" class="table-empty">等待读取支付记录</td></tr></tbody></table></div></article>
         <p class="field-hint">微信支付当前没有商户配置记录；支付宝与 USDT 读取现有收款配置。未完成商户绑定的渠道不会显示为可收款，也不会被客服 AI 宣称已开通。</p>
       </section>
-<section class="page" id="page-recharge">
+<section class="page" id="page-api">
+        <div class="page-heading"><div><p class="eyebrow">API ACCESS CONTROL</p><h1>API 管理</h1><p class="subheading">开发者密钥、调用权限、封禁停用、申请审核与调用日志统一管理</p></div><button class="btn btn-secondary" id="apiManagementRefresh">↻ 刷新数据</button></div>
+        <div class="notice"><b>密钥安全</b><span>已签发密钥只展示首尾提示；新建或批准时的完整密钥只显示一次，请立即复制保存。停用会立即阻断后续 API 调用。</span></div>
+        <div class="content-grid api-management-grid">
+          <article class="panel form-panel"><div class="panel-heading"><div><h2>签发 API Key</h2><p>为指定应用创建独立调用凭据</p></div><span class="tag tag-green">服务端校验</span></div>
+            <form id="apiKeyCreateForm" class="admin-form-grid">
+              <label class="span-two">应用名称<input id="apiKeyName" maxlength="128" required placeholder="例如：自动化订单系统"></label>
+              <label>调用权限<select id="apiKeyScopes"><option value="read">只读</option><option value="read,write">读写</option></select></label>
+              <label>每分钟限流<input id="apiKeyRate" type="number" min="1" max="6000" value="60" required></label>
+              <div class="form-actions span-two"><button class="btn btn-primary" type="submit" id="apiKeyCreateBtn">创建 API Key</button><span id="apiKeyCreateStatus" class="form-result"></span></div>
+            </form>
+            <div id="apiKeyOneTime" class="api-key-onetime" hidden><b>新密钥（仅显示本次）</b><code id="apiKeyOneTimeValue"></code><button class="btn btn-secondary btn-small" id="apiKeyCopy" type="button">复制密钥</button></div>
+          </article>
+          <article class="panel data-panel"><div class="panel-heading"><div><h2>API 使用概况</h2><p>密钥和调用记录实时统计</p></div></div><div class="api-stat-grid"><div><small>已签发密钥</small><strong id="apiKeyTotal">—</strong></div><div><small>正常启用</small><strong id="apiKeyEnabled">—</strong></div><div><small>已封禁 / 停用</small><strong id="apiKeyDisabled">—</strong></div><div><small>待审核申请</small><strong id="apiApplyPending">—</strong></div></div></article>
+        </div>
+        <article class="panel data-panel"><div class="panel-heading"><div><h2>API 密钥管理</h2><p>可立即封禁 / 解封，或永久撤销不再使用的密钥</p></div><input id="apiKeySearch" type="search" placeholder="搜索应用名称或 Key 尾号"></div><div class="table-wrap"><table class="data-table"><thead><tr><th>ID</th><th>应用名称</th><th>密钥标识</th><th>权限</th><th>限流</th><th>调用量</th><th>状态</th><th>最近使用</th><th>操作</th></tr></thead><tbody id="apiKeysBody"><tr><td colspan="9" class="table-empty">正在读取 API 密钥</td></tr></tbody></table></div><div class="table-foot"><span id="apiKeysCount">—</span><span>密钥明文不会再次返回</span></div></article>
+        <article class="panel data-panel"><div class="panel-heading"><div><h2>开发者接入申请</h2><p>审核通过后自动签发 API Key</p></div><select id="apiApplyFilter"><option value="">全部申请</option><option value="0">待审核</option><option value="1">已批准</option><option value="2">已拒绝</option></select></div><div class="table-wrap"><table class="data-table"><thead><tr><th>应用</th><th>联系人</th><th>用途</th><th>主页</th><th>状态</th><th>申请时间</th><th>操作</th></tr></thead><tbody id="apiApplicationsBody"><tr><td colspan="7" class="table-empty">正在读取申请</td></tr></tbody></table></div></article>
+        <article class="panel data-panel"><div class="panel-heading"><div><h2>API 调用日志</h2><p>最近调用路径、来源 IP、响应状态和时间</p></div><button class="btn btn-secondary btn-small" id="apiLogsClear" type="button">清理 7 天前日志</button></div><div class="table-wrap"><table class="data-table"><thead><tr><th>时间</th><th>请求路径</th><th>方法</th><th>来源 IP</th><th>响应码</th></tr></thead><tbody id="apiLogsBody"><tr><td colspan="5" class="table-empty">正在读取调用日志</td></tr></tbody></table></div><div class="table-foot"><span id="apiLogsCount">—</span><span>只清理 7 天前日志</span></div></article>
+      </section>
+      <section class="page" id="page-recharge">
         <div class="page-heading"><div><p class="eyebrow">BALANCE MANAGEMENT</p><h1>余额充值</h1><p class="subheading">通过现有管理 API 为指定用户增加人民币等值余额</p></div></div>
         <div class="notice"><b>安全提示</b><span>此操作使用已登录的管理员身份进行授权，服务端会再次校验管理员邮箱。</span></div>
         <div class="form-layout">
@@ -376,7 +426,7 @@
         <article class="panel ai-status-panel"><div><h2>智谱 AI 客服</h2><p>在线客服使用服务器端智谱 API，密钥只保存在服务端</p></div><div class="ai-status-meta"><span id="zhipuStatus" class="tag">检测中</span><b id="zhipuModel">GLM-4-Flash</b></div></article>
         <div class="support-layout">
           <article class="panel support-list-panel"><div class="panel-heading"><div><h2>客户会话</h2><p>按最近消息排序</p></div><span class="tag" id="supportChatCount">—</span></div><div id="chatUsersList" class="chat-users-list"><div class="table-empty">正在加载会话</div></div></article>
-          <article class="panel support-chat-panel"><div class="panel-heading"><div><h2 id="chatRoomTitle">选择一个会话</h2><p id="chatRoomMeta">客户消息会显示在这里</p></div><button class="btn btn-secondary" id="chatHandoffBtn" disabled>接管会话</button></div><div id="chatMessages" class="chat-messages"><div class="empty-state">从左侧选择客户会话</div></div><form id="chatReplyForm" class="chat-reply-form"><textarea id="chatReplyText" rows="2" placeholder="输入回复内容…" required disabled></textarea><button class="btn btn-primary" id="chatReplyBtn" type="submit" disabled>发送回复</button></form></article>
+          <article class="panel support-chat-panel"><div class="panel-heading"><div><h2 id="chatRoomTitle">选择一个会话</h2><p id="chatRoomMeta">客户消息会显示在这里</p></div><button class="btn btn-secondary" id="chatHandoffBtn" disabled>接管会话</button></div><div class="chat-history-toolbar"><button class="btn btn-secondary btn-small" type="button" id="chatLoadOlder" hidden>加载更早记录</button><span id="chatHistoryStatus">聊天记录长期保留，按需向上加载历史</span></div><div id="chatMessages" class="chat-messages"><div class="empty-state">从左侧选择客户会话</div></div><form id="chatReplyForm" class="chat-reply-form"><div class="chat-composer"><div class="chat-composer-tools"><button class="btn btn-secondary btn-small" type="button" id="chatEmojiToggle" disabled>😀 表情</button><label class="btn btn-secondary btn-small chat-attach-label">图片 / 文件<input id="chatAttachment" type="file" accept="image/*,video/*,.pdf,.txt,.csv,.zip,.7z,.doc,.docx,.xls,.xlsx,.ppt,.pptx" hidden disabled></label><span id="chatAttachmentName" class="chat-attachment-name"></span></div><div id="chatEmojiPicker" class="chat-emoji-picker" hidden></div><textarea id="chatReplyText" rows="2" placeholder="输入回复内容…" disabled></textarea></div><button class="btn btn-primary" id="chatReplyBtn" type="submit" disabled>发送回复</button></form></article>
         </div>
         <article class="panel data-panel support-tickets"><div class="panel-heading"><div><h2>售后工单</h2><p>咨询、投诉与需要跟进的售后请求</p></div><select id="ticketStatus"><option value="">全部工单</option><option value="1">待处理</option><option value="2">处理中</option><option value="3">已关闭</option></select></div><div class="table-wrap"><table class="data-table"><thead><tr><th>工单</th><th>客户</th><th>主题</th><th>优先级</th><th>状态</th><th>更新时间</th><th>操作</th></tr></thead><tbody id="ticketsBody"><tr><td colspan="7" class="table-empty">等待加载工单</td></tr></tbody></table></div></article>
       </section>
