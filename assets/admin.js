@@ -616,6 +616,7 @@ async function loadBots(){
  $("#botsUpdated").textContent=stateResult.status==="fulfilled"?"最后更新："+new Date().toLocaleString("zh-CN"):"进程状态读取失败："+(stateResult.reason?.message||"服务暂不可用");
  await loadBotUsers();
  await loadBotSettings();
+ await loadBotCredentials();
 }
 async function loadBotUsers(){
  const body=$("#botUsersBody");if(!body)return;
@@ -656,6 +657,21 @@ $("#botBroadcastForm")?.addEventListener("submit",async e=>{
 $("#botUserFilter")?.addEventListener("change",()=>{const el=$("#botBroadcastBot");if(el)el.value=$("#botUserFilter").value});
 
 let botSettingsCache={bot:"",data:null};
+
+async function loadBotCredentials(){
+ const bot=$("#botCredentialBot")?.value||"safew",status=$("#botCredentialStatus");if(!status)return;
+ status.textContent="正在验证机器人身份…";
+ try{const d=await legacyAdmin("/bots/credentials?bot="+encodeURIComponent(bot));status.className="form-result "+(d.identity_ok?"success":"error");status.textContent=d.identity_status||"身份状态未知"}
+ catch(e){status.className="form-result error";status.textContent="读取身份状态失败："+(e.message||"接口错误")}
+}
+$("#botCredentialBot")?.addEventListener("change",loadBotCredentials);
+$("#botCredentialForm")?.addEventListener("submit",async e=>{
+ e.preventDefault();const bot=$("#botCredentialBot").value,token=$("#botCredentialToken").value.trim(),btn=$("#botCredentialSave"),status=$("#botCredentialStatus");
+ if(!token)return;btn.disabled=true;status.className="form-result";status.textContent="正在验证 Token 身份…";
+ try{const d=await legacyAdmin("/bots/credentials/save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({bot,token})});$("#botCredentialToken").value="";status.className="form-result success";status.textContent=d.msg||"已安全绑定并重启机器人";await loadBotCredentials();await loadBots()}
+ catch(err){status.className="form-result error";status.textContent=err.message||"绑定失败；未确认前不会写入"}
+ finally{btn.disabled=false}
+});
 function renderBotPlans(){
  const body=$("#botPlansBody");if(!body)return;const plans=botSettingsCache.data?.plans||[];
  body.innerHTML=plans.length?plans.map((p,i)=>'<tr><td class="mono">'+escapeHtml(p.id)+'</td><td>'+escapeHtml(p.name)+'</td><td>'+Number(p.days)+'</td><td>'+Number(p.gb)+' GB</td><td>¥'+Number(p.cny).toFixed(2)+'</td><td><div class="table-actions"><button class="btn btn-secondary btn-small" data-plan-edit="'+i+'">编辑</button><button class="btn btn-danger btn-small" data-plan-delete="'+i+'">删除</button></div></td></tr>').join(""):'<tr><td colspan="6" class="table-empty">当前机器人没有套餐配置</td></tr>';
