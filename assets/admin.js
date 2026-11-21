@@ -608,7 +608,7 @@ async function openBotUserDetail(u,bot){
  const uid=u.tg_id||u.user_id||"",name=u.nickname||[u.first_name,u.last_name].filter(Boolean).join(" ")||"未设置昵称";
  $("#botUserAvatar").src="";$("#botUserAvatar").hidden=true;$("#botUserAvatarFallback").hidden=false;
  $("#botUserName").textContent=name;$("#botUserMeta").textContent="@"+String(u.username||"未设置").replace(/^@/,"")+" · "+(uid||"ID 未返回");
- const fields=[["Telegram 用户 ID",uid],["用户名",u.username?"@"+String(u.username).replace(/^@/,""):"未设置"],["名字",u.first_name],["姓氏",u.last_name],["机器人",bot],["流量",(Number(u.traffic_mb||0)/1024).toFixed(2)+" GB"],["余额",Number(u.balance||0).toFixed(2)+" USDT"],["到期时间",Number(u.expire||0)>0?formatAdminDate(u.expire):"未开通"],["最后签到",u.last_sign],["语言",u.language_code],["Premium",u.is_premium===true?"是":u.is_premium===false?"否":undefined]];
+ const fields=[["Telegram 用户 ID",uid],["用户名",u.username?"@"+String(u.username).replace(/^@/,""):"未设置"],["名字",u.first_name||name],["姓氏",u.last_name],["机器人",bot],["账号状态",Number(u.activated)?"已激活":"未激活"],["节点账号",u.suser],["MTProto 账号",u.mtp_user],["流量",(Number(u.traffic_mb||0)/1024).toFixed(2)+" GB"],["余额",Number(u.balance||0).toFixed(2)+" USDT"],["到期时间",Number(u.expire||0)>0?formatAdminDate(u.expire):"未开通"],["邀请人数",u.invite_count],["邀请人 ID",u.inviter],["最后签到",u.last_sign],["语言",u.language_code],["Premium",u.is_premium===true?"是":u.is_premium===false?"否":undefined]];
  $("#botUserProfileGrid").innerHTML=fields.filter(([k,v])=>v!==undefined&&v!==null&&v!=="").map(([k,v])=>'<div class="user-detail-item"><small>'+escapeHtml(k)+'</small><b>'+escapeHtml(v)+'</b></div>').join("");
  $("#botUserChannels").innerHTML='<li class="muted-inline">正在核验机器人可访问的频道…</li>';
  $("#botUserGroups").innerHTML='<li class="muted-inline">正在核验机器人可访问的群组…</li>';
