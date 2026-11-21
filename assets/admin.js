@@ -576,7 +576,7 @@ $("#noticeAddBtn")?.addEventListener("click",()=>editNotice({}));$("#noticeFormC
 $("#noticeForm")?.addEventListener("submit",async e=>{e.preventDefault();const date=v=>v?Math.floor(new Date(v).getTime()/1000):0;const p={id:Number($("#noticeId").value)||undefined,title:$("#noticeTitle").value.trim(),type:$("#noticeType").value,content:$("#noticeContent").value.trim(),display:$("#noticeDisplay").value,target_plan:Number($("#noticeTargetPlan").value||0),status:Number($("#noticeStatus").value),pinned:Number($("#noticePinned").value),start_at:date($("#noticeStart").value),end_at:date($("#noticeEnd").value)};try{await legacyAdmin("/notices",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)});toast("公告已保存");$("#noticeFormPanel").hidden=true;loadNotices()}catch(e){$("#noticeFormResult").textContent=e.message||"保存失败"}});
 $("#noticesRefresh")?.addEventListener("click",loadNotices);
 
-const botNames={fakabot:"晴天号铺机器人",tg:"TG 签到机器人",mivra:"Mivra 签到机器人"};
+const botNames={tg:"节点签到机器人",mivra:"节点综合机器人"};
 async function loadBots(){
  const grid=$("#botGrid");if(!grid)return;
  $("#botsUpdated").textContent="正在读取机器人进程和用户统计…";
@@ -584,10 +584,10 @@ async function loadBots(){
  const statePayload=stateResult.status==="fulfilled"?stateResult.value:{};
  const bots=Array.isArray(statePayload.bots)?statePayload.bots:dataList(statePayload);
  const stats=statsResult.status==="fulfilled"?dataList(statsResult.value):[];
- const cardMap={safew:"tg",mivra:"mivra",qingtian:"fakabot"};
- const nameMap={safew:"TG 签到机器人",mivra:"Mivra 签到机器人",qingtian:"晴天号铺机器人"};
+ const cardMap={safew:"tg",mivra:"mivra"};
+ const nameMap={safew:"节点签到机器人",mivra:"节点综合机器人"};
  bots.forEach(bot=>{
-  const key=bot.key||({1:"safew",2:"mivra",3:"qingtian"})[bot.id];
+  const key=bot.key||({1:"safew",2:"mivra"})[bot.id];
   const card=document.querySelector('[data-bot-card="'+(cardMap[key]||key)+'"]');if(!card)return;
   const state=card.querySelector(".bot-state"),running=!!bot.online||bot.status==="active",enabled=bot.status==="active"||bot.status===true||Number(bot.status)===1;
   state.textContent=running?"运行中":enabled?"已启用 · 未运行":"已停用";
