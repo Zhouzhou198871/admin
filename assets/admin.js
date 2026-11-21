@@ -9,17 +9,14 @@ const pageNames={overview:"经营总览",orders:"订单管理",users:"用户管�
 let currentAdmin=null,activeNodeAccess=[],selectedUserRecord=null;
 let toastTimer;
 function toast(message){const el=$("#toast");if(!el)return;el.textContent=message;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2600)}
-const iconGlyphs={"▦":"layout-dashboard","▤":"receipt-text","♙":"users-round","◇":"package","▣":"package-check","◉":"message-circle","✉":"mail","⌁":"network","⚙":"bot","￥":"wallet","¥":"wallet","＋":"plus-circle","⌘":"code","％":"percent","◌":"messages-square","⇧":"upload","↻":"refresh-cw","☰":"menu","支":"wallet-cards","微":"qr-code","₮":"coins","🔒":"lock","✓":"shield-check","？":"circle-help"};
+const iconGlyphs={"▦":"dashboard","▤":"receipt_long","♙":"group","◇":"inventory_2","▣":"inventory_2","◉":"support_agent","✉":"mail","⌁":"hub","⚙":"smart_toy","￥":"account_balance_wallet","¥":"account_balance_wallet","＋":"add_circle","⌘":"code","％":"percent","◌":"forum","⇧":"upload","↻":"refresh","☰":"menu","支":"account_balance_wallet","微":"qr_code_2","₮":"currency_exchange","🔒":"lock","✓":"verified_user","？":"help"};
 function hydrateIcons(root=document){
- if(!window.lucide?.createIcons)return;
  root.querySelectorAll(".nav-icon,.metric-icon,.todo-icon,.action-icon,.payment-logo,.mobile-menu,.login-security>span,.empty-state>span").forEach(el=>{
-  if(el.querySelector("svg"))return;
+  if(el.querySelector(".material-symbols-rounded"))return;
   const icon=el.dataset.icon||iconGlyphs[el.textContent.trim()];
-  if(icon)el.innerHTML='<i data-lucide="'+icon+'" aria-hidden="true"></i>';
+  if(icon)el.innerHTML='<span class="material-symbols-rounded" aria-hidden="true">'+icon+'</span>';
  });
- window.lucide.createIcons();
 }
-hydrateIcons();
 function authHeaders(extra={}){return {...extra,Authorization:"Bearer "+(localStorage.getItem(TOKEN_KEY)||"")}}
 async function adminRequest(path,options={}){const response=await fetchWithTimeout(API_BASE+path,{...options,headers:authHeaders(options.headers||{})},12000);let data={};try{data=await response.json()}catch{}if(!response.ok||!data.ok)throw new Error(data.error||"request_failed");return data}
 function adminHasPermission(permission){const p=currentAdmin?.permissions||[];return p.includes("*")||p.includes(permission)||(permission.endsWith(".read")&&p.includes("overview.read"))||p.includes(permission.replace(/\.read$/,".manage"))}
