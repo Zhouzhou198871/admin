@@ -448,7 +448,7 @@ async function loadDnsheConfig(){
   const d=await legacyAdmin("/config/dnshe"),x=d.data||d;
   status.textContent=x.configured?"DNSHE API 已配置（Key 尾号 "+(x.key_hint||"****")+"）":"DNSHE API 尚未配置";
   status.className="form-result "+(x.configured?"success":"");
-  $("#dnsheApiKey").value="";$("#dnsheApiSecret").value="";
+  $("#dnsheApiKey").value="";$("#dnsheApiSecret").value="";$("#dnsheSyncSingapore").disabled=!x.configured;
  }catch(e){status.textContent="DNSHE 配置读取失败："+(e.message||"接口错误");status.className="form-result error"}
 }
 async function saveDnsheConfig(){
@@ -464,7 +464,16 @@ async function saveDnsheConfig(){
  }catch(e){status.textContent=e.message||"DNSHE 授权保存失败";status.className="form-result error";toast("DNSHE 授权保存失败")}
  finally{btn.disabled=false;btn.textContent="保存并验证"}
 }
+async function syncSingaporeDns(){
+ const btn=$("#dnsheSyncSingapore"),status=$("#dnsheConfigStatus");btn.disabled=true;btn.textContent="正在同步…";
+ try{
+  const d=await legacyAdmin("/config/dnshe/sync_singapore",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"}),x=d.data||d;
+  status.textContent=x.domain+" → "+x.ip+"：DNS 记录已提交";status.className="form-result success";toast("新加坡 DNS 记录已提交，等待公共 DNS 生效");
+ }catch(e){status.textContent=e.message||"新加坡 DNS 同步失败";status.className="form-result error";toast("新加坡 DNS 同步失败")}
+ finally{btn.disabled=false;btn.textContent="修复新加坡解析"}
+}
 $("#dnsheConfigSave")?.addEventListener("click",saveDnsheConfig);
+$("#dnsheSyncSingapore")?.addEventListener("click",syncSingaporeDns);
 async function openNodeDomains(serverId,serverName){
  $("#domainServerId").value=serverId;$("#nodeDomainManagerTitle").textContent=serverName+" · 域名管理";$("#nodeDomainManagerPanel").hidden=false;$("#nodeDomainManagerPanel").scrollIntoView({behavior:"smooth",block:"start"});await Promise.all([loadNodeDomains(),loadDnsheConfig()]);
 }
