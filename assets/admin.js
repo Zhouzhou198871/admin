@@ -110,14 +110,14 @@ async function loadOverview(){
   legacyAdmin("/shop/products?page=1&size=100"),
   legacyAdmin("/notices"),
   legacyAdmin("/config/mail"),
-  adminRequest("/api/admin/bots"),
+  legacyAdmin("/bots/services"),
   legacyAdmin("/nodes/health"),
   legacyAdmin("/chat/users"),
   legacyAdmin("/stats/online")
  ]);
  const val=i=>jobs[i].status==="fulfilled"?jobs[i].value:null;
  const shop=val(0)||{},stats=val(1)||{},accounts=val(2)||{},tickets=val(3)||{},nodes=dataList(val(4)),plans=dataList(val(5)),ordersData=val(6)||{},productsData=val(7)||{};
- const orders=dataList(ordersData),products=dataList(productsData),notices=dataList(val(8)),mail=val(9)||{},bots=val(10)?.bots||[];
+ const orders=dataList(ordersData),products=dataList(productsData),notices=dataList(val(8)),mail=val(9)||{},bots=dataList(val(10));
  const chatSessions=dataList(val(12)),onlineStats=val(13)||{};
  const userTotal=Number(stats.users_total??0);
  const orderTotal=Number(shop.orders_pending||0)+Number(shop.orders_toship||0)+Number(shop.orders_shipped||0)+Number(shop.orders_done||0);
@@ -153,16 +153,16 @@ async function loadOverview(){
  $("#metricPlans").textContent="节点套餐 "+plans.length.toLocaleString("zh-CN");
  $("#metricNotices").textContent=notices.filter(n=>Number(n.status)===1).length.toLocaleString("zh-CN");
  $("#metricEmail").textContent=mail.smtp_host&&mail.sender_email?"已配置":"待配置";
- $("#metricBots").textContent=bots.filter(b=>b.status==="active").length+" / "+(bots.length||3);
+ $("#metricBots").textContent=bots.filter(b=>b.online).length+" / 2";
  $("#overviewNodeHealth").textContent=onlineNodes.length+" / "+enabledNodes.length+" 在线";
  $("#overviewNodeDetail").textContent=nodes.length+" 个节点配置 · "+(nodes.length-enabledNodes.length)+" 个已停用";
  $("#overviewNodeDot").classList.toggle("is-good",enabledNodes.length>0&&onlineNodes.length===enabledNodes.length);
  $("#overviewNodeDot").classList.toggle("is-warn",onlineNodes.length<enabledNodes.length);
- const runningBots=bots.filter(b=>b.status==="active").length;
- $("#overviewBotHealth").textContent=runningBots+" / "+(bots.length||3)+" 运行";
- $("#overviewBotDetail").textContent=runningBots===(bots.length||3)?"机器人进程状态正常":"存在未运行或未返回状态的机器人";
+ const runningBots=bots.filter(b=>b.online).length;
+ $("#overviewBotHealth").textContent=runningBots+" / 2 运行";
+ $("#overviewBotDetail").textContent=runningBots===2?"机器人进程状态正常":"存在未运行或未返回状态的机器人";
  $("#overviewBotDot").classList.toggle("is-good",runningBots===(bots.length||3));
- $("#overviewBotDot").classList.toggle("is-warn",runningBots!==(bots.length||3));
+ $("#overviewBotDot").classList.toggle("is-warn",runningBots!==2);
  const mailReady=!!(mail.smtp_host&&mail.sender_email);
  $("#overviewMailHealth").textContent=mailReady?"已配置":"待配置";
  $("#overviewMailDetail").textContent=mailReady?(mail.smtp_host+" · "+mail.sender_email):"SMTP 主机或发件邮箱未配置";
@@ -589,7 +589,7 @@ async function loadBots(){
  bots.forEach(bot=>{
   const key=bot.key||({1:"safew",2:"mivra"})[bot.id];
   const card=document.querySelector('[data-bot-card="'+(cardMap[key]||key)+'"]');if(!card)return;
-  const state=card.querySelector(".bot-state"),running=!!bot.online||bot.status==="active",enabled=bot.status==="active"||bot.status===true||Number(bot.status)===1;
+  const state=card.querySelector(".bot-state"),running=!!bot.online||bot.status==="active",enabled=bot.enabled===true||bot.status==="active"||bot.status===true||Number(bot.status)===1;
   state.textContent=running?"运行中":enabled?"已启用 · 未运行":"已停用";
   state.className="bot-state "+(running?"running":enabled?"pending":"stopped");
   card.querySelector("[data-bot-pid]").textContent=bot.pid||"—";
