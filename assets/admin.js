@@ -420,11 +420,11 @@ async function loadNodeServers(){
 }
 async function loadNodeHealth(){
  const body=$("#nodeHealthBody");if(!body)return;
- body.innerHTML='<tr><td colspan="5" class="table-empty">正在并发检测节点业务、API 与管理端口…</td></tr>';
+ body.innerHTML='<tr><td colspan="5" class="table-empty">正在并发检测节点入口与扩展端口…</td></tr>';
  try{
   const d=await legacyAdmin("/servers/health"),items=d.items||d.data?.items||[],total=Number(d.total??items.length);
   body.innerHTML=items.length?items.map(x=>{
-   const c=x.checks||{},cell=k=>{const v=c[k];return v?'<span class="'+(v.ok?'tag-green':'tag-red')+'">'+(v.ok?'可达':'异常')+(v.ok?' · '+Number(v.latency_ms||0)+'ms':' · '+escapeHtml(v.error||'连接失败'))+'</span>':'<span class="tag">未配置</span>'};
+   const c=x.checks||{},ports=x.ports||{},cell=k=>{const v=c[k],port=Number(ports[k]||0);return v?'<span class="'+(v.ok?'tag-green':'tag-red')+'">'+(v.ok?'可达':'异常')+(port?' · :'+port:'')+(v.ok?' · '+Number(v.latency_ms||0)+'ms':' · '+escapeHtml(v.error||'连接失败'))+'</span>':'<span class="tag">未配置</span>'};
    return '<tr><td><b>'+escapeHtml(x.name||"—")+'</b></td><td>'+cell("service")+'</td><td>'+cell("api")+'</td><td>'+cell("admin")+'</td><td>'+statusPill(x.healthy?"active":"unreachable")+'</td></tr>';
   }).join(""):'<tr><td colspan="5" class="table-empty">暂无节点服务器</td></tr>';
   $("#nodeHealthCount").textContent="已检查 "+total+" 台 · "+items.filter(x=>x.healthy).length+" 台全部端口正常";
