@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f5f7fb">
   <title>晴天账号铺 · 管理后台</title>
   <link rel="stylesheet" href="./assets/admin.css?v=20261121-17">
-  <script src="./assets/admin.js?v=20261121-24" defer></script>
+  <script src="./assets/admin.js?v=20261121-25" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -405,7 +405,7 @@
           <div class="table-wrap"><table class="data-table"><thead><tr><th>Telegram ID</th><th>昵称 / 用户名</th><th>流量</th><th>到期时间</th><th>余额</th><th>状态</th><th>最后签到</th><th>资料</th></tr></thead><tbody id="botUsersBody"><tr><td colspan="8" class="table-empty">选择机器人查看用户</td></tr></tbody></table></div>
           <div class="table-foot"><span id="botUsersCount">—</span><span>用户资料来自机器人数据库</span></div>
         </article>
-<div class="modal-overlay" id="botUserDetailModal" hidden><article class="panel modal-card user-detail-card"><div class="panel-heading"><div><h2>Telegram 用户资料</h2><p id="botUserMeta">用户详细信息</p></div><button class="btn btn-secondary" type="button" id="botUserDetailClose">关闭</button></div><div class="bot-user-profile-head"><img id="botUserAvatar" alt="Telegram 用户头像" hidden><div id="botUserAvatarFallback" class="bot-user-avatar-fallback">TG</div><div><h3 id="botUserName">—</h3><small>资料以机器人接口返回为准</small></div></div><div class="user-detail-grid" id="botUserProfileGrid"></div><div class="user-detail-columns"><section><h3>频道</h3><ul id="botUserChannels" class="bot-membership-list"></ul></section><section><h3>群组</h3><ul id="botUserGroups" class="bot-membership-list"></ul></section></div><small id="botUserMembershipScope" class="bot-membership-scope">仅显示机器人已配置且有权限核验的频道/群组；Telegram 不提供查询任意用户全部成员关系的接口。</small></article></div>        <article class="panel bot-log-panel"><div class="panel-heading"><div><h2 id="botLogTitle">运行日志</h2><p>只读取所选机器人的 systemd 日志，最多显示最近 100 条</p></div><span class="tag" id="botLogStatus">等待选择</span></div><pre class="bot-logs" id="botLogs">点击任意机器人卡片中的“查看日志”。</pre></article>
+<div class="modal-overlay" id="botUserDetailModal" hidden><article class="panel modal-card user-detail-card"><div class="panel-heading"><div><h2>Telegram 用户资料</h2><p id="botUserMeta">用户详细信息</p></div><button class="btn btn-secondary" type="button" id="botUserDetailClose">关闭</button></div><div class="bot-user-profile-head"><img id="botUserAvatar" alt="Telegram 用户头像" hidden><div id="botUserAvatarFallback" class="bot-user-avatar-fallback">TG</div><div><h3 id="botUserName">—</h3><small id="botUserAvatarStatus">头像正在读取</small></div></div><div class="user-detail-grid" id="botUserProfileGrid"></div><div class="user-detail-columns"><section><h3>频道</h3><ul id="botUserChannels" class="bot-membership-list"></ul></section><section><h3>群组</h3><ul id="botUserGroups" class="bot-membership-list"></ul></section><section><h3>未能核验的配置项</h3><ul id="botUserUnavailable" class="bot-membership-list"></ul></section></div><small id="botUserMembershipScope" class="bot-membership-scope">仅显示机器人已配置且有权限核验的频道/群组；Telegram 不提供查询任意用户全部成员关系的接口。</small></article></div>        <article class="panel bot-log-panel"><div class="panel-heading"><div><h2 id="botLogTitle">运行日志</h2><p>只读取所选机器人的 systemd 日志，最多显示最近 100 条</p></div><span class="tag" id="botLogStatus">等待选择</span></div><pre class="bot-logs" id="botLogs">点击任意机器人卡片中的“查看日志”。</pre></article>
         <p class="bot-updated" id="botsUpdated">状态尚未刷新</p>
       </section>
 

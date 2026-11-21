@@ -578,14 +578,15 @@ async function openBotUserDetail(u,bot){
  $("#botUserMembershipScope").textContent="正在查询机器人已配置的频道与群组…";
  $("#botUserDetailModal").hidden=false;
  if(uid){
-  try{const avatar=await legacyAdmin("/bots/matrix/avatar?bot="+encodeURIComponent(bot)+"&uid="+encodeURIComponent(uid));if(avatar.avatar){$("#botUserAvatar").src=avatar.avatar;$("#botUserAvatar").hidden=false;$("#botUserAvatarFallback").hidden=true}}catch{}
+  try{const avatar=await legacyAdmin("/bots/matrix/avatar?bot="+encodeURIComponent(bot)+"&uid="+encodeURIComponent(uid));if(avatar.avatar){$("#botUserAvatar").src=avatar.avatar;$("#botUserAvatar").hidden=false;$("#botUserAvatarFallback").hidden=true;$("#botUserAvatarStatus").textContent="头像已读取"}else{$("#botUserAvatarStatus").textContent=avatar.reason||"头像暂不可用"}}catch(e){$("#botUserAvatarStatus").textContent="头像读取失败："+(e.message||"接口错误")}
   try{
    const memberships=await legacyAdmin("/bots/matrix/memberships?bot="+encodeURIComponent(bot)+"&uid="+encodeURIComponent(uid));
    const renderList=items=>Array.isArray(items)&&items.length?items.map(x=>'<li><b>'+escapeHtml(x.title||x.chat_id||"未命名")+'</b><small class="muted-inline">'+escapeHtml(x.type||"")+' · '+escapeHtml(x.status||"无法核验")+(x.is_member?" · 已加入":"")+'</small></li>').join(""):'<li class="muted-inline">没有可核验的项目</li>';
    $("#botUserChannels").innerHTML=renderList(memberships.channels);
    $("#botUserGroups").innerHTML=renderList(memberships.groups);
+   $("#botUserUnavailable").innerHTML=renderList(memberships.unavailable);
    $("#botUserMembershipScope").textContent=memberships.scope||"仅显示机器人可访问的已配置群组/频道。";
-  }catch(e){$("#botUserChannels").innerHTML='<li class="muted-inline">频道资料暂不可用</li>';$("#botUserGroups").innerHTML='<li class="muted-inline">群组资料暂不可用</li>';$("#botUserMembershipScope").textContent="当前无法连接 Telegram 查询频道/群组。"}
+  }catch(e){$("#botUserChannels").innerHTML='<li class="muted-inline">频道资料暂不可用</li>';$("#botUserGroups").innerHTML='<li class="muted-inline">群组资料暂不可用</li>';$("#botUserUnavailable").innerHTML='<li class="muted-inline">查询失败</li>';$("#botUserMembershipScope").textContent="当前无法连接 Telegram 查询频道/群组。"}
  }
 }
 
