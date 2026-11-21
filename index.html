@@ -474,6 +474,7 @@
             <label id="botBroadcastChatWrap" hidden>目标 Chat ID<input id="botBroadcastChatId" placeholder="-1001234567890 或 @channelname"></label>
             <label>消息类型<select id="botBroadcastMediaType"><option value="text">纯文本</option><option value="photo">图片</option><option value="video">视频</option></select></label>
             <label id="botBroadcastFileWrap" hidden>上传图片 / 视频<input id="botBroadcastFile" type="file" accept="image/jpeg,image/png,image/webp,video/mp4"></label>
+            <label id="botBroadcastMediaUrlWrap" hidden>媒体公网 URL / Telegram File ID<input id="botBroadcastMediaUrl" placeholder="https://... 或 Telegram file_id"></label>
             <label class="span-two">消息内容 / 图片视频说明<textarea id="botBroadcastText" rows="4" maxlength="4000" placeholder="输入要发送给用户的通知内容或媒体说明"></textarea></label>
             <p class="field-hint span-two">支持文本、图片、MP4 视频；上传文件最大 20MB。发送到群组或频道前，请确认机器人已加入并有发言权限。</p>
             <div class="form-actions span-two"><button class="btn btn-primary" id="botBroadcastSubmit" type="submit">发送给该机器人全部用户</button><span id="botBroadcastResult" class="form-result" role="status"></span></div>
