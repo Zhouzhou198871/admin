@@ -432,6 +432,12 @@
         </article>
 <div class="modal-overlay" id="botUserDetailModal" hidden><article class="panel modal-card user-detail-card"><div class="panel-heading"><div><h2>Telegram 用户资料</h2><p id="botUserMeta">用户详细信息</p></div><button class="btn btn-secondary" type="button" id="botUserDetailClose">关闭</button></div><div class="bot-user-profile-head"><img id="botUserAvatar" alt="Telegram 用户头像" hidden><div id="botUserAvatarFallback" class="bot-user-avatar-fallback">TG</div><div><h3 id="botUserName">—</h3><small id="botUserAvatarStatus">头像正在读取</small></div></div><div class="user-detail-grid" id="botUserProfileGrid"></div><div class="user-detail-columns"><section><h3>频道</h3><ul id="botUserChannels" class="bot-membership-list"></ul></section><section><h3>群组</h3><ul id="botUserGroups" class="bot-membership-list"></ul></section><section><h3>未能核验的配置项</h3><ul id="botUserUnavailable" class="bot-membership-list"></ul></section></div><small id="botUserMembershipScope" class="bot-membership-scope">仅显示机器人已配置且有权限核验的频道/群组；Telegram 不提供查询任意用户全部成员关系的接口。</small></article></div>        <article class="panel form-panel compact-form" id="botSettingsPanel">
           <div class="panel-heading"><div><h2>机器人业务配置</h2><p>直接管理两个节点机器人的套餐、欢迎面板、收款地址和风控开关</p></div><button class="btn btn-secondary" type="button" id="botSettingsRefresh">读取配置</button></div>
+          <div class="notice"><b>机器人身份安全绑定</b><span>Token 只通过已登录的 HTTPS 管理接口提交，服务器以 root-only 权限保存；先验证 BotFather 返回的用户名，匹配目标机器人后才会写入并重启。不会在页面回显 Token。</span></div>
+          <form id="botCredentialForm" class="admin-form-grid">
+            <label>绑定机器人<select id="botCredentialBot"><option value="safew">节点签到机器人 · @qishe77</option><option value="mivra">节点综合机器人 · @vpn88</option></select></label>
+            <label>BotFather Token<input id="botCredentialToken" type="password" autocomplete="new-password" spellcheck="false" required placeholder="在这里安全输入对应机器人的 Token"></label>
+            <div class="form-actions span-two"><button class="btn btn-primary" type="submit" id="botCredentialSave">验证并安全绑定</button><span id="botCredentialStatus" class="form-result" role="status">尚未检查</span></div>
+          </form>
           <form id="botSettingsForm" class="admin-form-grid">
             <label>配置机器人<select id="botSettingsBot"><option value="safew">节点签到机器人</option><option value="mivra">节点综合机器人</option></select></label>
             <label class="check-field"><input type="checkbox" id="botSettingAdShow"> 开启签到招商广告按钮</label>
