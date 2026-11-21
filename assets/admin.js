@@ -11,7 +11,7 @@ let toastTimer;
 function toast(message){const el=$("#toast");el.textContent=message;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2600)}
 function authHeaders(extra={}){return {...extra,Authorization:"Bearer "+(localStorage.getItem(TOKEN_KEY)||"")}}
 async function adminRequest(path,options={}){const response=await fetchWithTimeout(API_BASE+path,{...options,headers:authHeaders(options.headers||{})},12000);let data={};try{data=await response.json()}catch{}if(!response.ok||!data.ok)throw new Error(data.error||"request_failed");return data}
-function adminHasPermission(permission){const p=currentAdmin?.permissions||[];return p.includes("*")||p.includes(permission)||p.includes(permission.replace(/\.read$/,".manage"))}
+function adminHasPermission(permission){const p=currentAdmin?.permissions||[];return p.includes("*")||p.includes(permission)||(permission.endsWith(".read")&&p.includes("overview.read"))||p.includes(permission.replace(/\.read$/,".manage"))}
 function applyAdminAccess(){
  const needs={overview:"overview.read",orders:"orders.read",users:"users.read",products:"products.read",nodes:"nodes.read",support:"support.read",email:"email.read",notices:"notices.read",payments:"payments.read",recharge:"finance.manage",bots:"bots.read",admins:"staff.manage"};
  document.querySelectorAll(".nav-item").forEach(el=>{const p=needs[el.dataset.page];el.hidden=!!p&&!adminHasPermission(p)});
@@ -204,71 +204,38 @@ $("#userDetailClose")?.addEventListener("click",()=>$("#userDetailModal").hidden
 async function loadUserNodeAccess(userId,email){
  const section=$("#userNodeAccessSection");if(!section)return;
  if(!adminHasPermission("nodes.read")){section.hidden=true;return}
- section.hidden=false;section.dataset.userId=String(userId||"");section.dataset.email=String(email||"");
- $("#userNodeAccessBody").innerHTML='<tr><td colspan="5" class="table-empty">正在读取节点权限…</td></tr>';
- $("#userNodePackage").innerHTML='<option value="">正在读取可开通节点…</option>';
+ section.hidden=false;section.dataset.userId=String(userId||"");
+ $("#userNodeAccessBody").innerHTML='<tr><td colspan="5" class="table-empty">正在读取节点授权…</td></tr>';
  try{
-  const [a,c]=await Promise.all([
-   adminRequest("/api/admin/node-access?"+(email?"email="+encodeURIComponent(email):"user_id="+encodeURIComponent(userId))),
-   adminRequest("/api/admin/node-access/catalog")
-  ]);
-  activeNodeAccess=a.accounts||[];
-  const packages=(c.packages||[]).filter(p=>p.server_present&&p.provisioning_ready);
-  $("#userNodePackage").innerHTML='<option value="">选择需要开通的节点套餐</option>'+packages.map(p=>'<option value="'+escapeHtml(p.package_id)+'">'+escapeHtml(p.name+" · "+p.package_name+" · "+String(p.protocol||"").toUpperCase()+" · "+p.duration_days+" 天")+'</option>').join("");
-  if(!packages.length)$("#userNodePackage").innerHTML='<option value="">暂无已就绪的可开通节点</option>';
-  $("#userNodeAccessBody").innerHTML=activeNodeAccess.length?activeNodeAccess.map(x=>'<tr><td><b>'+escapeHtml(x.product_name||"节点")+'</b><small class="muted-inline">'+escapeHtml(x.package_name||"")+'</small></td><td>'+escapeHtml(String(x.protocol||"").toUpperCase())+'</td><td>'+escapeHtml(nodeStatus(x.status))+'</td><td>'+escapeHtml(formatAdminDate(x.expires_at))+'</td><td><div class="table-actions">'+(x.delivery?.uri?'<button class="btn btn-secondary btn-small" data-node-export="'+escapeHtml(x.account_id)+'" data-format="all">导出全部</button><button class="btn btn-secondary btn-small" data-node-export="'+escapeHtml(x.account_id)+'" data-format="uri">链接</button><button class="btn btn-secondary btn-small" data-node-export="'+escapeHtml(x.account_id)+'" data-format="clash">Clash</button><button class="btn btn-secondary btn-small" data-node-export="'+escapeHtml(x.account_id)+'" data-format="singbox">Sing-box</button>':'—')+(x.status==="active"?'<button class="btn btn-danger btn-small" data-node-revoke="'+escapeHtml(x.account_id)+'">撤销</button>':"")+'</div></td></tr>').join(""):'<tr><td colspan="5" class="table-empty">该用户还没有开通节点权限</td></tr>';
-  $("#userNodeAccessBody").querySelectorAll("[data-node-export]").forEach(b=>b.addEventListener("click",()=>exportNodeAccess(b.dataset.nodeExport,b.dataset.format)));
-  $("#userNodeAccessBody").querySelectorAll("[data-node-revoke]").forEach(b=>b.addEventListener("click",async()=>{if(!confirm("确认撤销该用户的节点权限？此操作会同步停用服务端账号。"))return;try{await adminRequest("/api/admin/node-access/revoke",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({account_id:b.dataset.nodeRevoke})});toast("节点权限已撤销");await loadUserNodeAccess(userId,email)}catch(e){toast("撤销失败："+e.message)}}));
- }catch(e){activeNodeAccess=[];$("#userNodeAccessBody").innerHTML='<tr><td colspan="5" class="table-empty error-text">节点权限读取失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';$("#userNodePackage").innerHTML='<option value="">节点接口暂不可用</option>'}
+  const d=await legacyAdmin("/nodes/user-access?user_id="+encodeURIComponent(userId));
+  const nodes=d.nodes||[];activeNodeAccess=nodes;
+  const canManage=adminHasPermission("nodes.manage");
+  $("#userNodeAccessMode").textContent=d.mode==="custom"?"自定义授权：只允许勾选的节点":"默认授权：所有已启用节点";
+  $("#userNodeAccessResetBtn").hidden=!canManage;
+  $("#userNodeAccessBody").innerHTML=nodes.length?nodes.map(n=>'<tr><td><b>'+escapeHtml(n.name||("节点 #"+n.id))+'</b><small class="muted-inline">'+escapeHtml(n.region||"默认")+'</small></td><td>'+escapeHtml(String(n.protocol||"").toUpperCase())+'</td><td>'+escapeHtml(String(n.port||"—"))+'</td><td><label class="node-access-check"><input type="checkbox" data-node-access="'+Number(n.id)+'" '+(n.allowed?"checked":"")+' '+(!canManage||!n.enabled?"disabled":"")+'><span>'+(n.allowed?"已授权":"未授权")+'</span></label></td><td><div class="table-actions">'+(n.allowed?'<button class="btn btn-secondary btn-small" data-node-export="'+Number(n.id)+'" data-format="all">导出全部格式</button><button class="btn btn-secondary btn-small" data-node-export="'+Number(n.id)+'" data-format="clash">Clash</button><button class="btn btn-secondary btn-small" data-node-export="'+Number(n.id)+'" data-format="singbox">Sing-box</button><button class="btn btn-secondary btn-small" data-node-export="'+Number(n.id)+'" data-format="v2rayn">V2RayN</button><button class="btn btn-secondary btn-small" data-node-export="'+Number(n.id)+'" data-format="uri">原始链接</button>':'—')+'</div></td></tr>').join(""):'<tr><td colspan="5" class="table-empty">当前没有配置节点线路</td></tr>';
+  $("#userNodeAccessBody").querySelectorAll("[data-node-access]").forEach(box=>box.addEventListener("change",async()=>{const enabled=box.checked;box.disabled=true;try{await legacyAdmin("/nodes/user-access",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({user_id:Number(userId),node_id:Number(box.dataset.nodeAccess),enabled})});toast(enabled?"已为用户开通此节点":"已撤销该用户此节点权限");await loadUserNodeAccess(userId,email)}catch(e){box.checked=!enabled;toast("更新节点权限失败："+(e.message||"接口错误"))}finally{box.disabled=false}}));
+  $("#userNodeAccessBody").querySelectorAll("[data-node-export]").forEach(btn=>btn.addEventListener("click",()=>exportUserNodeFormat(userId,btn.dataset.nodeExport,btn.dataset.format)));
+ }catch(e){activeNodeAccess=[];$("#userNodeAccessMode").textContent="授权信息读取失败";$("#userNodeAccessBody").innerHTML='<tr><td colspan="5" class="table-empty error-text">读取节点权限失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>'}
 }
-$("#userNodeGrantBtn")?.addEventListener("click",async()=>{
- const section=$("#userNodeAccessSection"),email=section.dataset.email,userId=section.dataset.userId,packageId=$("#userNodePackage").value,btn=$("#userNodeGrantBtn");
- if(!packageId){toast("先选择一个已就绪的节点套餐");return}
- btn.disabled=true;btn.textContent="正在开通…";
- try{await adminRequest("/api/admin/node-access",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({user_id:userId,email,package_id:packageId})});toast("节点权限已开通，服务端账号已创建");await loadUserNodeAccess(userId,email)}
- catch(e){toast("开通失败："+e.message)}finally{btn.disabled=false;btn.textContent="为该用户开通节点"}
-});
-function decodeB64Utf8(value){try{return decodeURIComponent(escape(atob(value.replace(/-/g,"+").replace(/_/g,"/"))))}catch{return atob(value)}}
-function parseNodeShare(uri){
- if(uri.startsWith("vmess://")){const raw=decodeB64Utf8(uri.slice(8).split("#")[0]);const v=JSON.parse(raw);return {type:"vmess",server:v.add,port:Number(v.port),uuid:v.id,alter_id:Number(v.aid||0),network:v.net||"tcp",tls:v.tls==="tls",sni:v.sni||v.host,path:v.path||"/",tag:decodeURIComponent(uri.split("#")[1]||"晴天节点")}}
- if(uri.startsWith("ss://")){
-  let raw=uri.slice(5).split("#")[0],tag=decodeURIComponent(uri.split("#")[1]||"晴天节点"),host="",port=0,method="",password="";
-  if(raw.includes("@")){const [user,server]=raw.split("@");const dec=decodeB64Utf8(user);[method,password]=dec.split(":");const u=new URL("http://"+server);host=u.hostname;port=Number(u.port)}
-  else{const dec=decodeB64Utf8(raw);const at=dec.lastIndexOf("@");if(at<0)throw Error("Shadowsocks 链接缺少服务器信息");[method,password]=dec.slice(0,at).split(":");const u=new URL("http://"+dec.slice(at+1));host=u.hostname;port=Number(u.port)}
-  return {type:"shadowsocks",server:host,port,method,password,tag}
- }
- const u=new URL(uri),type=u.protocol.replace(":","").replace("hy2","hysteria2");
- return {type,server:u.hostname,port:Number(u.port),username:decodeURIComponent(u.username||""),password:decodeURIComponent(u.password||""),query:u.searchParams,tag:decodeURIComponent(u.hash.slice(1)||"晴天节点")};
-}
-function toSingBoxOutbound(uri){
- const p=parseNodeShare(uri),o={tag:p.tag,server:p.server,server_port:p.port};
- if(p.type==="vless"){o.type="vless";o.uuid=p.username;o.flow=p.query.get("flow")||undefined;const sec=p.query.get("security");if(sec&&sec!=="none")o.tls={enabled:true,server_name:p.query.get("sni")||p.query.get("serverName")||p.server,insecure:p.query.get("allowInsecure")==="1"};const net=p.query.get("type");if(net==="ws")o.transport={type:"ws",path:p.query.get("path")||"/",headers:p.query.get("host")?{Host:p.query.get("host")}:undefined};}
- else if(p.type==="vmess"){o.type="vmess";o.uuid=p.uuid;o.alter_id=p.alter_id;o.security="auto";if(p.tls)o.tls={enabled:true,server_name:p.sni||p.server};if(p.network==="ws")o.transport={type:"ws",path:p.path||"/"};}
- else if(p.type==="trojan"){o.type="trojan";o.password=p.username;o.tls={enabled:true,server_name:p.query.get("sni")||p.server};}
- else if(p.type==="shadowsocks"){o.type="shadowsocks";o.method=p.method;o.password=p.password;}
- else if(p.type==="hysteria2"){o.type="hysteria2";o.password=p.password||p.username;o.tls={enabled:true,server_name:p.query.get("sni")||p.server};const obfs=p.query.get("obfs");if(obfs)o.obfs={type:obfs,password:p.query.get("obfs-password")||""};}
- else if(p.type==="socks"||p.type==="socks5"||p.type==="http"){o.type=p.type==="socks"?"socks":p.type;if(p.username)o.username=p.username;if(p.password)o.password=p.password;}
- else throw Error("该协议暂不支持生成 sing-box 配置，请使用原始链接或客户端订阅");
- return {log:{level:"info"},outbounds:[o,{type:"direct",tag:"direct"},{type:"block",tag:"block"}],route:{final:"direct"}};
+async function exportUserNodeFormat(userId,nodeId,format){
+ try{
+  const d=await legacyAdmin("/nodes/export?user_id="+encodeURIComponent(userId)+"&node_id="+encodeURIComponent(nodeId));
+  const nodeName=(d.node_name||"node").replace(/[^\w\u4e00-\u9fa5-]/g,"_"),f=d.formats||{};
+  if(format==="all")return saveNodeExport(nodeName+"-all-formats.json",JSON.stringify({node_id:d.node_id,node_name:d.node_name,protocol:d.protocol,formats:f},null,2),"application/json");
+  if(format==="clash")return saveNodeExport(nodeName+".yaml",f.clash_meta_yaml||"");
+  if(format==="singbox")return saveNodeExport(nodeName+"-sing-box.json",f.sing_box_json||"","application/json");
+  if(format==="v2rayn")return saveNodeExport(nodeName+"-v2rayn.txt",f.v2rayn_v2rayng_base64||"");
+  if(format==="uri")return saveNodeExport(nodeName+"-links.txt",f.raw_links||"");
+ }catch(e){toast("节点导出失败："+(e.message||"接口错误"))}
 }
 function saveNodeExport(name,content,type="text/plain"){
  const blob=new Blob([content],{type:type+";charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
 }
-function exportNodeAccess(accountId,format){
- const a=activeNodeAccess.find(x=>String(x.account_id)===String(accountId));if(!a?.delivery?.uri){toast("该节点没有可导出的有效配置");return}
- const d=a.delivery,uri=d.uri,baseName=(a.product_name||"node").replace(/[^\w\u4e00-\u9fa5-]/g,"_");
- try{
-  if(format==="uri")return saveNodeExport(baseName+".txt",uri);
-  if(format==="v2rayn")return saveNodeExport(baseName+"-v2rayn.txt",btoa(unescape(encodeURIComponent(uri))));
-  if(format==="clash"){if(!d.clash_yaml)throw Error("此节点服务端未生成 Clash YAML");return saveNodeExport(baseName+".yaml",d.clash_yaml);}
-  if(format==="singbox")return saveNodeExport(baseName+"-singbox.json",JSON.stringify(toSingBoxOutbound(uri),null,2),"application/json");
-  if(format==="all"){
-   const all={protocol:d.protocol,uri,v2rayn_base64:btoa(unescape(encodeURIComponent(uri))),clash_yaml:d.clash_yaml||null,sing_box:null};
-   try{all.sing_box=toSingBoxOutbound(uri)}catch(e){all.sing_box_error=e.message}
-   return saveNodeExport(baseName+"-all-formats.json",JSON.stringify(all,null,2),"application/json");
-  }
- }catch(e){toast("导出失败："+e.message)}
-}
+$("#userNodeAccessResetBtn")?.addEventListener("click",async()=>{
+ const section=$("#userNodeAccessSection"),userId=Number(section.dataset.userId);if(!userId||!confirm("恢复该用户的默认节点权限？将重新允许访问所有已启用节点。"))return;
+ try{await legacyAdmin("/nodes/user-access/reset",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({user_id:userId})});toast("已恢复默认节点权限");await loadUserNodeAccess(userId,"")}
+ catch(e){toast("恢复失败："+(e.message||"接口错误"))}
+});
 
 async function loadOrders(){
  const body=$("#ordersBody");if(!body)return;body.innerHTML='<tr><td colspan="8" class="table-empty">正在读取订单数据…</td></tr>';
