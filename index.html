@@ -29,6 +29,7 @@
         <button class="nav-item" data-page="recharge"><span class="nav-icon">＋</span>余额充值</button>
         <button class="nav-item" data-page="bots"><span class="nav-icon">⚙</span>机器人管理</button>
         <button class="nav-item" data-page="admins"><span class="nav-icon">♙</span>管理员与权限</button>
+        <button class="nav-item" data-page="audit"><span class="nav-icon">▤</span>安全审计</button>
       </nav>
       <div class="sidebar-bottom">
         <div class="secure-note"><span class="secure-dot"></span><span><b>独立管理端</b><small>与商城前台分离</small></span></div>
@@ -486,6 +487,14 @@
         <p class="bot-updated" id="botsUpdated">状态尚未刷新</p>
       </section>
 
+      <section class="page" id="page-audit">
+        <div class="page-heading"><div><p class="eyebrow">SECURITY & COMPLIANCE</p><h1>安全审计</h1><p class="subheading">记录管理员关键操作、目标对象、变更摘要与来源 IP，便于追溯</p></div><button class="btn btn-secondary" id="auditRefresh" type="button">↻ 刷新记录</button></div>
+        <article class="panel data-panel">
+          <div class="table-toolbar"><input id="auditSearch" type="search" placeholder="搜索管理员、操作类型、对象、详情或 IP"><button class="btn btn-primary" id="auditSearchBtn" type="button">查询</button></div>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>时间</th><th>操作管理员</th><th>操作类型</th><th>目标对象</th><th>变更摘要</th><th>来源 IP</th></tr></thead><tbody id="auditLogsBody"><tr><td colspan="6" class="table-empty">进入页面后读取审计记录</td></tr></tbody></table></div>
+          <div class="table-foot"><span id="auditCount">—</span><div class="table-actions"><button class="btn btn-secondary btn-small" id="auditPrev" type="button" disabled>上一页</button><span id="auditPageInfo">第 1 页</span><button class="btn btn-secondary btn-small" id="auditNext" type="button" disabled>下一页</button></div></div>
+        </article>
+      </section>
       <section class="page" id="page-admins">
         <div class="page-heading"><div><p class="eyebrow">ADMINISTRATION & RBAC</p><h1>管理员与权限</h1><p class="subheading">沿用每位成员自己的晴天号铺账号密码，按岗位分配最小权限</p></div><button class="btn btn-secondary" id="adminRefreshBtn" type="button" onclick="loadAdmins()">↻ 刷新</button></div>
         <div class="content-grid admin-account-layout">
