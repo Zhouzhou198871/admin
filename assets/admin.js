@@ -631,6 +631,21 @@ async function loadBotUsers(){
   body.querySelectorAll("[data-bot-user-detail]").forEach(btn=>btn.addEventListener("click",()=>openBotUserDetail(users[Number(btn.dataset.botUserDetail)],bot)));
  }catch(e){body.innerHTML='<tr><td colspan="8" class="table-empty error-text">读取机器人用户失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';$("#botUsersCount").textContent="读取失败"}
 }
+async function loadBotChats(){
+ const body=$("#botChatsBody");if(!body)return;const bot=$("#botUserFilter")?.value||"safew";
+ body.innerHTML='<tr><td colspan="3" class="table-empty">正在读取频道/群组配置…</td></tr>';
+ try{
+  const chats=dataList(await legacyAdmin("/bots/matrix/chats?bot="+encodeURIComponent(bot)));
+  $("#botChatsCount").textContent="已配置 "+chats.length+" 项";
+  body.innerHTML=chats.length?chats.map(x=>'<tr><td class="mono">'+escapeHtml(x.chat_id)+'</td><td>'+escapeHtml(x.title||"未命名")+'</td><td><button class="btn btn-danger btn-small" data-bot-chat-delete="'+escapeHtml(x.chat_id)+'">删除</button></td></tr>').join(""):'<tr><td colspan="3" class="table-empty">当前机器人尚未配置频道或群组</td></tr>';
+  body.querySelectorAll("[data-bot-chat-delete]").forEach(btn=>btn.addEventListener("click",async()=>{if(!confirm("确认移除该频道/群组配置？"))return;try{await legacyAdmin("/bots/matrix/chats/delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({bot,chat_id:btn.dataset.botChatDelete})});toast("配置已移除");await loadBotChats()}catch(e){toast("删除失败："+e.message)}}));
+ }catch(e){body.innerHTML='<tr><td colspan="3" class="table-empty error-text">读取失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>'}
+}
+$("#botChatsManageBtn")?.addEventListener("click",async()=>{const panel=$("#botChatManagerPanel");panel.hidden=!panel.hidden;if(!panel.hidden){panel.scrollIntoView({behavior:"smooth",block:"start"});await loadBotChats()}});
+$("#botChatForm")?.addEventListener("submit",async e=>{
+ e.preventDefault();const btn=$("#botChatSaveBtn"),bot=$("#botUserFilter").value,chat_id=$("#botChatId").value.trim(),title=$("#botChatTitle").value.trim();btn.disabled=true;
+ try{await legacyAdmin("/bots/matrix/chats/save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({bot,chat_id,title})});$("#botChatId").value="";$("#botChatTitle").value="";toast("频道 / 群组配置已保存");await loadBotChats()}catch(err){toast("保存失败："+(err.message||"接口错误"))}finally{btn.disabled=false}
+});
 async function openBotUserDetail(u,bot){
  if(!u)return;
  const uid=u.tg_id||u.user_id||"",name=u.nickname||[u.first_name,u.last_name].filter(Boolean).join(" ")||"未设置昵称";
@@ -657,7 +672,7 @@ async function openBotUserDetail(u,bot){
 
 $("#botUserDetailClose")?.addEventListener("click",()=>$("#botUserDetailModal").hidden=true);
 $("#botUsersRefresh")?.addEventListener("click",loadBotUsers);
-$("#botUserFilter")?.addEventListener("change",loadBotUsers);
+$("#botUserFilter")?.addEventListener("change",()=>{loadBotUsers();if(!$("#botChatManagerPanel")?.hidden)loadBotChats()});
 
 $("#botsRefreshBtn")?.addEventListener("click",loadBots);
 document.querySelectorAll("[data-bot-action]").forEach(btn=>btn.addEventListener("click",async()=>{

@@ -506,3 +506,7 @@ html,body{min-height:100%;height:auto;overflow-x:hidden;overflow-y:auto}
 .domain-check-detail{display:block;color:var(--muted);font-size:11px;margin-top:4px;max-width:220px;overflow-wrap:anywhere}
 .tag-blue{background:rgba(45,120,230,.12);color:#3676d9}
 .tag-red{background:rgba(220,70,70,.12);color:#d64a4a}
+
+.bot-chat-manager{margin:12px 0 16px}
+.bot-chat-manager .admin-form-grid{margin-bottom:12px}
+.bot-chat-manager .table-wrap{max-height:280px;overflow:auto}
