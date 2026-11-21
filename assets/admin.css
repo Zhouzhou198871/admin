@@ -510,3 +510,6 @@ html,body{min-height:100%;height:auto;overflow-x:hidden;overflow-y:auto}
 .bot-chat-manager{margin:12px 0 16px}
 .bot-chat-manager .admin-form-grid{margin-bottom:12px}
 .bot-chat-manager .table-wrap{max-height:280px;overflow:auto}
+
+.domain-value-input{min-width:190px;max-width:260px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.domain-sort-input{width:72px;min-width:72px}
