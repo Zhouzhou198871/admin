@@ -373,19 +373,27 @@ $("#productForm")?.addEventListener("submit",async e=>{
  catch(error){result.className="form-result error";result.textContent=error.message||"保存失败"}
  finally{btn.disabled=false}
 });
-async function loadAccountPool(){
- const body=$("#accountPoolBody");if(!body)return;body.innerHTML='<tr><td colspan="6" class="table-empty">正在读取账号库存…</td></tr>';
- const status=$("#accountPoolStatus")?.value||"";
- const [sr,lr]=await Promise.allSettled([legacyAdmin("/account_pool/stats"),legacyAdmin("/account_pool?status="+encodeURIComponent(status)+"&page=1&size=50")]);
+let accountPoolPage=1;
+const accountPoolPageSize=50;
+async function loadAccountPool(resetPage=true){
+ const body=$("#accountPoolBody");if(!body)return;
+ if(resetPage)accountPoolPage=1;
+ body.innerHTML='<tr><td colspan="6" class="table-empty">正在读取账号库存…</td></tr>';
+ const status=$("#accountPoolStatus")?.value||"",q=$("#accountPoolSearch")?.value.trim()||"";
+ const params=new URLSearchParams({status,q,page:String(accountPoolPage),size:String(accountPoolPageSize)});
+ const [sr,lr]=await Promise.allSettled([legacyAdmin("/account_pool/stats"),legacyAdmin("/account_pool?"+params.toString())]);
  if(sr.status==="fulfilled"){const st=sr.value||{};const available=Number(st.available||0),sold=Number(st.sold||0);$("#accountAvailableCount").textContent=available.toLocaleString("zh-CN");$("#accountSoldCount").textContent=sold.toLocaleString("zh-CN");$("#accountTotalCount").textContent=(available+sold).toLocaleString("zh-CN")}
  if(lr.status!=="fulfilled"){body.innerHTML='<tr><td colspan="6" class="table-empty error-text">库存读取失败：'+escapeHtml(lr.reason?.message||"接口错误")+'</td></tr>';return}
- const d=lr.value||{},items=d.items||dataList(d);
+ const d=lr.value||{},items=d.items||dataList(d),total=Number(d.total??items.length),pages=Math.max(1,Math.ceil(total/accountPoolPageSize));
  body.innerHTML=items.length?items.map(x=>'<tr><td><b>'+escapeHtml(x.email||x.session_id||"—")+'</b></td><td>'+escapeHtml(x.phone||"—")+'</td><td>'+statusPill(x.status==="available"?"active":x.status)+'</td><td class="mono">'+escapeHtml(x.order_id||"—")+'</td><td>'+escapeHtml(formatAdminDate(x.created_at))+'</td><td><div class="table-actions">'+(x.status==="sold"?'<button class="btn btn-secondary btn-small" data-account-restore="'+x.id+'">恢复可售</button>':'')+'<button class="btn btn-danger btn-small" data-account-delete="'+x.id+'">删除</button></div></td></tr>').join(""):'<tr><td colspan="6" class="table-empty">当前筛选下没有账号库存</td></tr>';
- $("#accountPoolCount").textContent="共 "+Number(d.total??items.length).toLocaleString("zh-CN")+" 条账号库存";
- body.querySelectorAll("[data-account-restore]").forEach(b=>b.addEventListener("click",async()=>{b.disabled=true;try{await legacyAdmin("/account_pool/restore",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(b.dataset.accountRestore)})});toast("账号已恢复为可售");loadAccountPool()}catch(e){toast("操作失败："+e.message)}finally{b.disabled=false}}));
- body.querySelectorAll("[data-account-delete]").forEach(b=>b.addEventListener("click",async()=>{if(!confirm("确认删除这条库存记录？"))return;b.disabled=true;try{await legacyAdmin("/account_pool/delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(b.dataset.accountDelete)})});toast("库存记录已删除");loadAccountPool()}catch(e){toast("删除失败："+e.message)}finally{b.disabled=false}}));
+ $("#accountPoolCount").textContent="共 "+total.toLocaleString("zh-CN")+" 条账号库存";
+ if($("#accountPoolPrev"))$("#accountPoolPrev").disabled=accountPoolPage<=1;
+ if($("#accountPoolNext"))$("#accountPoolNext").disabled=accountPoolPage>=pages;
+ if($("#accountPoolPageInfo"))$("#accountPoolPageInfo").textContent="第 "+accountPoolPage+" / "+pages+" 页";
+ body.querySelectorAll("[data-account-restore]").forEach(b=>b.addEventListener("click",async()=>{b.disabled=true;try{await legacyAdmin("/account_pool/restore",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(b.dataset.accountRestore)})});toast("账号已恢复为可售");loadAccountPool(false)}catch(e){toast("操作失败："+e.message)}finally{b.disabled=false}}));
+ body.querySelectorAll("[data-account-delete]").forEach(b=>b.addEventListener("click",async()=>{if(!confirm("确认删除这条库存记录？"))return;b.disabled=true;try{await legacyAdmin("/account_pool/delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(b.dataset.accountDelete)})});toast("库存记录已删除");loadAccountPool(false)}catch(e){toast("删除失败："+e.message)}finally{b.disabled=false}}));
 }
-$("#accountPoolRefresh")?.addEventListener("click",loadAccountPool);$("#accountPoolStatus")?.addEventListener("change",loadAccountPool);
+$("#accountPoolRefresh")?.addEventListener("click",()=>loadAccountPool(true));$("#accountPoolStatus")?.addEventListener("change",()=>loadAccountPool(true));$("#accountPoolSearchBtn")?.addEventListener("click",()=>loadAccountPool(true));$("#accountPoolSearch")?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();loadAccountPool(true)}});$("#accountPoolPrev")?.addEventListener("click",()=>{if(accountPoolPage>1){accountPoolPage--;loadAccountPool(false)}});$("#accountPoolNext")?.addEventListener("click",()=>{accountPoolPage++;loadAccountPool(false)});
 $("#accountImportFile")?.addEventListener("change",async e=>{const f=e.target.files?.[0];if(!f)return;$("#accountImportText").value=await f.text();toast("文件已载入，请检查格式后导入")});
 $("#accountImportForm")?.addEventListener("submit",async e=>{
  e.preventDefault();const textValue=$("#accountImportText").value.trim(),result=$("#accountImportResult"),btn=$("#accountImportSubmit");
