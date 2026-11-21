@@ -5,7 +5,7 @@ const $=s=>document.querySelector(s);
 const REMEMBER_EMAIL_KEY="qingtian_admin_remembered_email";
 const rememberedEmail=localStorage.getItem(REMEMBER_EMAIL_KEY);
 if(rememberedEmail){$("#loginEmail").value=rememberedEmail;$("#rememberPassword").checked=true}
-const pageNames={overview:"经营总览",orders:"订单管理",users:"用户管理",products:"商品与库存",nodes:"节点服务",support:"在线客服",email:"邮件系统",notices:"公告管理",upstream:"上游采购中心",payments:"支付系统",recharge:"余额充值",bots:"机器人管理"};
+const pageNames={overview:"经营总览",orders:"订单管理",users:"用户管理",products:"商品与库存",nodes:"节点服务",support:"在线客服",email:"邮件系统",notices:"公告管理",payments:"支付系统",recharge:"余额充值",bots:"机器人管理"};
 let toastTimer;
 function toast(message){const el=$("#toast");el.textContent=message;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2600)}
 function authHeaders(extra={}){return {...extra,Authorization:"Bearer "+(localStorage.getItem(TOKEN_KEY)||"")}}
@@ -37,12 +37,12 @@ $("#adminLoginForm").addEventListener("submit",async e=>{
 $("#togglePassword").addEventListener("click",()=>{const input=$("#loginPassword"),button=$("#togglePassword"),show=input.type==="password";input.type=show?"text":"password";button.textContent=show?"隐藏":"显示";button.setAttribute("aria-label",show?"隐藏密码":"显示密码");button.setAttribute("aria-pressed",String(show));});
 
 $("#logoutBtn").addEventListener("click",()=>{localStorage.removeItem(TOKEN_KEY);document.body.classList.remove("authenticated");$("#loginPassword").value="";});
-function showPage(name){if(!pageNames[name])return;document.querySelectorAll(".page").forEach(el=>{const active=el.id==="page-"+name;el.classList.toggle("active",active);el.setAttribute("aria-hidden",String(!active))});document.querySelectorAll(".nav-item").forEach(el=>{const active=el.dataset.page===name;el.classList.toggle("active",active);if(active)el.setAttribute("aria-current","page");else el.removeAttribute("aria-current")});$("#pageCrumb").textContent=pageNames[name];$("#sidebar").classList.remove("open");$("#menuToggle").setAttribute("aria-expanded","false");window.scrollTo({top:0,behavior:"smooth"});const loaders={overview:loadOverview,orders:loadOrders,users:loadUsers,products:loadProducts,nodes:loadNodes,support:loadSupport,email:loadEmail,notices:loadNotices,upstream:refreshUpstream,payments:loadPayments,bots:loadBots};if(loaders[name])loaders[name]();}
+function showPage(name){if(!pageNames[name])return;document.querySelectorAll(".page").forEach(el=>{const active=el.id==="page-"+name;el.classList.toggle("active",active);el.setAttribute("aria-hidden",String(!active))});document.querySelectorAll(".nav-item").forEach(el=>{const active=el.dataset.page===name;el.classList.toggle("active",active);if(active)el.setAttribute("aria-current","page");else el.removeAttribute("aria-current")});$("#pageCrumb").textContent=pageNames[name];$("#sidebar").classList.remove("open");$("#menuToggle").setAttribute("aria-expanded","false");window.scrollTo({top:0,behavior:"smooth"});const loaders={overview:loadOverview,orders:loadOrders,users:loadUsers,products:loadProducts,nodes:loadNodes,support:loadSupport,email:loadEmail,notices:loadNotices,payments:loadPayments,bots:loadBots};if(loaders[name])loaders[name]();}
 document.querySelectorAll(".nav-item").forEach(btn=>btn.addEventListener("click",()=>showPage(btn.dataset.page)));
 document.querySelectorAll("[data-go]").forEach(btn=>btn.addEventListener("click",()=>{showPage(btn.dataset.go);if(btn.dataset.productTab)switchProductTab(btn.dataset.productTab);if(btn.dataset.nodeTab)switchNodeTab(btn.dataset.nodeTab)}));
 $("#menuToggle").addEventListener("click",()=>{const open=$("#sidebar").classList.toggle("open");$("#menuToggle").setAttribute("aria-expanded",String(open))});
 $("#refreshBtn").addEventListener("click",async()=>{await Promise.allSettled([checkApi(),loadOverview()]);toast("经营数据已刷新")});
-async function checkApi(){const dot=$("#apiDot"),status=$("#apiStatus");dot.parentElement.classList.remove("ok","bad");status.textContent="正在检查 API";try{const r=await fetchWithTimeout(API_BASE+"/health",{cache:"no-store"},8000);if(!r.ok)throw Error();const d=await r.json();if(!d.ok)throw Error();dot.parentElement.classList.add("ok");status.textContent="API 正常"}catch{dot.parentElement.classList.add("bad");status.textContent="API 暂不可用"}}
+async function checkApi(){const dot=$("#apiDot"),status=$("#apiStatus");dot.parentElement.classList.remove("ok","bad");status.textContent="正在检查 API";try{const r=await fetchWithTimeout(API_BASE+"/health",{cache:"no-store"},8000);if(!r.ok)throw Error();const d=await r.json();if(!d.ok)throw Error();dot.parentElement.classList.add("ok");status.textContent="API 正常";if($("#overviewApiHealth")){$("#overviewApiHealth").textContent="运行正常";$("#overviewApiDetail").textContent="商城健康检查已通过";$("#overviewApiDot").classList.add("is-good");$("#overviewApiDot").classList.remove("is-warn")}}catch{dot.parentElement.classList.add("bad");status.textContent="API 暂不可用";if($("#overviewApiHealth")){$("#overviewApiHealth").textContent="暂不可用";$("#overviewApiDetail").textContent="健康检查未通过，请检查 API";$("#overviewApiDot").classList.add("is-warn");$("#overviewApiDot").classList.remove("is-good")}}}
 document.querySelectorAll("[data-amount]").forEach(btn=>btn.addEventListener("click",()=>{$("#creditAmount").value=btn.dataset.amount}));
 $("#creditForm").addEventListener("submit",async e=>{e.preventDefault();const email=$("#creditEmail").value.trim().toLowerCase(),amount=$("#creditAmount").value.trim(),result=$("#creditResult"),submit=$("#creditSubmit");result.className="form-result";result.textContent="";if(!/^\d{1,8}(\.\d{1,2})?$/.test(amount)||Number(amount)<=0){result.classList.add("error");result.textContent="请输入有效人民币金额，最多两位小数。";return}const amountCny=Number(amount),amountUsdt=(amountCny/4).toFixed(4);if(!confirm("确认向 "+email+" 充值 ¥"+amountCny.toFixed(2)+"？系统按 ¥4.00 = 1 USDT 折算入账。此操作会真实增加用户余额。"))return;submit.disabled=true;submit.textContent="正在提交…";try{await adminRequest("/api/admin/credit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,amount_usdt:amountUsdt})});result.classList.add("success");result.textContent="充值成功。用户："+email+" · 人民币金额：¥"+amountCny.toFixed(2);$("#creditAmount").value="";toast("余额充值成功")}catch(error){result.classList.add("error");result.textContent=error.message||"请求失败"}finally{submit.disabled=false;submit.innerHTML="确认充值"}});
 
@@ -99,7 +99,8 @@ async function loadOverview(){
   legacyAdmin("/shop/products?page=1&size=100"),
   legacyAdmin("/notices"),
   legacyAdmin("/config/mail"),
-  adminRequest("/api/admin/bots")
+  adminRequest("/api/admin/bots"),
+  legacyAdmin("/nodes/health")
  ]);
  const val=i=>jobs[i].status==="fulfilled"?jobs[i].value:null;
  const shop=val(0)||{},stats=val(1)||{},accounts=val(2)||{},tickets=val(3)||{},nodes=dataList(val(4)),plans=dataList(val(5)),ordersData=val(6)||{},productsData=val(7)||{};
@@ -112,6 +113,9 @@ async function loadOverview(){
  const pendingOrders=Number(shop.orders_pending??0)+Number(shop.orders_toship??0);
  const available=Number(accounts.available??accounts.in_stock??0),sold=Number(accounts.sold??0);
  const pendingSupport=Number(tickets.total??dataList(tickets).length??0);
+ const nodeHealth=dataList(val(11)),healthById={};nodeHealth.forEach(x=>healthById[String(x.id)]=x);
+ const enabledNodes=nodes.filter(n=>Number(n.enabled)!==0);
+ const onlineNodes=enabledNodes.filter(n=>healthById[String(n.id)]?.reachable);
  const lowStock=products.filter(p=>Number(p.stock||0)<=5&&Number(p.status??p.is_active??1)!==0).length;
  $("#metricRevenue").textContent=formatCny(revenue);
  $("#metricOrders").textContent=orderTotal.toLocaleString("zh-CN");
@@ -128,6 +132,24 @@ async function loadOverview(){
  $("#metricNotices").textContent=notices.filter(n=>Number(n.status)===1).length.toLocaleString("zh-CN");
  $("#metricEmail").textContent=mail.smtp_host&&mail.sender_email?"已配置":"待配置";
  $("#metricBots").textContent=bots.filter(b=>b.status==="active").length+" / "+(bots.length||3);
+ $("#overviewNodeHealth").textContent=onlineNodes.length+" / "+enabledNodes.length+" 在线";
+ $("#overviewNodeDetail").textContent=nodes.length+" 个节点配置 · "+(nodes.length-enabledNodes.length)+" 个已停用";
+ $("#overviewNodeDot").classList.toggle("is-good",enabledNodes.length>0&&onlineNodes.length===enabledNodes.length);
+ $("#overviewNodeDot").classList.toggle("is-warn",onlineNodes.length<enabledNodes.length);
+ const runningBots=bots.filter(b=>b.status==="active").length;
+ $("#overviewBotHealth").textContent=runningBots+" / "+(bots.length||3)+" 运行";
+ $("#overviewBotDetail").textContent=runningBots===(bots.length||3)?"机器人进程状态正常":"存在未运行或未返回状态的机器人";
+ $("#overviewBotDot").classList.toggle("is-good",runningBots===(bots.length||3));
+ $("#overviewBotDot").classList.toggle("is-warn",runningBots!==(bots.length||3));
+ const mailReady=!!(mail.smtp_host&&mail.sender_email);
+ $("#overviewMailHealth").textContent=mailReady?"已配置":"待配置";
+ $("#overviewMailDetail").textContent=mailReady?(mail.smtp_host+" · "+mail.sender_email):"SMTP 主机或发件邮箱未配置";
+ $("#overviewMailDot").classList.toggle("is-good",mailReady);
+ $("#overviewMailDot").classList.toggle("is-warn",!mailReady);
+ $("#overviewSupportHealth").textContent=pendingSupport.toLocaleString("zh-CN")+" 条待处理";
+ $("#overviewSupportDetail").textContent=pendingSupport?"请进入客服工作台及时回复":"当前没有待处理工单";
+ $("#overviewSupportDot").classList.toggle("is-good",pendingSupport===0);
+ $("#overviewSupportDot").classList.toggle("is-warn",pendingSupport>0);
  $("#todoOrders").textContent=pendingOrders.toLocaleString("zh-CN");
  $("#todoSupport").textContent=pendingSupport.toLocaleString("zh-CN");
  $("#todoLowStock").textContent=lowStock.toLocaleString("zh-CN");
@@ -353,10 +375,19 @@ async function loadProtocolNodes(){
   $("#protocolNodesCount").textContent="共 "+nodes.length+" 个协议节点 · "+nodes.filter(x=>Number(x.enabled)).length+" 个启用";
   document.querySelectorAll("[data-proto-cap]").forEach(card=>{
    const proto=card.dataset.protoCap;
-   if(["socks5","mtproto","ss2022","http"].includes(proto))return;
-   const group=nodes.filter(x=>x.protocol===proto),enabled=group.filter(x=>Number(x.enabled)),online=enabled.filter(x=>healthById[String(x.id)]?.reachable);
+   if(proto==="mtproto"){card.querySelector("small").textContent="Telegram 专属代理 · 独立服务状态待接入";card.classList.add("pending");return}
+   if(["socks5","ss2022","http"].includes(proto)){card.querySelector("small").textContent="待补齐服务端订阅渲染与真实节点配置";card.classList.add("pending");return}
+   const aliases={shadowsocks:"ss","shadowsocks-2022":"ss2022",shadowsocks2022:"ss2022",socks:"socks5","http/https":"http"};
+   const group=nodes.filter(x=>(aliases[String(x.protocol||"").toLowerCase()]||String(x.protocol||"").toLowerCase())===proto),enabled=group.filter(x=>Number(x.enabled)),online=enabled.filter(x=>healthById[String(x.id)]?.reachable);
    card.querySelector("small").textContent=enabled.length?"启用 "+enabled.length+" · 在线 "+online.length:"尚无启用节点";
    card.classList.toggle("pending",!enabled.length);
+  });
+  const activeProtocolTypes=new Set(nodes.filter(n=>Number(n.enabled)).map(n=>({shadowsocks:"ss",shadowsocks2022:"ss2022","shadowsocks-2022":"ss2022",socks:"socks5","http/https":"http"}[String(n.protocol||"").toLowerCase()]||String(n.protocol||"").toLowerCase())));
+  const onlineProtocolNodes=nodes.filter(n=>Number(n.enabled)&&healthById[String(n.id)]?.reachable).length;
+  $("#protocolConfiguredCount").textContent=activeProtocolTypes.size+" / 8";
+  $("#protocolOnlineCount").textContent=onlineProtocolNodes+" / "+nodes.filter(n=>Number(n.enabled)).length;
+  $("#protocolPendingCount").textContent=["socks5","http","ss2022"].filter(p=>!activeProtocolTypes.has(p)).length+" 种";
+  $("#protocolMtprotoState").textContent="独立服务待核验";
   });
   body.querySelectorAll("[data-proto-edit]").forEach(btn=>btn.addEventListener("click",()=>{const n=nodes.find(x=>String(x.id)===btn.dataset.protoEdit);if(n)editProtocolNode(n)}));
   body.querySelectorAll("[data-proto-toggle]").forEach(btn=>btn.addEventListener("click",async()=>{try{await legacyAdmin("/nodes/toggle",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(btn.dataset.protoToggle),enabled:Number(btn.dataset.enabled)})});toast(Number(btn.dataset.enabled)?"协议节点已启用":"协议节点已停用");await loadProtocolNodes()}catch(e){toast("协议状态更新失败："+(e.message||"接口错误"))}}));

@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f7fb">
   <title>晴天账号铺 · 管理后台</title>
-  <link rel="stylesheet" href="./assets/admin.css?v=20261121-16">
-  <script src="./assets/admin.js?v=20261121-16" defer></script>
+  <link rel="stylesheet" href="./assets/admin.css?v=20261121-17">
+  <script src="./assets/admin.js?v=20261121-17" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -25,7 +25,6 @@
         <button class="nav-item" data-page="email"><span class="nav-icon">✉</span>邮件系统</button>
         <button class="nav-item" data-page="notices"><span class="nav-icon">▣</span>公告管理</button>
         <button class="nav-item" data-page="nodes"><span class="nav-icon">⌁</span>节点服务</button>
-        <button class="nav-item" data-page="upstream"><span class="nav-icon">⇄</span>上游采购中心</button>
         <button class="nav-item" data-page="payments"><span class="nav-icon">￥</span>支付系统</button>
         <button class="nav-item" data-page="recharge"><span class="nav-icon">＋</span>余额充值</button>
         <button class="nav-item" data-page="bots"><span class="nav-icon">⚙</span>机器人管理</button>
@@ -86,6 +85,14 @@
           <div class="panel-heading"><div><h2>最近订单</h2><p>最新业务订单，点击查看完整订单列表</p></div><button class="btn btn-secondary" data-go="orders">全部订单 →</button></div>
           <div class="table-wrap"><table class="data-table"><thead><tr><th>订单号</th><th>客户</th><th>商品</th><th>金额</th><th>状态</th><th>创建时间</th></tr></thead><tbody id="overviewOrdersBody"><tr><td colspan="6" class="table-empty">正在读取业务数据…</td></tr></tbody></table></div>
         </article>
+        <div class="section-title"><div><h2>系统运行状态</h2><p>根据现有服务接口实时汇总，不显示模拟状态</p></div><span class="live-label"><i></i>服务监测</span></div>
+        <div class="overview-service-grid">
+          <button class="service-health-card" type="button" data-go="overview"><span class="service-health-top"><b>商城 API</b><i id="overviewApiDot" class="health-dot"></i></span><strong id="overviewApiHealth">检查中</strong><small id="overviewApiDetail">正在检测商城服务</small></button>
+          <button class="service-health-card" type="button" data-go="nodes"><span class="service-health-top"><b>节点协议服务</b><i id="overviewNodeDot" class="health-dot"></i></span><strong id="overviewNodeHealth">—</strong><small id="overviewNodeDetail">等待读取节点健康状态</small></button>
+          <button class="service-health-card" type="button" data-go="bots"><span class="service-health-top"><b>Telegram 机器人</b><i id="overviewBotDot" class="health-dot"></i></span><strong id="overviewBotHealth">—</strong><small id="overviewBotDetail">等待读取机器人进程状态</small></button>
+          <button class="service-health-card" type="button" data-go="email"><span class="service-health-top"><b>邮件通道</b><i id="overviewMailDot" class="health-dot"></i></span><strong id="overviewMailHealth">—</strong><small id="overviewMailDetail">等待读取 SMTP 配置</small></button>
+          <button class="service-health-card" type="button" data-go="support"><span class="service-health-top"><b>在线客服</b><i id="overviewSupportDot" class="health-dot"></i></span><strong id="overviewSupportHealth">—</strong><small id="overviewSupportDetail">等待读取待处理会话</small></button>
+        </div>
       </section>
       
       <section class="page" id="page-payments">
@@ -225,6 +232,7 @@
       </section>
       <section class="page" id="page-nodes">
         <div class="page-heading"><div><p class="eyebrow">NODE OPERATIONS</p><h1>节点服务</h1><p class="subheading">节点线路、协议、套餐、流量与人民币定价统一管理</p></div><button class="btn btn-secondary" id="nodesRefresh">↻ 刷新</button></div>
+        <div class="notice"><b>协议范围</b><span>8 种主流接入协议独立管理；Telegram MTProto 作为专属代理单独核验。只有服务端订阅渲染与真实连通性均通过的协议才会标记为已接入。</span></div>
         <div class="tab-bar" id="nodeTabs"><button class="tab-button active" data-node-tab="plans">套餐与价格</button><button class="tab-button" data-node-tab="servers">节点线路</button><button class="tab-button" data-node-tab="protocols">协议开通</button><button class="tab-button" data-node-tab="orders">节点订单</button></div>
         <div class="node-view active" id="nodeView-plans">
           <div class="toolbar-row"><p class="field-hint">套餐价格统一以人民币展示；保存时按服务端分单位换算。</p><button class="btn btn-primary" id="planAddBtn">＋ 新增套餐</button></div>
@@ -274,16 +282,22 @@
         </div>
 
         <div class="node-view" id="nodeView-protocols">
-          <div class="toolbar-row"><p class="field-hint">只开放订阅渲染器已支持的 VLESS、VMess、Trojan、Hysteria2、Shadowsocks。启用前会检测域名端口连通性。</p><button class="btn btn-primary" id="protocolNodeAddBtn">＋ 新增协议节点</button></div>
+          <div class="toolbar-row"><p class="field-hint">8 种主流协议与 Telegram MTProto 分开管理；当前已接入的协议会按真实节点与端口健康检查显示。</p><button class="btn btn-primary" id="protocolNodeAddBtn">＋ 新增协议节点</button></div>
+          <div class="protocol-summary-strip">
+            <div><small>已配置协议类型</small><b id="protocolConfiguredCount">—</b></div>
+            <div><small>在线协议节点</small><b id="protocolOnlineCount">—</b></div>
+            <div><small>待接入主流协议</small><b id="protocolPendingCount">3</b></div>
+            <div><small>Telegram MTProto</small><b id="protocolMtprotoState">独立核验</b></div>
+          </div>
           <div class="protocol-capability-grid" id="protocolCapabilityGrid">
             <div class="protocol-capability" data-proto-cap="vless"><b>VLESS</b><span>订阅支持</span><small>检测中</small></div>
             <div class="protocol-capability" data-proto-cap="vmess"><b>VMess</b><span>订阅支持</span><small>检测中</small></div>
             <div class="protocol-capability" data-proto-cap="trojan"><b>Trojan</b><span>可配置</span><small>尚无启用节点</small></div>
             <div class="protocol-capability" data-proto-cap="hysteria2"><b>Hysteria2</b><span>可配置</span><small>尚无启用节点</small></div>
             <div class="protocol-capability" data-proto-cap="ss"><b>Shadowsocks</b><span>可配置</span><small>尚无启用节点</small></div>
-            <div class="protocol-capability pending" data-proto-cap="socks5"><b>SOCKS5</b><span>待接入订阅</span><small>旧线路不等于已迁移</small></div>
-            <div class="protocol-capability pending" data-proto-cap="mtproto"><b>MTProto</b><span>Telegram 专属</span><small>由签到机器人管理</small></div>
-            <div class="protocol-capability pending" data-proto-cap="ss2022"><b>Shadowsocks 2022</b><span>待部署</span><small>当前渲染器未实现</small></div>
+            <div class="protocol-capability pending" data-proto-cap="socks5"><b>SOCKS5</b><span>待接入订阅</span><small>需补齐代理凭证与订阅渲染</small></div>
+            <div class="protocol-capability pending" data-proto-cap="mtproto"><b>MTProto</b><span>Telegram 专属</span><small>MTProto 独立服务，需真实状态接口</small></div>
+            <div class="protocol-capability pending" data-proto-cap="ss2022"><b>Shadowsocks 2022</b><span>待接入</span><small>需补齐服务端订阅渲染</small></div>
             <div class="protocol-capability pending" data-proto-cap="http"><b>HTTP / HTTPS</b><span>待部署</span><small>当前渲染器未实现</small></div>
           </div>
           <article class="panel form-panel compact-form" id="protocolNodeFormPanel" hidden>
@@ -316,12 +330,6 @@
             <div class="table-wrap"><table class="data-table"><thead><tr><th>订单号</th><th>客户</th><th>套餐</th><th>金额</th><th>状态</th><th>创建时间</th></tr></thead><tbody id="nodeAdminOrdersBody"><tr><td colspan="6" class="table-empty">等待加载节点订单</td></tr></tbody></table></div><div class="table-foot"><span id="nodeAdminOrdersCount">—</span><span>全站节点服务订单</span></div>
           </article>
         </div>
-      </section>
-      <section class="page" id="page-upstream">
-        <div class="page-heading"><div><p class="eyebrow">SUPPLIER OPERATIONS</p><h1>上游采购中心</h1><p class="subheading">上游采购订单记录、账户余额接口状态与 API 连接</p></div><button class="btn btn-secondary" id="upstreamRefresh">↻ 检查连接</button></div>
-        <div class="notice"><b>真实数据状态</b><span>继续复用既有大号商采购代理。订单记录已接入本地真实采购流水；供应商余额接口暂未提供，因此余额不会显示估算值。</span></div>
-        <div class="content-grid upstream-grid"><article class="panel"><div class="panel-heading"><div><h2>上游账户余额</h2><p>供应商实时可用余额</p></div><span class="tag" id="upstreamBalanceStatus">接口待接通</span></div><div class="upstream-balance-value" id="upstreamBalance">暂不可读取</div><p class="integration-tip" id="upstreamBalanceHint">通过服务端安全代理读取，不在浏览器暴露供应商密钥。</p></article><article class="panel"><div class="panel-heading"><div><h2>上游 API 连接</h2><p>复用现有采购服务，不新建采购系统</p></div><span class="tag" id="upstreamApiStatus">未验证</span></div><div class="info-line"><span>采购方式</span><b>现有大号商 API</b></div><div class="info-line"><span>密钥管理</span><b>仅服务端保存</b></div><div class="info-line"><span>币种</span><b>CNY 人民币</b></div></article></div>
-        <article class="panel data-panel node-data-panel"><div class="panel-heading"><div><h2>上游订单</h2><p>真实采购流水、上游订单号与同步时间</p></div><span class="tag" id="upstreamOrderCount">—</span></div><div class="table-wrap"><table class="data-table"><thead><tr><th>上游订单号</th><th>关联商城订单</th><th>商品</th><th>采购金额</th><th>状态</th><th>下单时间</th></tr></thead><tbody id="upstreamOrdersBody"><tr><td colspan="6" class="table-empty">查询接口尚未接通，不显示模拟数据</td></tr></tbody></table></div></article>
       </section>
       <section class="page" id="page-support">
         <div class="page-heading"><div><p class="eyebrow">CUSTOMER SUPPORT</p><h1>在线客服</h1><p class="subheading">查看客户会话、人工接管 AI、回复消息与处理售后工单</p></div><button class="btn btn-secondary" id="supportRefresh">↻ 刷新会话</button></div>
