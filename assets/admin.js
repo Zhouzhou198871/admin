@@ -664,7 +664,7 @@ function renderChatMessage(m){
 }
 let activeChatOldestId=0,activeChatHasMore=false;
 async function loadChatHistory(id,userId=activeChatUserId,email=activeChatEmail,beforeId=0,append=false){
- activeChatId=id;activeChatUserId=userId||activeChatUserId||0;activeChatEmail=email||activeChatEmail||"";
+ activeChatId=id;activeChatUserId=Number(userId??0);activeChatEmail=String(email??"");
  const area=$("#chatMessages"),older=$("#chatLoadOlder"),status=$("#chatHistoryStatus");
  if(!append){$("#chatRoomTitle").textContent="客户会话 #"+id;$("#chatRoomMeta").textContent="用户 ID："+(activeChatUserId||"—")+" · "+(activeChatEmail||"未绑定邮箱")+" · 正在读取消息…";area.innerHTML='<div class="empty-state">正在读取聊天记录…</div>';$("#chatReplyText").disabled=false;$("#chatReplyBtn").disabled=false;$("#chatHandoffBtn").disabled=false;$("#chatEmojiToggle").disabled=false;$("#chatAttachment").disabled=false;}
  try{
