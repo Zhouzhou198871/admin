@@ -841,7 +841,7 @@ document.querySelectorAll("[data-bot-logs]").forEach(btn=>btn.addEventListener("
  catch(error){$("#botLogs").textContent="日志读取失败："+(error.message||"服务暂不可用");$("#botLogStatus").textContent="读取失败"}
 }));
  
-async let auditPage=1;
+let auditPage=1;
 const auditPageSize=50;
 async function loadAuditLogs(resetPage=true){
  const body=$("#auditLogsBody");if(!body)return;
