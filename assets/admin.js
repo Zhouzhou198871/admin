@@ -17,6 +17,7 @@ function hydrateIcons(root=document){
   if(icon)el.innerHTML='<span class="material-symbols-rounded" aria-hidden="true">'+icon+'</span>';
  });
 }
+hydrateIcons();
 function authHeaders(extra={}){return {...extra,Authorization:"Bearer "+(localStorage.getItem(TOKEN_KEY)||"")}}
 async function adminRequest(path,options={}){const response=await fetchWithTimeout(API_BASE+path,{...options,headers:authHeaders(options.headers||{})},12000);let data={};try{data=await response.json()}catch{}if(!response.ok||!data.ok)throw new Error(data.error||"request_failed");return data}
 function adminHasPermission(permission){const p=currentAdmin?.permissions||[];return p.includes("*")||p.includes(permission)||(permission.endsWith(".read")&&p.includes("overview.read"))||p.includes(permission.replace(/\.read$/,".manage"))}
