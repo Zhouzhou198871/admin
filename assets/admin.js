@@ -862,7 +862,7 @@ $("#auditSearch")?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventD
 $("#auditRefresh")?.addEventListener("click",()=>loadAuditLogs(false));
 $("#auditPrev")?.addEventListener("click",()=>{if(auditPage>1){auditPage--;loadAuditLogs(false)}});
 $("#auditNext")?.addEventListener("click",()=>{auditPage++;loadAuditLogs(false)});
-function loadAdmins(){
+async function loadAdmins(){
  const body=$("#adminUsersBody");if(!body)return;body.innerHTML='<tr><td colspan="6" class="table-empty">正在读取管理员列表…</td></tr>';
  try{
   const d=await adminRequest("/api/admin/staff");
