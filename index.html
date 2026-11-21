@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f5f7fb">
   <title>晴天账号铺 · 管理后台</title>
   <link rel="stylesheet" href="./assets/admin.css?v=20261121-17">
-  <script src="./assets/admin.js?v=20261121-19" defer></script>
+  <script src="./assets/admin.js?v=20261121-20" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -28,6 +28,7 @@
         <button class="nav-item" data-page="payments"><span class="nav-icon">￥</span>支付系统</button>
         <button class="nav-item" data-page="recharge"><span class="nav-icon">＋</span>余额充值</button>
         <button class="nav-item" data-page="bots"><span class="nav-icon">⚙</span>机器人管理</button>
+        <button class="nav-item" data-page="admins"><span class="nav-icon">♙</span>管理员与权限</button>
       </nav>
       <div class="sidebar-bottom">
         <div class="secure-note"><span class="secure-dot"></span><span><b>独立管理端</b><small>与商城前台分离</small></span></div>
@@ -169,6 +170,12 @@
             <section><h3>最近登录记录</h3><div class="table-wrap"><table class="data-table"><thead><tr><th>IP 地址</th><th>设备 / 浏览器</th><th>时间</th></tr></thead><tbody id="userLoginHistory"><tr><td colspan="3" class="table-empty">等待加载</td></tr></tbody></table></div></section>
             <section><h3>最近订单</h3><div class="table-wrap"><table class="data-table"><thead><tr><th>订单号</th><th>金额</th><th>支付方式</th><th>状态</th></tr></thead><tbody id="userOrdersHistory"><tr><td colspan="4" class="table-empty">等待加载</td></tr></tbody></table></div></section>
           </div>
+          <section id="userNodeAccessSection" class="user-node-access" hidden>
+            <div class="panel-heading"><div><h3>节点权限</h3><p>为该客户开通指定节点套餐；会真实创建服务端账号</p></div><span class="tag">节点授权</span></div>
+            <div class="node-access-grant"><select id="userNodePackage"><option value="">选择需要开通的节点套餐</option></select><button class="btn btn-primary" id="userNodeGrantBtn" type="button">为该用户开通节点</button></div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>节点 / 套餐</th><th>协议</th><th>状态</th><th>到期时间</th><th>配置导出 / 操作</th></tr></thead><tbody id="userNodeAccessBody"><tr><td colspan="5" class="table-empty">读取节点权限</td></tr></tbody></table></div>
+            <p class="field-hint">导出全部会打包该节点可用的原始链接、V2RayN Base64、Clash/Mihomo 与 Sing-box 格式；协议不支持的格式会明确标记。</p>
+          </section>
           <div class="form-result" id="userDetailResult"></div>
         </article>
       </div>
@@ -402,6 +409,31 @@
         <p class="bot-updated" id="botsUpdated">状态尚未刷新</p>
       </section>
 
+      <section class="page" id="page-admins">
+        <div class="page-heading"><div><p class="eyebrow">ADMINISTRATION & RBAC</p><h1>管理员与权限</h1><p class="subheading">沿用每位成员自己的晴天号铺账号密码，按岗位分配最小权限</p></div><button class="btn btn-secondary" id="adminRefreshBtn" type="button" onclick="loadAdmins()">↻ 刷新</button></div>
+        <div class="content-grid admin-account-layout">
+          <article class="panel">
+            <div class="panel-heading"><div><h2>当前登录账户</h2><p>主账号不可被普通管理员移除</p></div><span class="tag tag-green">当前账户</span></div>
+            <div class="admin-account-grid">
+              <div><small>账户邮箱</small><b id="adminAccountEmail">—</b></div><div><small>账户昵称</small><b id="adminAccountNickname">—</b></div>
+              <div><small>管理员等级</small><b id="adminAccountRole">—</b></div><div><small>用户 ID</small><b id="adminAccountId">—</b></div>
+              <div><small>账户创建时间</small><b id="adminAccountCreated">—</b></div>
+            </div>
+          </article>
+          <article class="panel form-panel">
+            <div class="panel-heading"><div><h2>添加管理员</h2><p>先注册晴天号铺账户，再按邮箱授权后台角色</p></div></div>
+            <form id="adminAddForm" class="admin-form-grid">
+              <label class="span-two">成员注册邮箱<input id="newAdminEmail" type="email" required placeholder="输入已注册的晴天号铺邮箱"></label>
+              <label class="span-two">管理员等级<select id="newAdminRole" required><option value="operations_admin">运营管理员</option><option value="support_admin">客服管理员</option><option value="node_admin">节点管理员</option><option value="viewer">只读管理员</option><option value="super_admin">超级管理员</option></select></label>
+              <div class="form-actions span-two"><button class="btn btn-primary" id="adminAddBtn" type="submit">添加管理员</button><span class="form-result" id="adminAddResult"></span></div>
+            </form>
+          </article>
+        </div>
+        <article class="panel data-panel">
+          <div class="panel-heading"><div><h2>管理员列表</h2><p>变更角色或移除权限不会删除成员原有商城账户</p></div><span class="tag" id="adminCount">—</span></div>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>账户</th><th>等级</th><th>状态</th><th>添加时间</th><th>更新时间</th><th>操作</th></tr></thead><tbody id="adminUsersBody"><tr><td colspan="6" class="table-empty">登录后加载</td></tr></tbody></table></div>
+        </article>
+      </section>
       <footer class="footer"><span>晴天账号铺 · 独立管理后台</span><span>Build by GitHub Actions</span></footer>
     </main>
   </div>

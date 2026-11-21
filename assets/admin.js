@@ -5,12 +5,23 @@ const $=s=>document.querySelector(s);
 const REMEMBER_EMAIL_KEY="qingtian_admin_remembered_email";
 const rememberedEmail=localStorage.getItem(REMEMBER_EMAIL_KEY);
 if(rememberedEmail){$("#loginEmail").value=rememberedEmail;$("#rememberPassword").checked=true}
-const pageNames={overview:"经营总览",orders:"订单管理",users:"用户管理",products:"商品与库存",nodes:"节点服务",support:"在线客服",email:"邮件系统",notices:"公告管理",payments:"支付系统",recharge:"余额充值",bots:"机器人管理"};
+const pageNames={overview:"经营总览",orders:"订单管理",users:"用户管理",products:"商品与库存",nodes:"节点服务",support:"在线客服",email:"邮件系统",notices:"公告管理",payments:"支付系统",recharge:"余额充值",bots:"机器人管理",admins:"管理员与权限"};
+let currentAdmin=null,activeNodeAccess=[];
 let toastTimer;
 function toast(message){const el=$("#toast");el.textContent=message;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2600)}
 function authHeaders(extra={}){return {...extra,Authorization:"Bearer "+(localStorage.getItem(TOKEN_KEY)||"")}}
 async function adminRequest(path,options={}){const response=await fetchWithTimeout(API_BASE+path,{...options,headers:authHeaders(options.headers||{})},12000);let data={};try{data=await response.json()}catch{}if(!response.ok||!data.ok)throw new Error(data.error||"request_failed");return data}
-async function verifyAdmin(){const token=localStorage.getItem(TOKEN_KEY);if(!token){document.body.classList.remove("authenticated");return false}try{await adminRequest("/api/admin/session");document.body.classList.add("authenticated");return true}catch(error){const denied=["unauthorized","invalid_token","token_expired","admin_forbidden"].includes(error.message);if(denied)localStorage.removeItem(TOKEN_KEY);document.body.classList.remove("authenticated");$("#loginError").textContent=denied?"登录状态已失效，请重新登录。":"暂时无法连接验证服务，请检查网络后重试。";return false}}
+function adminHasPermission(permission){const p=currentAdmin?.permissions||[];return p.includes("*")||p.includes(permission)||p.includes(permission.replace(/\.read$/,".manage"))}
+function applyAdminAccess(){
+ const needs={overview:"overview.read",orders:"orders.read",users:"users.read",products:"products.read",nodes:"nodes.read",support:"support.read",email:"email.read",notices:"notices.read",payments:"payments.read",recharge:"finance.manage",bots:"bots.read",admins:"staff.manage"};
+ document.querySelectorAll(".nav-item").forEach(el=>{const p=needs[el.dataset.page];el.hidden=!!p&&!adminHasPermission(p)});
+ if($("#adminAccountRole"))$("#adminAccountRole").textContent=currentAdmin?.role_label||"—";
+ if($("#adminAccountEmail"))$("#adminAccountEmail").textContent=currentAdmin?.email||"—";
+ if($("#adminAccountNickname"))$("#adminAccountNickname").textContent=currentAdmin?.nickname||"—";
+ if($("#adminAccountId"))$("#adminAccountId").textContent=currentAdmin?.id||"—";
+ if($("#adminAccountCreated"))$("#adminAccountCreated").textContent=currentAdmin?.created_at?formatAdminDate(currentAdmin.created_at):"—";
+}
+async function verifyAdmin(){const token=localStorage.getItem(TOKEN_KEY);if(!token){document.body.classList.remove("authenticated");currentAdmin=null;return false}try{const session=await adminRequest("/api/admin/session");currentAdmin=session.admin||null;applyAdminAccess();document.body.classList.add("authenticated");return true}catch(error){const denied=["unauthorized","invalid_token","token_expired","admin_forbidden"].includes(error.message);if(denied)localStorage.removeItem(TOKEN_KEY);document.body.classList.remove("authenticated");currentAdmin=null;$("#loginError").textContent=denied?"登录状态已失效，请重新登录。":"暂时无法连接验证服务，请检查网络后重试。";return false}}
 async function fetchWithTimeout(url,options={},timeoutMs=12000){
  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),timeoutMs);
  try{return await fetch(url,{...options,signal:controller.signal})}
@@ -25,7 +36,7 @@ $("#adminLoginForm").addEventListener("submit",async e=>{
   const response=await fetchWithTimeout(API_BASE+"/api/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password})});
   const data=await response.json();if(!response.ok||!data.token)throw new Error(data.error||"invalid_credentials");
   localStorage.setItem(TOKEN_KEY,data.token);err.textContent="账号验证通过，正在确认管理员权限…";btn.textContent="确认管理权限…";
-  await adminRequest("/api/admin/session");
+  const session=await adminRequest("/api/admin/session");currentAdmin=session.admin||null;applyAdminAccess();
   if(remember&&window.PasswordCredential&&navigator.credentials&&navigator.credentials.store){try{await navigator.credentials.store(new PasswordCredential({id:email,password,name:"晴天账号铺管理后台"}))}catch(saveError){console.info("Browser password manager did not accept the credential",saveError)}}
   if(!remember)$("#loginPassword").value="";$("#loginScreen").hidden=true;document.body.classList.add("authenticated");err.textContent="";checkApi();showPage("overview");
  }catch(error){
@@ -36,8 +47,8 @@ $("#adminLoginForm").addEventListener("submit",async e=>{
 
 $("#togglePassword").addEventListener("click",()=>{const input=$("#loginPassword"),button=$("#togglePassword"),show=input.type==="password";input.type=show?"text":"password";button.textContent=show?"隐藏":"显示";button.setAttribute("aria-label",show?"隐藏密码":"显示密码");button.setAttribute("aria-pressed",String(show));});
 
-$("#logoutBtn").addEventListener("click",()=>{localStorage.removeItem(TOKEN_KEY);document.body.classList.remove("authenticated");$("#loginPassword").value="";});
-function showPage(name){if(!pageNames[name])return;document.querySelectorAll(".page").forEach(el=>{const active=el.id==="page-"+name;el.classList.toggle("active",active);el.setAttribute("aria-hidden",String(!active))});document.querySelectorAll(".nav-item").forEach(el=>{const active=el.dataset.page===name;el.classList.toggle("active",active);if(active)el.setAttribute("aria-current","page");else el.removeAttribute("aria-current")});$("#pageCrumb").textContent=pageNames[name];$("#sidebar").classList.remove("open");$("#menuToggle").setAttribute("aria-expanded","false");window.scrollTo({top:0,behavior:"smooth"});const loaders={overview:loadOverview,orders:loadOrders,users:loadUsers,products:loadProducts,nodes:loadNodes,support:loadSupport,email:loadEmail,notices:loadNotices,payments:loadPayments,bots:loadBots};if(loaders[name])loaders[name]();}
+$("#logoutBtn").addEventListener("click",()=>{localStorage.removeItem(TOKEN_KEY);currentAdmin=null;document.body.classList.remove("authenticated");$("#loginPassword").value="";});
+function showPage(name){if(!pageNames[name])return;const need=({overview:"overview.read",orders:"orders.read",users:"users.read",products:"products.read",nodes:"nodes.read",support:"support.read",email:"email.read",notices:"notices.read",payments:"payments.read",recharge:"finance.manage",bots:"bots.read",admins:"staff.manage"})[name];if(need&&!adminHasPermission(need)){toast("当前管理员没有此模块权限");return}document.querySelectorAll(".page").forEach(el=>{const active=el.id==="page-"+name;el.classList.toggle("active",active);el.setAttribute("aria-hidden",String(!active))});document.querySelectorAll(".nav-item").forEach(el=>{const active=el.dataset.page===name;el.classList.toggle("active",active);if(active)el.setAttribute("aria-current","page");else el.removeAttribute("aria-current")});$("#pageCrumb").textContent=pageNames[name];$("#sidebar").classList.remove("open");$("#menuToggle").setAttribute("aria-expanded","false");window.scrollTo({top:0,behavior:"smooth"});const loaders={overview:loadOverview,orders:loadOrders,users:loadUsers,products:loadProducts,nodes:loadNodes,support:loadSupport,email:loadEmail,notices:loadNotices,payments:loadPayments,bots:loadBots,admins:loadAdmins};if(loaders[name])loaders[name]();}
 document.querySelectorAll(".nav-item").forEach(btn=>btn.addEventListener("click",()=>showPage(btn.dataset.page)));
 document.querySelectorAll("[data-go]").forEach(btn=>btn.addEventListener("click",()=>{showPage(btn.dataset.go);if(btn.dataset.productTab)switchProductTab(btn.dataset.productTab);if(btn.dataset.nodeTab)switchNodeTab(btn.dataset.nodeTab)}));
 $("#menuToggle").addEventListener("click",()=>{const open=$("#sidebar").classList.toggle("open");$("#menuToggle").setAttribute("aria-expanded",String(open))});
@@ -183,11 +194,81 @@ async function openUserDetail(id){
   $("#userDetailSummary").innerHTML=items.map(x=>'<div class="user-detail-item"><small>'+escapeHtml(x[0])+'</small><b>'+escapeHtml(String(x[1]))+'</b></div>').join("");
   const logs=u.login_history||[];
   $("#userLoginHistory").innerHTML=logs.length?logs.map(x=>'<tr><td class="mono">'+escapeHtml(x.ip||"—")+'</td><td>'+escapeHtml((x.ua||"—").slice(0,100))+'</td><td>'+escapeHtml(formatAdminDate(x.created_at))+'</td></tr>').join(""):'<tr><td colspan="3" class="table-empty">暂无登录历史</td></tr>';
+  await loadUserNodeAccess(id,u.email||"");
   const orders=u.orders||[];
   $("#userOrdersHistory").innerHTML=orders.length?orders.map(x=>'<tr><td class="mono">'+escapeHtml(x.trade_no||"—")+'</td><td class="money">'+formatCny(Number(x.total_amount||0)/100)+'</td><td>'+escapeHtml(({alipay:"支付宝",wechat:"微信支付",usdt:"USDT"})[x.method]||x.method||"—")+'</td><td>'+statusPill(orderStatusLabel(x.status))+'</td></tr>').join(""):'<tr><td colspan="4" class="table-empty">暂无订单</td></tr>';
  }catch(e){$("#userDetailMeta").textContent="读取失败";$("#userDetailSummary").innerHTML='<div class="table-empty error-text">'+escapeHtml(e.message||"读取用户详情失败")+'</div>'}
 }
 $("#userDetailClose")?.addEventListener("click",()=>$("#userDetailModal").hidden=true);
+
+async function loadUserNodeAccess(userId,email){
+ const section=$("#userNodeAccessSection");if(!section)return;
+ if(!adminHasPermission("nodes.read")){section.hidden=true;return}
+ section.hidden=false;section.dataset.userId=String(userId||"");section.dataset.email=String(email||"");
+ $("#userNodeAccessBody").innerHTML='<tr><td colspan="5" class="table-empty">正在读取节点权限…</td></tr>';
+ $("#userNodePackage").innerHTML='<option value="">正在读取可开通节点…</option>';
+ try{
+  const [a,c]=await Promise.all([
+   adminRequest("/api/admin/node-access?"+(email?"email="+encodeURIComponent(email):"user_id="+encodeURIComponent(userId))),
+   adminRequest("/api/admin/node-access/catalog")
+  ]);
+  activeNodeAccess=a.accounts||[];
+  const packages=(c.packages||[]).filter(p=>p.server_present&&p.provisioning_ready);
+  $("#userNodePackage").innerHTML='<option value="">选择需要开通的节点套餐</option>'+packages.map(p=>'<option value="'+escapeHtml(p.package_id)+'">'+escapeHtml(p.name+" · "+p.package_name+" · "+String(p.protocol||"").toUpperCase()+" · "+p.duration_days+" 天")+'</option>').join("");
+  if(!packages.length)$("#userNodePackage").innerHTML='<option value="">暂无已就绪的可开通节点</option>';
+  $("#userNodeAccessBody").innerHTML=activeNodeAccess.length?activeNodeAccess.map(x=>'<tr><td><b>'+escapeHtml(x.product_name||"节点")+'</b><small class="muted-inline">'+escapeHtml(x.package_name||"")+'</small></td><td>'+escapeHtml(String(x.protocol||"").toUpperCase())+'</td><td>'+escapeHtml(nodeStatus(x.status))+'</td><td>'+escapeHtml(formatAdminDate(x.expires_at))+'</td><td><div class="table-actions">'+(x.delivery?.uri?'<button class="btn btn-secondary btn-small" data-node-export="'+escapeHtml(x.account_id)+'" data-format="all">导出全部</button><button class="btn btn-secondary btn-small" data-node-export="'+escapeHtml(x.account_id)+'" data-format="uri">链接</button><button class="btn btn-secondary btn-small" data-node-export="'+escapeHtml(x.account_id)+'" data-format="clash">Clash</button><button class="btn btn-secondary btn-small" data-node-export="'+escapeHtml(x.account_id)+'" data-format="singbox">Sing-box</button>':'—')+(x.status==="active"?'<button class="btn btn-danger btn-small" data-node-revoke="'+escapeHtml(x.account_id)+'">撤销</button>':"")+'</div></td></tr>').join(""):'<tr><td colspan="5" class="table-empty">该用户还没有开通节点权限</td></tr>';
+  $("#userNodeAccessBody").querySelectorAll("[data-node-export]").forEach(b=>b.addEventListener("click",()=>exportNodeAccess(b.dataset.nodeExport,b.dataset.format)));
+  $("#userNodeAccessBody").querySelectorAll("[data-node-revoke]").forEach(b=>b.addEventListener("click",async()=>{if(!confirm("确认撤销该用户的节点权限？此操作会同步停用服务端账号。"))return;try{await adminRequest("/api/admin/node-access/revoke",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({account_id:b.dataset.nodeRevoke})});toast("节点权限已撤销");await loadUserNodeAccess(userId,email)}catch(e){toast("撤销失败："+e.message)}}));
+ }catch(e){activeNodeAccess=[];$("#userNodeAccessBody").innerHTML='<tr><td colspan="5" class="table-empty error-text">节点权限读取失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';$("#userNodePackage").innerHTML='<option value="">节点接口暂不可用</option>'}
+}
+$("#userNodeGrantBtn")?.addEventListener("click",async()=>{
+ const section=$("#userNodeAccessSection"),email=section.dataset.email,userId=section.dataset.userId,packageId=$("#userNodePackage").value,btn=$("#userNodeGrantBtn");
+ if(!packageId){toast("先选择一个已就绪的节点套餐");return}
+ btn.disabled=true;btn.textContent="正在开通…";
+ try{await adminRequest("/api/admin/node-access",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({user_id:userId,email,package_id:packageId})});toast("节点权限已开通，服务端账号已创建");await loadUserNodeAccess(userId,email)}
+ catch(e){toast("开通失败："+e.message)}finally{btn.disabled=false;btn.textContent="为该用户开通节点"}
+});
+function decodeB64Utf8(value){try{return decodeURIComponent(escape(atob(value.replace(/-/g,"+").replace(/_/g,"/"))))}catch{return atob(value)}}
+function parseNodeShare(uri){
+ if(uri.startsWith("vmess://")){const raw=decodeB64Utf8(uri.slice(8).split("#")[0]);const v=JSON.parse(raw);return {type:"vmess",server:v.add,port:Number(v.port),uuid:v.id,alter_id:Number(v.aid||0),network:v.net||"tcp",tls:v.tls==="tls",sni:v.sni||v.host,path:v.path||"/",tag:decodeURIComponent(uri.split("#")[1]||"晴天节点")}}
+ if(uri.startsWith("ss://")){
+  let raw=uri.slice(5).split("#")[0],tag=decodeURIComponent(uri.split("#")[1]||"晴天节点"),host="",port=0,method="",password="";
+  if(raw.includes("@")){const [user,server]=raw.split("@");const dec=decodeB64Utf8(user);[method,password]=dec.split(":");const u=new URL("http://"+server);host=u.hostname;port=Number(u.port)}
+  else{const dec=decodeB64Utf8(raw);const at=dec.lastIndexOf("@");if(at<0)throw Error("Shadowsocks 链接缺少服务器信息");[method,password]=dec.slice(0,at).split(":");const u=new URL("http://"+dec.slice(at+1));host=u.hostname;port=Number(u.port)}
+  return {type:"shadowsocks",server:host,port,method,password,tag}
+ }
+ const u=new URL(uri),type=u.protocol.replace(":","").replace("hy2","hysteria2");
+ return {type,server:u.hostname,port:Number(u.port),username:decodeURIComponent(u.username||""),password:decodeURIComponent(u.password||""),query:u.searchParams,tag:decodeURIComponent(u.hash.slice(1)||"晴天节点")};
+}
+function toSingBoxOutbound(uri){
+ const p=parseNodeShare(uri),o={tag:p.tag,server:p.server,server_port:p.port};
+ if(p.type==="vless"){o.type="vless";o.uuid=p.username;o.flow=p.query.get("flow")||undefined;const sec=p.query.get("security");if(sec&&sec!=="none")o.tls={enabled:true,server_name:p.query.get("sni")||p.query.get("serverName")||p.server,insecure:p.query.get("allowInsecure")==="1"};const net=p.query.get("type");if(net==="ws")o.transport={type:"ws",path:p.query.get("path")||"/",headers:p.query.get("host")?{Host:p.query.get("host")}:undefined};}
+ else if(p.type==="vmess"){o.type="vmess";o.uuid=p.uuid;o.alter_id=p.alter_id;o.security="auto";if(p.tls)o.tls={enabled:true,server_name:p.sni||p.server};if(p.network==="ws")o.transport={type:"ws",path:p.path||"/"};}
+ else if(p.type==="trojan"){o.type="trojan";o.password=p.username;o.tls={enabled:true,server_name:p.query.get("sni")||p.server};}
+ else if(p.type==="shadowsocks"){o.type="shadowsocks";o.method=p.method;o.password=p.password;}
+ else if(p.type==="hysteria2"){o.type="hysteria2";o.password=p.password||p.username;o.tls={enabled:true,server_name:p.query.get("sni")||p.server};const obfs=p.query.get("obfs");if(obfs)o.obfs={type:obfs,password:p.query.get("obfs-password")||""};}
+ else if(p.type==="socks"||p.type==="socks5"||p.type==="http"){o.type=p.type==="socks"?"socks":p.type;if(p.username)o.username=p.username;if(p.password)o.password=p.password;}
+ else throw Error("该协议暂不支持生成 sing-box 配置，请使用原始链接或客户端订阅");
+ return {log:{level:"info"},outbounds:[o,{type:"direct",tag:"direct"},{type:"block",tag:"block"}],route:{final:"direct"}};
+}
+function saveNodeExport(name,content,type="text/plain"){
+ const blob=new Blob([content],{type:type+";charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+function exportNodeAccess(accountId,format){
+ const a=activeNodeAccess.find(x=>String(x.account_id)===String(accountId));if(!a?.delivery?.uri){toast("该节点没有可导出的有效配置");return}
+ const d=a.delivery,uri=d.uri,baseName=(a.product_name||"node").replace(/[^\w\u4e00-\u9fa5-]/g,"_");
+ try{
+  if(format==="uri")return saveNodeExport(baseName+".txt",uri);
+  if(format==="v2rayn")return saveNodeExport(baseName+"-v2rayn.txt",btoa(unescape(encodeURIComponent(uri))));
+  if(format==="clash"){if(!d.clash_yaml)throw Error("此节点服务端未生成 Clash YAML");return saveNodeExport(baseName+".yaml",d.clash_yaml);}
+  if(format==="singbox")return saveNodeExport(baseName+"-singbox.json",JSON.stringify(toSingBoxOutbound(uri),null,2),"application/json");
+  if(format==="all"){
+   const all={protocol:d.protocol,uri,v2rayn_base64:btoa(unescape(encodeURIComponent(uri))),clash_yaml:d.clash_yaml||null,sing_box:null};
+   try{all.sing_box=toSingBoxOutbound(uri)}catch(e){all.sing_box_error=e.message}
+   return saveNodeExport(baseName+"-all-formats.json",JSON.stringify(all,null,2),"application/json");
+  }
+ }catch(e){toast("导出失败："+e.message)}
+}
 
 async function loadOrders(){
  const body=$("#ordersBody");if(!body)return;body.innerHTML='<tr><td colspan="8" class="table-empty">正在读取订单数据…</td></tr>';
@@ -552,6 +633,20 @@ document.querySelectorAll("[data-bot-logs]").forEach(btn=>btn.addEventListener("
  catch(error){$("#botLogs").textContent="日志读取失败："+(error.message||"服务暂不可用");$("#botLogStatus").textContent="读取失败"}
 }));
  
+async function loadAdmins(){
+ const body=$("#adminUsersBody");if(!body)return;body.innerHTML='<tr><td colspan="6" class="table-empty">正在读取管理员列表…</td></tr>';
+ try{
+  const d=await adminRequest("/api/admin/staff");
+  const roleOptions=Object.entries(d.roles||{}).map(([k,v])=>'<option value="'+k+'">'+escapeHtml(v)+'</option>').join("");
+  body.innerHTML=(d.admins||[]).length?d.admins.map(a=>'<tr><td><b>'+escapeHtml(a.email||"—")+'</b><small class="muted-inline">'+escapeHtml(a.nickname||"")+'</small></td><td><select data-staff-role="'+escapeHtml(a.user_id)+'">'+Object.entries(d.roles||{}).map(([k,v])=>'<option value="'+k+'" '+(k===a.role?"selected":"")+'>'+escapeHtml(v)+'</option>').join("")+'</select></td><td>'+statusPill(a.status==="active"?"active":"inactive")+'</td><td>'+escapeHtml(formatAdminDate(a.created_at))+'</td><td>'+escapeHtml(formatAdminDate(a.updated_at))+'</td><td><div class="table-actions"><button class="btn btn-secondary btn-small" data-staff-save="'+escapeHtml(a.user_id)+'" data-status="'+escapeHtml(a.status)+'">保存</button><button class="btn btn-danger btn-small" data-staff-remove="'+escapeHtml(a.user_id)+'">移除</button></div></td></tr>').join(""):'<tr><td colspan="6" class="table-empty">暂未添加其他管理员</td></tr>';
+  body.querySelectorAll("[data-staff-save]").forEach(b=>b.addEventListener("click",async()=>{const role=body.querySelector('[data-staff-role="'+CSS.escape(b.dataset.staffSave)+'"]').value;try{await adminRequest("/api/admin/staff",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({user_id:b.dataset.staffSave,role,status:b.dataset.status==="active"?"active":"disabled"})});toast("管理员权限已更新");loadAdmins()}catch(e){toast("更新失败："+e.message)}}));
+  body.querySelectorAll("[data-staff-remove]").forEach(b=>b.addEventListener("click",async()=>{if(!confirm("确认移除该管理员权限？其原商城账号和密码不会被删除。"))return;try{await adminRequest("/api/admin/staff/"+encodeURIComponent(b.dataset.staffRemove),{method:"DELETE"});toast("管理员权限已移除");loadAdmins()}catch(e){toast("移除失败："+e.message)}}));
+  $("#adminCount").textContent="已配置 "+(d.admins||[]).length+" 位管理员（不含主账号）";
+  applyAdminAccess();
+ }catch(e){body.innerHTML='<tr><td colspan="6" class="table-empty error-text">读取管理员失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>'}
+}
+$("#adminAddForm")?.addEventListener("submit",async e=>{e.preventDefault();const email=$("#newAdminEmail").value.trim(),role=$("#newAdminRole").value,btn=$("#adminAddBtn"),result=$("#adminAddResult");btn.disabled=true;result.textContent="正在添加…";try{await adminRequest("/api/admin/staff",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,role})});result.className="form-result success";result.textContent="管理员已添加。对方使用自己原有的晴天号铺账号密码登录。";$("#newAdminEmail").value="";await loadAdmins()}catch(err){result.className="form-result error";result.textContent=err.message||"添加失败"}finally{btn.disabled=false}});
+
 function moneyCny(value){const n=Number(value);return Number.isFinite(n)?"¥"+n.toFixed(2):"—"}
 function nodeStatus(value){return ({fulfilled:"已开通",provisioning:"开通中",refunded:"已退款",failed:"失败",active:"使用中",expired:"已到期"})[String(value||"").toLowerCase()]||String(value||"未知")}
 async function loadNodes(){await Promise.allSettled([loadPlans(),loadNodeServers()])}
