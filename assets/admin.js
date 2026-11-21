@@ -737,7 +737,10 @@ $("#botSettingsRefresh")?.addEventListener("click",loadBotSettings);
 $("#botSettingsBot")?.addEventListener("change",loadBotSettings);
 $("#botUserFilter")?.addEventListener("change",()=>{const x=$("#botSettingsBot");if(x)x.value=$("#botUserFilter").value;loadBotSettings()});
 $("#botSettingsForm")?.addEventListener("submit",async e=>{
- e.preventDefault();await saveBotSettings({ad_show:$("#botSettingAdShow").checked,verify_enabled:$("#botSettingVerify").checked,ai_enabled:$("#botSettingAi").checked,trc_address:$("#botSettingAddress").value.trim(),ad_text:$("#botSettingAdText").value.trim(),ad_url:$("#botSettingAdUrl").value.trim(),start_text:$("#botSettingStartText").value,start_poster:$("#botSettingPoster").value.trim()});
+ e.preventDefault();let poster=$("#botSettingPoster").value.trim();const file=$("#botSettingPosterFile")?.files?.[0];
+ try{if(file){if(file.size>20*1024*1024)throw new Error("海报不能超过 20MB");const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error("读取海报失败"));reader.readAsDataURL(file)});const uploaded=await legacyAdmin("/upload",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:file.name,data})});poster=uploaded.url||"";if(!poster)throw new Error("海报上传没有返回 URL")}
+ await saveBotSettings({ad_show:$("#botSettingAdShow").checked,verify_enabled:$("#botSettingVerify").checked,ai_enabled:$("#botSettingAi").checked,trc_address:$("#botSettingAddress").value.trim(),ad_text:$("#botSettingAdText").value.trim(),ad_url:$("#botSettingAdUrl").value.trim(),start_text:$("#botSettingStartText").value,start_poster:poster});if(file)$("#botSettingPosterFile").value=""}
+ catch(err){$("#botSettingsResult").className="form-result error";$("#botSettingsResult").textContent=err.message||"配置保存失败"}
 });
 $("#botPlanClear")?.addEventListener("click",()=>{$("#botPlanForm").reset();$("#botPlanId").readOnly=false});
 $("#botPlanForm")?.addEventListener("submit",async e=>{
