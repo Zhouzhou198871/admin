@@ -79,52 +79,62 @@ function statusText(status){return ({pending:"待处理",reserved:"已预留",de
 function statusPill(status){const value=String(status||"").toLowerCase();const cls=["delivered","paid","active"].includes(value)?"good":["failed","refunded","cancelled","expired","inactive"].includes(value)?"bad":"wait";return '<span class="status-pill '+cls+'">'+escapeHtml(statusText(value))+'</span>'}
 function unwrapLegacy(value){let v=value;for(let i=0;i<4;i++){if(!v||typeof v!=="object"||Array.isArray(v)||!Object.prototype.hasOwnProperty.call(v,"data"))break;if(v.ok===true||v.code!==undefined||v.status==="success")v=v.data;else break;}return v}
 async function legacyAdmin(path,options={}){return unwrapLegacy(await adminRequest("/api/admin/legacy"+path,options))}
-async function apiAdminRequest(path,options={}){
- const response=await fetchWithTimeout(API_BASE+"/api/v1/admin/"+path,{...options,headers:authHeaders(options.headers||{})},15000);
- let data={};try{data=await response.json()}catch{}
- if(!response.ok||!(data.code===1||data.ok===true))throw new Error(data.msg||data.message||data.error||"API 管理请求失败");
- return data.data??data;
-}
 
-function dataList(value){const v=unwrapLegacy(value);if(Array.isArray(v))return v;if(!v||typeof v!=="object")return [];return v.list||v.items||v.products||v.orders||v.users||v.rows||v.records||[]}
+
+function dataList(value){const v=unwrapLegacy(value);if(Array.isArray(v))return v;if(!v||typeof v!=="object")return [];return v.list||v.items||v.products||v.orders||v.users||v.rows||v.records||[]}\nfunction nodeBotRecords(value){const list=Array.isArray(value)?value:dataList(value);return list.filter(b=>{const key=String(b.key||b.bot||({1:"tg",2:"mivra"})[b.id]||"").toLowerCase();return key==="tg"||key==="safew"||key==="mivra"})}
 function dataTotal(value,list){return Number(value?.total??value?.count??value?.total_count??list.length)}
 function cnyValue(value){const n=Number(value);return Number.isFinite(n)?n:0}
 function formatCny(value){return "¥"+cnyValue(value).toFixed(2)}
 function orderStatusLabel(value){const n=Number(value);if(Number.isFinite(n)&&String(value).trim()!=="")return ({0:"待支付",1:"待发货",2:"已发货",3:"已完成","-1":"已取消"})[n]||String(value);return statusText(value)}
 async function loadApiManagement(){
- const keysBody=$("#apiKeysBody"),appsBody=$("#apiApplicationsBody"),logsBody=$("#apiLogsBody");
- if(!keysBody||!appsBody||!logsBody)return;
- keysBody.innerHTML='<tr><td colspan="9" class="table-empty">正在读取 API 密钥…</td></tr>';
- appsBody.innerHTML='<tr><td colspan="7" class="table-empty">正在读取开发者申请…</td></tr>';
+ const keysBody=$("#apiKeysBody"),logsBody=$("#apiLogsBody");
+ if(!keysBody||!logsBody)return;
+ keysBody.innerHTML='<tr><td colspan="7" class="table-empty">正在读取 API 密钥…</td></tr>';
  logsBody.innerHTML='<tr><td colspan="5" class="table-empty">正在读取调用日志…</td></tr>';
- const results=await Promise.allSettled([apiAdminRequest("apikeys"),apiAdminRequest("apply/list"),apiAdminRequest("apilogs?limit=100")]);
- const keys=results[0].status==="fulfilled"?(Array.isArray(results[0].value)?results[0].value:[]):[];
- const apps=results[1].status==="fulfilled"?(Array.isArray(results[1].value)?results[1].value:[]):[];
- const logs=results[2].status==="fulfilled"?(results[2].value.items||[]):[];
- $("#apiKeyTotal").textContent=keys.length;$("#apiKeyEnabled").textContent=keys.filter(x=>Number(x.enabled)===1).length;$("#apiKeyDisabled").textContent=keys.filter(x=>Number(x.enabled)!==1).length;$("#apiApplyPending").textContent=apps.filter(x=>Number(x.status)===0).length;
+ const [keyResult,logResult]=await Promise.allSettled([
+  adminRequest("/api/admin/api-keys"),
+  adminRequest("/api/admin/api-logs?limit=100")
+ ]);
+ const keys=keyResult.status==="fulfilled"?(keyResult.value.keys||[]):[];
+ const logs=logResult.status==="fulfilled"?(logResult.value.logs||[]):[];
+ $("#apiKeyTotal").textContent=keyResult.status==="fulfilled"?keys.length:"—";
+ $("#apiKeyEnabled").textContent=keys.filter(x=>!x.revoked_at).length;
+ $("#apiKeyDisabled").textContent=keys.filter(x=>!!x.revoked_at).length;
+ $("#apiUsageTotal").textContent=logResult.status==="fulfilled"?logs.length:"—";
  const kw=($("#apiKeySearch").value||"").trim().toLowerCase();
- const filtered=keys.filter(x=>!kw||String(x.name||"").toLowerCase().includes(kw)||String(x.key_hint||"").toLowerCase().includes(kw));
- keysBody.innerHTML=filtered.length?filtered.map(x=>'<tr><td>'+Number(x.id)+'</td><td>'+escapeHtml(x.name||"未命名")+'</td><td class="mono">'+escapeHtml(x.key_hint||"—")+'</td><td>'+escapeHtml(x.scopes||"read")+'</td><td>'+Number(x.rate_limit||0)+'/分钟</td><td>'+Number(x.used||0)+'</td><td>'+statusPill(Number(x.enabled)===1?"active":"inactive")+'</td><td>'+escapeHtml(formatAdminDate(x.last_used_at||x.created_at))+'</td><td><div class="table-actions"><button class="btn btn-secondary btn-small" data-api-toggle="'+Number(x.id)+'" data-enabled="'+(Number(x.enabled)===1?"1":"0")+'">'+(Number(x.enabled)===1?"封禁":"解封")+'</button><button class="btn btn-danger btn-small" data-api-delete="'+Number(x.id)+'">撤销</button></div></td></tr>').join(""):'<tr><td colspan="9" class="table-empty">暂无 API 密钥</td></tr>';
- $("#apiKeysCount").textContent=filtered.length+" / "+keys.length+" 个密钥";
- keysBody.querySelectorAll("[data-api-toggle]").forEach(btn=>btn.addEventListener("click",async()=>{const enabled=btn.dataset.enabled!=="1";if(!confirm(enabled?"确认解封并启用此 API Key？":"确认封禁此 API Key？封禁后调用将立即失效。"))return;btn.disabled=true;try{await apiAdminRequest("apikeys/toggle",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(btn.dataset.apiToggle),enabled})});toast(enabled?"API Key 已解封":"API Key 已封禁");await loadApiManagement()}catch(e){toast("状态更新失败："+e.message);btn.disabled=false}}));
- keysBody.querySelectorAll("[data-api-delete]").forEach(btn=>btn.addEventListener("click",async()=>{if(!confirm("永久撤销该 API Key？此操作不可恢复。"))return;btn.disabled=true;try{await apiAdminRequest("apikeys/delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(btn.dataset.apiDelete)})});toast("API Key 已撤销");await loadApiManagement()}catch(e){toast("撤销失败："+e.message);btn.disabled=false}}));
- const filter=$("#apiApplyFilter").value;
- const showApps=apps.filter(x=>filter===""||String(x.status)===filter);
- const labels={0:"待审核",1:"已批准",2:"已拒绝"};
- appsBody.innerHTML=showApps.length?showApps.map(x=>'<tr><td>'+escapeHtml(x.app_name||"—")+'</td><td>'+escapeHtml(x.contact||"—")+'</td><td>'+escapeHtml(x.use_case||"—")+'</td><td>'+escapeHtml(x.homepage||"—")+'</td><td>'+escapeHtml(labels[x.status]||"未知")+'</td><td>'+escapeHtml(formatAdminDate(x.created_at))+'</td><td>'+(Number(x.status)===0?'<div class="table-actions"><button class="btn btn-primary btn-small" data-api-approve="'+Number(x.id)+'">批准并签发</button><button class="btn btn-secondary btn-small" data-api-reject="'+Number(x.id)+'">拒绝</button></div>':'—')+'</td></tr>').join(""):'<tr><td colspan="7" class="table-empty">暂无申请</td></tr>';
- appsBody.querySelectorAll("[data-api-approve]").forEach(btn=>btn.addEventListener("click",async()=>{if(!confirm("确认批准该开发者申请并签发 API Key？"))return;btn.disabled=true;try{const d=await apiAdminRequest("apply/review",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(btn.dataset.apiApprove),action:"approve",scopes:"read",rate_limit:60})});if(d.key)showOneTimeApiKey(d.key);toast("申请已批准，已签发 API Key");await loadApiManagement()}catch(e){toast("审核失败："+e.message);btn.disabled=false}}));
- appsBody.querySelectorAll("[data-api-reject]").forEach(btn=>btn.addEventListener("click",async()=>{if(!confirm("确认拒绝该开发者申请？"))return;btn.disabled=true;try{await apiAdminRequest("apply/review",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(btn.dataset.apiReject),action:"reject"})});toast("申请已拒绝");await loadApiManagement()}catch(e){toast("审核失败："+e.message);btn.disabled=false}}));
- logsBody.innerHTML=logs.length?logs.map(x=>'<tr><td>'+escapeHtml(formatAdminDate(x.ts))+'</td><td class="mono">'+escapeHtml(x.path||"—")+'</td><td>'+escapeHtml(x.method||"—")+'</td><td class="mono">'+escapeHtml(x.ip||"—")+'</td><td>'+escapeHtml(x.code||"—")+'</td></tr>').join(""):'<tr><td colspan="5" class="table-empty">暂无调用日志</td></tr>';
- $("#apiLogsCount").textContent=logs.length+" 条 / 总计 "+Number(results[2].status==="fulfilled"?results[2].value.total:0);
- [keysBody,appsBody,logsBody].forEach((el,i)=>{if(results[i]?.status==="rejected")el.innerHTML='<tr><td colspan="'+(i===0?9:i===1?7:5)+'" class="table-empty error-text">读取失败：'+escapeHtml(results[i].reason?.message||"接口错误")+'</td></tr>'});
+ const filtered=keys.filter(x=>!kw||[x.email,x.label,x.key_prefix].some(v=>String(v||"").toLowerCase().includes(kw)));
+ keysBody.innerHTML=keyResult.status==="rejected"
+  ?'<tr><td colspan="7" class="table-empty error-text">读取 API 密钥失败：'+escapeHtml(keyResult.reason?.message||"接口不可用")+'</td></tr>'
+  :filtered.length?filtered.map(x=>'<tr><td>'+escapeHtml(x.email||"—")+'</td><td>'+escapeHtml(x.label||"—")+'</td><td class="mono">'+escapeHtml(x.key_prefix||"—")+'</td><td>'+Number(x.used||0).toLocaleString("zh-CN")+'</td><td>'+statusPill(x.revoked_at?"inactive":"active")+'</td><td>'+escapeHtml(x.last_used_at?formatAdminDate(x.last_used_at):"尚未使用")+'</td><td><div class="table-actions">'+(!x.revoked_at?'<button class="btn btn-danger btn-small" data-api-revoke="'+escapeHtml(x.id)+'">撤销</button>':'<span class="muted-inline">不可恢复</span>')+'</div></td></tr>').join("")
+  :'<tr><td colspan="7" class="table-empty">暂无 API 密钥</td></tr>';
+ $("#apiKeysCount").textContent=keyResult.status==="fulfilled"?filtered.length+" / "+keys.length+" 把密钥":"读取失败";
+ keysBody.querySelectorAll("[data-api-revoke]").forEach(btn=>btn.addEventListener("click",async()=>{
+  const id=btn.dataset.apiRevoke;
+  if(!confirm("确定永久撤销此 API Key？撤销后该密钥立即失效，且不能恢复。"))return;
+  btn.disabled=true;
+  try{await adminRequest("/api/admin/api-keys/"+encodeURIComponent(id)+"/revoke",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});toast("API Key 已撤销");await loadApiManagement()}
+  catch(e){toast("撤销失败："+(e.message||"接口错误"));btn.disabled=false}
+ }));
+ logsBody.innerHTML=logResult.status==="rejected"
+  ?'<tr><td colspan="5" class="table-empty error-text">读取 API 日志失败：'+escapeHtml(logResult.reason?.message||"接口不可用")+'</td></tr>'
+  :logs.length?logs.map(x=>'<tr><td>'+escapeHtml(formatAdminDate(x.created_at))+'</td><td>'+escapeHtml(x.email||"—")+'</td><td class="mono">'+escapeHtml(x.path||"—")+'</td><td>'+escapeHtml(x.method||"—")+'</td><td>'+Number(x.status_code||0)+'</td></tr>').join("")
+  :'<tr><td colspan="5" class="table-empty">暂无 API 调用记录</td></tr>';
+ $("#apiLogsCount").textContent=logResult.status==="fulfilled"?logs.length+" 条记录":"读取失败";
 }
 function showOneTimeApiKey(key){$("#apiKeyOneTimeValue").textContent=key;$("#apiKeyOneTime").hidden=false;}
-$("#apiKeyCreateForm")?.addEventListener("submit",async e=>{e.preventDefault();const btn=$("#apiKeyCreateBtn"),status=$("#apiKeyCreateStatus");btn.disabled=true;btn.textContent="创建中…";try{const d=await apiAdminRequest("apikeys/create",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:$("#apiKeyName").value.trim(),scopes:$("#apiKeyScopes").value,rate_limit:Number($("#apiKeyRate").value)})});if(d.key)showOneTimeApiKey(d.key);status.textContent="密钥已创建，请立即复制保存";status.className="form-result success";$("#apiKeyCreateForm").reset();$("#apiKeyRate").value="60";await loadApiManagement()}catch(e){status.textContent=e.message||"创建失败";status.className="form-result error"}finally{btn.disabled=false;btn.textContent="创建 API Key"}});
+$("#apiKeyCreateForm")?.addEventListener("submit",async e=>{
+ e.preventDefault();const btn=$("#apiKeyCreateBtn"),status=$("#apiKeyCreateStatus");btn.disabled=true;btn.textContent="创建中…";
+ try{
+  const d=await adminRequest("/api/admin/api-keys",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:$("#apiKeyEmail").value.trim(),label:$("#apiKeyName").value.trim()})});
+  if(d.key)showOneTimeApiKey(d.key);
+  status.textContent="密钥已创建，请立即复制保存";status.className="form-result success";
+  $("#apiKeyCreateForm").reset();await loadApiManagement();
+ }catch(e){status.textContent=e.message||"创建失败";status.className="form-result error"}
+ finally{btn.disabled=false;btn.textContent="创建 API Key"}
+});
 $("#apiKeyCopy")?.addEventListener("click",()=>{const key=$("#apiKeyOneTimeValue").textContent;if(key)navigator.clipboard?.writeText(key).then(()=>toast("API Key 已复制")).catch(()=>toast("复制失败，请手动选择密钥"))});
 $("#apiManagementRefresh")?.addEventListener("click",loadApiManagement);
 $("#apiKeySearch")?.addEventListener("input",loadApiManagement);
-$("#apiApplyFilter")?.addEventListener("change",loadApiManagement);
-$("#apiLogsClear")?.addEventListener("click",async()=>{if(!confirm("清理 7 天前的 API 调用日志？近期日志会保留。"))return;try{await apiAdminRequest("apilogs/clear",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});toast("旧日志已清理");loadApiManagement()}catch(e){toast("清理失败："+e.message)}});
 
 async function loadPayments(){
  const body=$("#paymentStatsBody");if(!body)return;body.innerHTML='<tr><td colspan="3" class="table-empty">正在读取支付配置和收款记录…</td></tr>';
@@ -163,7 +173,7 @@ async function loadOverview(){
   legacyAdmin("/shop/products?page=1&size=100"),
   legacyAdmin("/notices"),
   legacyAdmin("/config/mail"),
-  legacyAdmin("/bots/services"),
+  adminRequest("/api/admin/bots"),
   legacyAdmin("/nodes/health"),
   legacyAdmin("/chat/users"),
   legacyAdmin("/stats/online")
@@ -755,14 +765,14 @@ const botNames={safew:"节点签到机器人",mivra:"节点综合机器人"};
 async function loadBots(){
  const grid=$("#botGrid");if(!grid)return;
  $("#botsUpdated").textContent="正在读取机器人进程和用户统计…";
- const [stateResult,statsResult]=await Promise.allSettled([legacyAdmin("/bots/services"),legacyAdmin("/bots/matrix/stats")]);
+ const [stateResult,statsResult]=await Promise.allSettled([adminRequest("/api/admin/bots"),legacyAdmin("/bots/matrix/stats")]);
  const statePayload=stateResult.status==="fulfilled"?stateResult.value:{};
- const bots=Array.isArray(statePayload.bots)?statePayload.bots:dataList(statePayload);
+ const bots=nodeBotRecords(statePayload);
  const stats=statsResult.status==="fulfilled"?dataList(statsResult.value):[];
- const cardMap={safew:"tg",mivra:"mivra"};
- const nameMap={safew:"节点签到机器人",mivra:"节点综合机器人"};
+ const cardMap={tg:"tg",safew:"tg",mivra:"mivra"};
+ const nameMap={tg:"节点签到机器人",safew:"节点签到机器人",mivra:"节点综合机器人"};
  bots.forEach(bot=>{
-  const key=bot.key||({1:"safew",2:"mivra"})[bot.id];
+  const key=bot.key||bot.bot||({1:"tg",2:"mivra"})[bot.id];
   const card=document.querySelector('[data-bot-card="'+(cardMap[key]||key)+'"]');if(!card)return;
   const state=card.querySelector(".bot-state"),running=!!bot.online||bot.status==="active",enabled=bot.enabled===true||bot.status==="active"||bot.status===true||Number(bot.status)===1,identityOk=bot.identity_ok!==false;
   state.textContent=!identityOk?"身份异常":running?"运行中":enabled?"已启用 · 未运行":"已停用";
@@ -978,14 +988,14 @@ document.querySelectorAll("[data-bot-action]").forEach(btn=>btn.addEventListener
  if(action!=="start"&&!confirm("确定要"+verb+botNames[bot]+"？"))return;
  const buttons=document.querySelectorAll('[data-bot="'+bot+'"]');buttons.forEach(b=>b.disabled=true);
  try{
-  await legacyAdmin("/bots/services/action",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({bot,action})});
+  await adminRequest("/api/admin/bots/action",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({bot,action})});
   toast(botNames[bot]+verb+"指令已执行");
  }catch(error){toast("操作失败："+(error.message||"请稍后重试"))}
  finally{await loadBots()}
 }));
 document.querySelectorAll("[data-bot-logs]").forEach(btn=>btn.addEventListener("click",async()=>{
  const bot=btn.dataset.botLogs;$("#botLogTitle").textContent=botNames[bot]+" · 运行日志";$("#botLogStatus").textContent="读取中";$("#botLogs").textContent="正在读取日志…";
- try{const data=await legacyAdmin("/bots/services/logs?bot="+encodeURIComponent(bot));$("#botLogs").textContent=data.logs||"暂无日志";$("#botLogStatus").textContent="读取完成"}
+ try{const data=await adminRequest("/api/admin/bots/logs?bot="+encodeURIComponent(bot));$("#botLogs").textContent=data.logs||"暂无日志";$("#botLogStatus").textContent="读取完成"}
  catch(error){$("#botLogs").textContent="日志读取失败："+(error.message||"服务暂不可用");$("#botLogStatus").textContent="读取失败"}
 }));
  
