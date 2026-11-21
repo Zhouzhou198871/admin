@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f5f7fb">
   <title>晴天账号铺 · 管理后台</title>
   <link rel="stylesheet" href="./assets/admin.css?v=20261121-17">
-  <script src="./assets/admin.js?v=20261121-22" defer></script>
+  <script src="./assets/admin.js?v=20261121-23" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -174,7 +174,7 @@
             <div class="panel-heading"><div><h3>节点权限</h3><p>按用户单独控制可访问线路；订阅内容会同步按授权过滤</p></div><span class="tag">节点授权</span></div>
             <div class="node-access-toolbar"><span id="userNodeAccessMode">正在读取授权模式…</span><button class="btn btn-secondary btn-small" id="userNodeAccessResetBtn" type="button" hidden>恢复默认全部节点</button></div>
             <div class="table-wrap"><table class="data-table"><thead><tr><th>节点 / 地区</th><th>协议</th><th>端口</th><th>访问权限</th><th>配置导出</th></tr></thead><tbody id="userNodeAccessBody"><tr><td colspan="5" class="table-empty">读取节点权限</td></tr></tbody></table></div>
-            <p class="field-hint">每份导出均使用该用户自己的协议凭证，提供原始链接、V2RayN/v2rayNG Base64、Clash Meta YAML、Sing-box JSON。</p>
+            <p class="field-hint">首次调整会保留用户原有线路；之后逐条勾选或撤销。导出使用该用户自己的凭证，提供原始链接、V2RayN/v2rayNG Base64、Clash Meta YAML、Sing-box JSON。</p>
           </section>
           <div class="form-result" id="userDetailResult"></div>
         </article>
