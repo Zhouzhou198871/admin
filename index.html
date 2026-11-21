@@ -284,8 +284,8 @@
               <label>域名<input id="nodeDomain" placeholder="可选"></label>
               <label>地区代码<input id="nodeRegion" placeholder="HK / US / JP"></label>
               <label>地区名称<input id="nodeRegionName" placeholder="香港 / 美国 / 日本"></label>
-              <label>节点 API 端口<input id="nodeApiPort" type="number" min="1" max="65535" value="54323" required></label>
-              <label>管理端口<input id="nodeAdminPort" type="number" min="1" max="65535" value="54324" required></label>
+              <label>节点 扩展端口 A<input id="nodeApiPort" type="number" min="1" max="65535" value="54323" required></label>
+              <label>扩展端口 B<input id="nodeAdminPort" type="number" min="1" max="65535" value="54324" required></label>
               <label>排序<input id="nodeSort" type="number" value="0"></label>
               <label>启用状态<select id="nodeEnabled"><option value="1">启用</option><option value="0">停用</option></select></label>
               <p class="field-hint span-two">服务器访问令牌由服务端保管，编辑时自动沿用原令牌，不会发送到浏览器。</p>
@@ -306,8 +306,8 @@
           </article>
           <article class="panel data-panel"><div class="table-wrap"><table class="data-table"><thead><tr><th>服务器名称</th><th>服务器 IP</th><th>地区</th><th>API 端口</th><th>状态</th><th>操作</th></tr></thead><tbody id="nodesBody"><tr><td colspan="6" class="table-empty">等待加载节点线路</td></tr></tbody></table></div><div class="table-foot"><span id="nodesCount">—</span><span>删除节点前请确认没有依赖中的用户配置</span></div></article>
           <article class="panel data-panel">
-            <div class="panel-heading"><div><h2>节点健康监控</h2><p id="nodeHealthUpdated">业务端口、节点 API 与管理端口分别检测，不以单一在线状态代替真实健康度</p></div><button class="btn btn-secondary" id="nodeHealthRefresh" type="button">重新检测</button></div>
-            <div class="table-wrap"><table class="data-table"><thead><tr><th>节点</th><th>业务端口（443）</th><th>API 端口</th><th>管理端口</th><th>综合状态</th></tr></thead><tbody id="nodeHealthBody"><tr><td colspan="5" class="table-empty">进入节点管理后执行检测</td></tr></tbody></table></div>
+            <div class="panel-heading"><div><h2>节点健康监控</h2><p id="nodeHealthUpdated">按节点实际配置检测入口与扩展端口，不以单一在线状态代替真实健康度</p></div><button class="btn btn-secondary" id="nodeHealthRefresh" type="button">重新检测</button></div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>节点</th><th>入口端口（443）</th><th>API 端口</th><th>管理端口</th><th>综合状态</th></tr></thead><tbody id="nodeHealthBody"><tr><td colspan="5" class="table-empty">进入节点管理后执行检测</td></tr></tbody></table></div>
             <div class="table-foot"><span id="nodeHealthCount">等待检测</span><span>检测为 TCP 连通性，不代表协议握手或用户实际可用性</span></div>
             <div class="panel-heading" style="margin-top:18px"><div><h3>最近 24 小时巡检历史</h3><p>每 5 分钟自动采样，保留 30 天</p></div><span id="nodeHealthHistoryCount">等待历史数据</span></div>
             <div class="table-wrap"><table class="data-table"><thead><tr><th>检测时间</th><th>节点</th><th>业务端口</th><th>API 端口</th><th>管理端口</th><th>异常详情</th></tr></thead><tbody id="nodeHealthHistoryBody"><tr><td colspan="6" class="table-empty">等待读取巡检历史</td></tr></tbody></table></div>
