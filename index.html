@@ -470,8 +470,12 @@
           <div class="panel-heading"><div><h2>机器人消息推送</h2><p>向当前选中的节点机器人用户发送公告；发送前可预览目标机器人和内容</p></div><span class="tag">真实发送</span></div>
           <form id="botBroadcastForm" class="admin-form-grid">
             <label>推送机器人<select id="botBroadcastBot"><option value="safew">节点签到机器人</option><option value="mivra">节点综合机器人</option></select></label>
-            <label>发送范围<select id="botBroadcastTarget"><option value="all">全部用户</option></select></label>
-            <label class="span-two">消息内容<textarea id="botBroadcastText" rows="4" required maxlength="4000" placeholder="输入要发送给用户的通知内容"></textarea></label>
+            <label>发送范围<select id="botBroadcastTarget"><option value="all">全部未封禁用户</option><option value="chat">指定群组 / 频道</option></select></label>
+            <label id="botBroadcastChatWrap" hidden>目标 Chat ID<input id="botBroadcastChatId" placeholder="-1001234567890 或 @channelname"></label>
+            <label>消息类型<select id="botBroadcastMediaType"><option value="text">纯文本</option><option value="photo">图片</option><option value="video">视频</option></select></label>
+            <label id="botBroadcastFileWrap" hidden>上传图片 / 视频<input id="botBroadcastFile" type="file" accept="image/jpeg,image/png,image/webp,video/mp4"></label>
+            <label class="span-two">消息内容 / 图片视频说明<textarea id="botBroadcastText" rows="4" maxlength="4000" placeholder="输入要发送给用户的通知内容或媒体说明"></textarea></label>
+            <p class="field-hint span-two">支持文本、图片、MP4 视频；上传文件最大 20MB。发送到群组或频道前，请确认机器人已加入并有发言权限。</p>
             <div class="form-actions span-two"><button class="btn btn-primary" id="botBroadcastSubmit" type="submit">发送给该机器人全部用户</button><span id="botBroadcastResult" class="form-result" role="status"></span></div>
           </form>
         </article>
