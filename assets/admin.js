@@ -866,7 +866,7 @@ $("#noticeAddBtn")?.addEventListener("click",()=>editNotice({}));$("#noticeFormC
 $("#noticeForm")?.addEventListener("submit",async e=>{e.preventDefault();const date=v=>v?Math.floor(new Date(v).getTime()/1000):0;const p={id:Number($("#noticeId").value)||undefined,title:$("#noticeTitle").value.trim(),type:$("#noticeType").value,content:$("#noticeContent").value.trim(),display:$("#noticeDisplay").value,target_plan:Number($("#noticeTargetPlan").value||0),status:Number($("#noticeStatus").value),pinned:Number($("#noticePinned").value),start_at:date($("#noticeStart").value),end_at:date($("#noticeEnd").value)};try{await legacyAdmin("/notices",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)});toast("公告已保存");$("#noticeFormPanel").hidden=true;loadNotices()}catch(e){$("#noticeFormResult").textContent=e.message||"保存失败"}});
 $("#noticesRefresh")?.addEventListener("click",loadNotices);
 
-const botNames={safew:"节点签到机器人",mivra:"节点综合机器人"};
+const botNames={tg:"节点签到机器人",safew:"节点签到机器人",mivra:"节点综合机器人"};
 async function loadBots(){
  const grid=$("#botGrid");if(!grid)return;
  $("#botsUpdated").textContent="正在读取机器人进程和用户统计…";
