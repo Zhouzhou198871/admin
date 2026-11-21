@@ -657,8 +657,8 @@ function renderNodeCatalog(){
    const ready=nodeProductReady(p),active=!!p.active,count=packages.filter(x=>x.product_id===p.product_id).length;
    const sale=ready&&active?"可销售":active?"已登记 · 服务端未就绪":"已停用";
    const action=active?"停用":"启用";
-   return '<tr><td><b>'+escapeHtml(p.name||p.product_id)+'</b><small class="muted-inline">'+escapeHtml(p.product_id)+'</small></td><td>'+escapeHtml(String(p.protocol||"").toUpperCase())+'</td><td>'+ (p.server_present?"已部署":"未部署")+'</td><td>'+ (p.provisioning_ready?"已就绪":"未就绪")+'</td><td>'+escapeHtml(sale)+'</td><td><div class="table-actions"><span>'+count+' 个套餐</span><button class="btn btn-secondary btn-small" data-node-product-toggle="'+escapeHtml(p.product_id)+'" data-active="'+(active?"0":"1")+'" '+(!ready&&!active?"disabled":"")+'>'+action+'</button></div></td></tr>';
-  }).join(""):'<tr><td colspan="6" class="table-empty">没有读取到节点产品</td></tr>';
+   return '<tr><td><b>'+escapeHtml(p.name||p.product_id)+'</b><small class="muted-inline">'+escapeHtml(p.product_id)+'</small></td><td>'+escapeHtml(String(p.protocol||"").toUpperCase())+'</td><td>'+escapeHtml(p.server_ref==="sg"?"新加坡节点":"美国节点")+'</td><td>'+ (p.server_present?"已部署":"未部署")+'</td><td>'+ (p.provisioning_ready?"已就绪":"未就绪")+'</td><td>'+escapeHtml(sale)+'</td><td><div class="table-actions"><span>'+count+' 个套餐</span><button class="btn btn-secondary btn-small" data-node-product-toggle="'+escapeHtml(p.product_id)+'" data-active="'+(active?"0":"1")+'" '+(!ready&&!active?"disabled":"")+'>'+action+'</button></div></td></tr>';
+  }).join(""):'<tr><td colspan="7" class="table-empty">没有读取到节点产品</td></tr>';
   $("#nodeCatalogCount").textContent=products.length+" 个协议产品 · "+products.filter(p=>nodeProductReady(p)&&p.active).length+" 个可销售";
  }
  if(packageBody){
@@ -699,7 +699,7 @@ function renderNodeCatalog(){
 }
 async function loadNodeCatalog(){
  const body=$("#nodeCatalogBody"),packagesBody=$("#nodePackagesBody");
- if(body)body.innerHTML='<tr><td colspan="6" class="table-empty">正在读取生产节点产品…</td></tr>';
+ if(body)body.innerHTML='<tr><td colspan="7" class="table-empty">正在读取生产节点产品…</td></tr>';
  if(packagesBody)packagesBody.innerHTML='<tr><td colspan="8" class="table-empty">正在读取节点套餐…</td></tr>';
  try{
   const d=await adminRequest("/api/admin/node-catalog");
@@ -707,7 +707,7 @@ async function loadNodeCatalog(){
   renderNodeCatalog();
   return nodeCatalogCache;
  }catch(e){
-  if(body)body.innerHTML='<tr><td colspan="6" class="table-empty error-text">节点产品读取失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';
+  if(body)body.innerHTML='<tr><td colspan="7" class="table-empty error-text">节点产品读取失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';
   if(packagesBody)packagesBody.innerHTML='<tr><td colspan="8" class="table-empty error-text">节点套餐读取失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';
   $("#nodeCatalogCount").textContent="读取失败";$("#nodePackagesCount").textContent="读取失败";
   throw e;
