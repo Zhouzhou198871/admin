@@ -556,3 +556,19 @@ html,body{min-height:100%;height:auto;overflow-x:hidden;overflow-y:auto}
 @media(max-width:1000px){.api-management-grid{grid-template-columns:1fr}.nav{max-height:calc(100vh - 190px)}}
 
 .nav-item[hidden]{display:none!important}
+
+
+/* External Lucide icon system + compact sidebar scrolling */
+.sidebar{overflow-y:auto;overscroll-behavior:contain}
+.nav{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#d7ddea transparent}
+.sidebar-bottom{flex-shrink:0}
+.nav-icon,.metric-icon,.todo-icon,.action-icon,.payment-logo,.mobile-menu,.nav-chevron{display:inline-flex;align-items:center;justify-content:center}
+.nav-icon svg{width:18px;height:18px;stroke-width:1.9}
+.metric-icon svg,.todo-icon svg{width:16px;height:16px;stroke-width:1.9}
+.action-icon svg,.payment-logo svg{width:18px;height:18px;stroke-width:1.9}
+.mobile-menu svg{width:21px;height:21px;stroke-width:2}
+.nav-chevron{width:16px;height:16px;transition:transform .2s ease}
+.nav-chevron svg{width:15px;height:15px;stroke-width:1.8}
+.nav-group-toggle[aria-expanded="true"] .nav-chevron{transform:rotate(180deg)}
+.login-security>span svg,.empty-state>span svg{width:22px;height:22px;stroke-width:1.8}
+@media(max-height:720px) and (min-width:761px){.sidebar{padding-top:18px;padding-bottom:18px}.brand{padding-bottom:20px}.nav-item{padding-top:9px;padding-bottom:9px}}
