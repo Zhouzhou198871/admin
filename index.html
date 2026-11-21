@@ -385,16 +385,16 @@
             <div class="protocol-capability" data-proto-cap="vless"><b>VLESS</b><span>订阅支持</span><small>检测中</small></div>
             <div class="protocol-capability" data-proto-cap="vmess"><b>VMess</b><span>订阅支持</span><small>检测中</small></div>
             <div class="protocol-capability" data-proto-cap="trojan"><b>Trojan</b><span>可配置</span><small>尚无启用节点</small></div>
-            <div class="protocol-capability" data-proto-cap="hysteria2"><b>Hysteria2</b><span>可配置</span><small>尚无启用节点</small></div>
-            <div class="protocol-capability" data-proto-cap="ss"><b>Shadowsocks</b><span>可配置</span><small>尚无启用节点</small></div>
-            <div class="protocol-capability pending" data-proto-cap="socks5"><b>SOCKS5</b><span>待接入订阅</span><small>需补齐代理凭证与订阅渲染</small></div>
-            <div class="protocol-capability pending" data-proto-cap="mtproto"><b>MTProto</b><span>Telegram 专属</span><small>MTProto 独立服务，需真实状态接口</small></div>
-            <div class="protocol-capability pending" data-proto-cap="ss2022"><b>Shadowsocks 2022</b><span>待接入</span><small>需补齐服务端订阅渲染</small></div>
-            <div class="protocol-capability pending" data-proto-cap="http"><b>HTTP / HTTPS</b><span>待部署</span><small>当前渲染器未实现</small></div>
+            <div class="protocol-capability" data-proto-cap="hysteria2"><b>Hysteria2</b><span>已接入</span><small>美国节点 · UDP 443</small></div>
+            <div class="protocol-capability" data-proto-cap="ss"><b>Shadowsocks</b><span>已接入</span><small>新加坡节点 · 8446</small></div>
+            <div class="protocol-capability" data-proto-cap="socks5"><b>SOCKS5</b><span>已接入</span><small>新加坡节点 · 8447</small></div>
+            <div class="protocol-capability" data-proto-cap="mtproto"><b>MTProto</b><span>已接入</span><small>美国节点 · Telegram 代理</small></div>
+            <div class="protocol-capability" data-proto-cap="ss2022"><b>Shadowsocks 2022</b><span>已接入</span><small>新加坡节点 · 8449</small></div>
+            <div class="protocol-capability" data-proto-cap="http"><b>HTTP / HTTPS</b><span>已接入</span><small>新加坡节点 · HTTP 8450 / HTTPS 8451</small></div>
           </div>
           <article class="panel data-panel">
             <div class="panel-heading"><div><h2>商城节点产品状态</h2><p>读取生产 node_products；服务器未部署或配置未就绪的产品不能开售</p></div><button class="btn btn-secondary btn-small" id="nodeCatalogRefresh" type="button">刷新产品</button></div>
-            <div class="table-wrap"><table class="data-table"><thead><tr><th>产品</th><th>协议</th><th>服务器</th><th>开通条件</th><th>销售状态</th><th>操作</th></tr></thead><tbody id="nodeCatalogBody"><tr><td colspan="6" class="table-empty">等待读取生产节点产品</td></tr></tbody></table></div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>产品</th><th>协议</th><th>目标节点</th><th>服务器</th><th>开通条件</th><th>销售状态</th><th>操作</th></tr></thead><tbody id="nodeCatalogBody"><tr><td colspan="7" class="table-empty">等待读取生产节点产品</td></tr></tbody></table></div>
             <div class="table-foot"><span id="nodeCatalogCount">—</span><span>服务端就绪状态由服务器配置决定，后台不能强行伪造为已接入</span></div>
           </article>
           <article class="panel data-panel">
