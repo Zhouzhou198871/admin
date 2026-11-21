@@ -6,7 +6,7 @@ const REMEMBER_EMAIL_KEY="qingtian_admin_remembered_email";
 const rememberedEmail=localStorage.getItem(REMEMBER_EMAIL_KEY);
 if(rememberedEmail){$("#loginEmail").value=rememberedEmail;$("#rememberPassword").checked=true}
 const pageNames={overview:"经营总览",orders:"订单管理",users:"用户管理",products:"商品与库存",nodes:"节点服务",support:"在线客服",email:"邮件系统",notices:"公告管理",payments:"支付系统",recharge:"余额充值",bots:"机器人管理",admins:"管理员与权限"};
-let currentAdmin=null,activeNodeAccess=[];
+let currentAdmin=null,activeNodeAccess=[],selectedUserRecord=null;
 let toastTimer;
 function toast(message){const el=$("#toast");el.textContent=message;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2600)}
 function authHeaders(extra={}){return {...extra,Authorization:"Bearer "+(localStorage.getItem(TOKEN_KEY)||"")}}
@@ -181,14 +181,22 @@ async function loadOverview(){
  const failed=jobs.map((x,i)=>x.status==="rejected"?i:-1).filter(i=>i>=0);
  if(failed.length)$("#apiStatus").textContent="部分业务数据待接通";
 }
-async function loadUsers(){
- const body=$("#usersBody");if(!body)return;body.innerHTML='<tr><td colspan="8" class="table-empty">正在读取用户数据…</td></tr>';
- const q=$("#userSearch")?.value.trim()||"";
+async let userPage=1;
+const userPageSize=50;
+async function loadUsers(resetPage=true){
+ const body=$("#usersBody");if(!body)return;
+ if(resetPage)userPage=1;
+ body.innerHTML='<tr><td colspan="8" class="table-empty">正在读取用户数据…</td></tr>';
+ const q=$("#userSearch")?.value.trim()||"",status=$("#userStatusFilter")?.value||"";
  try{
-  const data=await legacyAdmin("/users");
-  const all=dataList(data),users=all.filter(u=>!q||[u.email,u.nickname,u.short_id,u.tg_id,u.tg_username,u.last_login_ip].some(v=>String(v||"").toLowerCase().includes(q.toLowerCase()))).slice(0,50);
-  body.innerHTML=users.length?users.map(user=>'<tr><td><b>'+escapeHtml(user.email||"—")+'</b></td><td>'+escapeHtml(user.nickname||user.name||"—")+'</td><td class="mono">'+escapeHtml(user.tg_username||user.tg_id||user.short_id||"—")+'</td><td class="money">'+formatCny(Number(user.commission_balance||0)/100)+'</td><td>'+escapeHtml(formatAdminDate(user.created_at))+'</td><td class="mono">'+escapeHtml(user.last_login_ip||"—")+'</td><td>'+escapeHtml(formatAdminDate(user.last_login_at))+'</td><td><button class="btn btn-secondary btn-small" data-user-detail="'+Number(user.id||0)+'">详情</button></td></tr>').join(""):'<tr><td colspan="8" class="table-empty">没有找到匹配用户</td></tr>';
-  $("#usersCount").textContent="全站用户 "+all.length.toLocaleString("zh-CN")+" 位（当前显示 "+users.length+" 位）";
+  const params=new URLSearchParams({q,status,page:String(userPage),size:String(userPageSize)});
+  const data=await legacyAdmin("/users?"+params.toString());
+  const users=dataList(data),total=Number(data.total??users.length),pages=Math.max(1,Number(data.pages??Math.ceil(total/userPageSize)));
+  body.innerHTML=users.length?users.map(user=>'<tr><td><b>'+escapeHtml(user.email||"—")+'</b><small class="muted-inline">#'+Number(user.id||0)+'</small></td><td>'+escapeHtml(user.nickname||user.name||"—")+'</td><td class="mono">'+escapeHtml(user.tg_username||user.tg_id||user.short_id||"—")+'</td><td class="money">'+formatCny(Number(user.commission_balance||0)/100)+'</td><td>'+escapeHtml(formatAdminDate(user.created_at))+'</td><td class="mono">'+escapeHtml(user.last_login_ip||"—")+'</td><td>'+escapeHtml(formatAdminDate(user.last_login_at))+'</td><td><button class="btn btn-secondary btn-small" data-user-detail="'+Number(user.id||0)+'">详情</button></td></tr>').join(""):'<tr><td colspan="8" class="table-empty">没有找到匹配用户</td></tr>';
+  $("#usersCount").textContent="筛选结果 "+total.toLocaleString("zh-CN")+" 位 · 第 "+userPage+" / "+pages+" 页";
+  if($("#usersPrev"))$("#usersPrev").disabled=userPage<=1;
+  if($("#usersNext"))$("#usersNext").disabled=userPage>=pages;
+  if($("#usersPageInfo"))$("#usersPageInfo").textContent="第 "+userPage+" / "+pages+" 页";
   body.querySelectorAll("[data-user-detail]").forEach(btn=>btn.addEventListener("click",()=>openUserDetail(Number(btn.dataset.userDetail))));
  }catch(error){body.innerHTML='<tr><td colspan="8" class="table-empty error-text">读取失败：'+escapeHtml(error.message||"请求失败")+'</td></tr>';$("#usersCount").textContent="读取失败"}
 }
@@ -196,6 +204,8 @@ async function openUserDetail(id){
  const modal=$("#userDetailModal");modal.hidden=false;$("#userDetailTitle").textContent="客户 #"+id;$("#userDetailMeta").textContent="正在读取用户资料…";$("#userDetailSummary").innerHTML='<div class="empty-state">读取中…</div>';$("#userLoginHistory").innerHTML='<tr><td colspan="3" class="table-empty">读取中…</td></tr>';$("#userOrdersHistory").innerHTML='<tr><td colspan="4" class="table-empty">读取中…</td></tr>';$("#userDetailResult").textContent="";
  try{
   const raw=await legacyAdmin("/users/detail?id="+encodeURIComponent(id)),u=raw?.user||raw;
+  selectedUserRecord=u;
+  if($("#userBanToggleBtn"))$("#userBanToggleBtn").textContent=Number(u.banned)?"解除封禁":"封禁账号";
   $("#userDetailTitle").textContent=u.email||("客户 #"+id);$("#userDetailMeta").textContent="用户 ID "+id+" · "+(Number(u.banned)?"已封禁":"正常");
   const used=Number(u.u||0)+Number(u.d||0),traffic=Number(u.transfer_enable||0);
   const items=[["注册邮箱",u.email||"—"],["首次记录 IP",u.first_login_ip||"暂无登录记录"],["最近登录 IP",u.last_login_ip||"—"],["登录次数",Number(u.login_count||0).toLocaleString("zh-CN")],["注册时间",formatAdminDate(u.created_at)],["最近登录",formatAdminDate(u.last_login_at)],["佣金余额",formatCny(Number(u.commission_balance||0)/100)],["累计佣金",formatCny(Number(u.commission_total||0)/100)],["套餐 ID",u.plan_id??"—"],["到期时间",formatAdminDate(u.expired_at)],["流量使用",((used/1073741824)||0).toFixed(2)+" GB"],["流量上限",traffic?((traffic/1073741824).toFixed(2)+" GB"):"不限/未设置"]];
@@ -208,6 +218,14 @@ async function openUserDetail(id){
  }catch(e){$("#userDetailMeta").textContent="读取失败";$("#userDetailSummary").innerHTML='<div class="table-empty error-text">'+escapeHtml(e.message||"读取用户详情失败")+'</div>'}
 }
 $("#userDetailClose")?.addEventListener("click",()=>$("#userDetailModal").hidden=true);
+$("#usersPrev")?.addEventListener("click",()=>{if(userPage>1){userPage--;loadUsers(false)}});
+$("#usersNext")?.addEventListener("click",()=>{userPage++;loadUsers(false)});
+$("#userStatusFilter")?.addEventListener("change",()=>loadUsers(true));
+$("#userExtendBtn")?.addEventListener("click",async()=>{if(!selectedUserRecord)return;const days=Number(prompt("请输入需要增加的有效天数","30"));if(!Number.isInteger(days)||days<1||days>3650){toast("天数必须为 1–3650 的整数");return}try{await legacyAdmin("/users/add-days",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:selectedUserRecord.id,days})});toast("账号有效期已延长 "+days+" 天");openUserDetail(Number(selectedUserRecord.id));loadUsers(false)}catch(e){toast("操作失败："+e.message)}});
+$("#userResetTrafficBtn")?.addEventListener("click",async()=>{if(!selectedUserRecord||!confirm("确认重置该账号的上行与下行流量？"))return;try{await legacyAdmin("/users/reset-traffic",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:selectedUserRecord.id})});toast("流量已重置");openUserDetail(Number(selectedUserRecord.id))}catch(e){toast("操作失败："+e.message)}});
+$("#userBanToggleBtn")?.addEventListener("click",async()=>{if(!selectedUserRecord)return;const banned=Number(selectedUserRecord.banned)?0:1;if(!confirm(banned?"确认封禁该账号？":"确认解除该账号封禁？"))return;try{await legacyAdmin("/users/ban",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:selectedUserRecord.id,banned})});toast(banned?"账号已封禁":"账号已解封");openUserDetail(Number(selectedUserRecord.id));loadUsers(false)}catch(e){toast("操作失败："+e.message)}});
+$("#userSubTokenBtn")?.addEventListener("click",async()=>{if(!selectedUserRecord||!confirm("重新生成订阅凭证会使旧订阅链接失效，确认继续？"))return;try{const d=await legacyAdmin("/users/sub_token",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:selectedUserRecord.id})});const token=d.sub_token||d.data?.sub_token||"";if(token)prompt("新的订阅凭证（请妥善保存）",token);else toast("凭证已生成，请刷新用户详情")}catch(e){toast("生成失败："+e.message)}});
+
 
 async function loadUserNodeAccess(userId,email){
  const section=$("#userNodeAccessSection");if(!section)return;
