@@ -5,7 +5,7 @@ const $=s=>document.querySelector(s);
 const REMEMBER_EMAIL_KEY="qingtian_admin_remembered_email";
 const rememberedEmail=localStorage.getItem(REMEMBER_EMAIL_KEY);
 if(rememberedEmail){$("#loginEmail").value=rememberedEmail;$("#rememberPassword").checked=true}
-const pageNames={overview:"经营总览",orders:"订单管理",users:"用户管理",products:"商品与库存",nodes:"节点服务",support:"在线客服",email:"邮件系统",notices:"公告管理",payments:"支付系统",recharge:"余额充值",bots:"机器人管理",admins:"管理员与权限"};
+const pageNames={overview:"经营总览",orders:"订单管理",users:"用户管理",products:"商品与库存",nodes:"节点服务",support:"在线客服",email:"邮件系统",notices:"公告管理",payments:"支付系统",recharge:"余额充值",bots:"机器人管理",admins:"管理员与权限",audit:"安全审计"};
 let currentAdmin=null,activeNodeAccess=[],selectedUserRecord=null;
 let toastTimer;
 function toast(message){const el=$("#toast");el.textContent=message;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2600)}
@@ -13,7 +13,7 @@ function authHeaders(extra={}){return {...extra,Authorization:"Bearer "+(localSt
 async function adminRequest(path,options={}){const response=await fetchWithTimeout(API_BASE+path,{...options,headers:authHeaders(options.headers||{})},12000);let data={};try{data=await response.json()}catch{}if(!response.ok||!data.ok)throw new Error(data.error||"request_failed");return data}
 function adminHasPermission(permission){const p=currentAdmin?.permissions||[];return p.includes("*")||p.includes(permission)||(permission.endsWith(".read")&&p.includes("overview.read"))||p.includes(permission.replace(/\.read$/,".manage"))}
 function applyAdminAccess(){
- const needs={overview:"overview.read",orders:"orders.read",users:"users.read",products:"products.read",nodes:"nodes.read",support:"support.read",email:"email.read",notices:"notices.read",payments:"payments.read",recharge:"finance.manage",bots:"bots.read",admins:"staff.manage"};
+ const needs={overview:"overview.read",orders:"orders.read",users:"users.read",products:"products.read",nodes:"nodes.read",support:"support.read",email:"email.read",notices:"notices.read",payments:"payments.read",recharge:"finance.manage",bots:"bots.read",admins:"staff.manage",audit:"staff.manage"};
  document.querySelectorAll(".nav-item").forEach(el=>{const p=needs[el.dataset.page];el.hidden=!!p&&!adminHasPermission(p)});
  if($("#adminAccountRole"))$("#adminAccountRole").textContent=currentAdmin?.role_label||"—";
  if($("#adminAccountEmail"))$("#adminAccountEmail").textContent=currentAdmin?.email||"—";
@@ -48,7 +48,7 @@ $("#adminLoginForm").addEventListener("submit",async e=>{
 $("#togglePassword").addEventListener("click",()=>{const input=$("#loginPassword"),button=$("#togglePassword"),show=input.type==="password";input.type=show?"text":"password";button.textContent=show?"隐藏":"显示";button.setAttribute("aria-label",show?"隐藏密码":"显示密码");button.setAttribute("aria-pressed",String(show));});
 
 $("#logoutBtn").addEventListener("click",()=>{localStorage.removeItem(TOKEN_KEY);currentAdmin=null;document.body.classList.remove("authenticated");$("#loginPassword").value="";});
-function showPage(name){if(!pageNames[name])return;const need=({overview:"overview.read",orders:"orders.read",users:"users.read",products:"products.read",nodes:"nodes.read",support:"support.read",email:"email.read",notices:"notices.read",payments:"payments.read",recharge:"finance.manage",bots:"bots.read",admins:"staff.manage"})[name];if(need&&!adminHasPermission(need)){toast("当前管理员没有此模块权限");return}document.querySelectorAll(".page").forEach(el=>{const active=el.id==="page-"+name;el.classList.toggle("active",active);el.setAttribute("aria-hidden",String(!active))});document.querySelectorAll(".nav-item").forEach(el=>{const active=el.dataset.page===name;el.classList.toggle("active",active);if(active)el.setAttribute("aria-current","page");else el.removeAttribute("aria-current")});$("#pageCrumb").textContent=pageNames[name];$("#sidebar").classList.remove("open");$("#menuToggle").setAttribute("aria-expanded","false");window.scrollTo({top:0,behavior:"smooth"});const loaders={overview:loadOverview,orders:loadOrders,users:loadUsers,products:loadProducts,nodes:loadNodes,support:loadSupport,email:loadEmail,notices:loadNotices,payments:loadPayments,bots:loadBots,admins:loadAdmins};if(loaders[name])loaders[name]();}
+function showPage(name){if(!pageNames[name])return;const need=({overview:"overview.read",orders:"orders.read",users:"users.read",products:"products.read",nodes:"nodes.read",support:"support.read",email:"email.read",notices:"notices.read",payments:"payments.read",recharge:"finance.manage",bots:"bots.read",admins:"staff.manage",audit:"staff.manage"})[name];if(need&&!adminHasPermission(need)){toast("当前管理员没有此模块权限");return}document.querySelectorAll(".page").forEach(el=>{const active=el.id==="page-"+name;el.classList.toggle("active",active);el.setAttribute("aria-hidden",String(!active))});document.querySelectorAll(".nav-item").forEach(el=>{const active=el.dataset.page===name;el.classList.toggle("active",active);if(active)el.setAttribute("aria-current","page");else el.removeAttribute("aria-current")});$("#pageCrumb").textContent=pageNames[name];$("#sidebar").classList.remove("open");$("#menuToggle").setAttribute("aria-expanded","false");window.scrollTo({top:0,behavior:"smooth"});const loaders={overview:loadOverview,orders:loadOrders,users:loadUsers,products:loadProducts,nodes:loadNodes,support:loadSupport,email:loadEmail,notices:loadNotices,payments:loadPayments,bots:loadBots,admins:loadAdmins,audit:loadAuditLogs};if(loaders[name])loaders[name]();}
 document.querySelectorAll(".nav-item").forEach(btn=>btn.addEventListener("click",()=>showPage(btn.dataset.page)));
 document.querySelectorAll("[data-go]").forEach(btn=>btn.addEventListener("click",()=>{showPage(btn.dataset.go);if(btn.dataset.productTab)switchProductTab(btn.dataset.productTab);if(btn.dataset.nodeTab)switchNodeTab(btn.dataset.nodeTab)}));
 $("#menuToggle").addEventListener("click",()=>{const open=$("#sidebar").classList.toggle("open");$("#menuToggle").setAttribute("aria-expanded",String(open))});
@@ -841,7 +841,28 @@ document.querySelectorAll("[data-bot-logs]").forEach(btn=>btn.addEventListener("
  catch(error){$("#botLogs").textContent="日志读取失败："+(error.message||"服务暂不可用");$("#botLogStatus").textContent="读取失败"}
 }));
  
-async function loadAdmins(){
+async let auditPage=1;
+const auditPageSize=50;
+async function loadAuditLogs(resetPage=true){
+ const body=$("#auditLogsBody");if(!body)return;
+ if(resetPage)auditPage=1;
+ body.innerHTML='<tr><td colspan="6" class="table-empty">正在读取安全审计记录…</td></tr>';
+ const q=$("#auditSearch")?.value.trim()||"",params=new URLSearchParams({q,page:String(auditPage),size:String(auditPageSize)});
+ try{
+  const d=await legacyAdmin("/logs?"+params.toString()),items=dataList(d),total=Number(d.total??items.length),pages=Math.max(1,Number(d.pages??Math.ceil(total/auditPageSize)));
+  body.innerHTML=items.length?items.map(x=>'<tr><td>'+escapeHtml(formatAdminDate(x.created_at))+'</td><td><b>'+escapeHtml(x.admin||"—")+'</b></td><td>'+escapeHtml(x.action||"—")+'</td><td>'+escapeHtml(x.target||"—")+'</td><td>'+escapeHtml(x.detail||"—")+'</td><td class="mono">'+escapeHtml(x.ip||"—")+'</td></tr>').join(""):'<tr><td colspan="6" class="table-empty">暂无匹配的操作记录</td></tr>';
+  $("#auditCount").textContent="共 "+total.toLocaleString("zh-CN")+" 条审计记录";
+  if($("#auditPrev"))$("#auditPrev").disabled=auditPage<=1;
+  if($("#auditNext"))$("#auditNext").disabled=auditPage>=pages;
+  if($("#auditPageInfo"))$("#auditPageInfo").textContent="第 "+auditPage+" / "+pages+" 页";
+ }catch(e){body.innerHTML='<tr><td colspan="6" class="table-empty error-text">审计记录读取失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';$("#auditCount").textContent="读取失败"}
+}
+$("#auditSearchBtn")?.addEventListener("click",()=>loadAuditLogs(true));
+$("#auditSearch")?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();loadAuditLogs(true)}});
+$("#auditRefresh")?.addEventListener("click",()=>loadAuditLogs(false));
+$("#auditPrev")?.addEventListener("click",()=>{if(auditPage>1){auditPage--;loadAuditLogs(false)}});
+$("#auditNext")?.addEventListener("click",()=>{auditPage++;loadAuditLogs(false)});
+function loadAdmins(){
  const body=$("#adminUsersBody");if(!body)return;body.innerHTML='<tr><td colspan="6" class="table-empty">正在读取管理员列表…</td></tr>';
  try{
   const d=await adminRequest("/api/admin/staff");
