@@ -589,12 +589,13 @@ async function loadBots(){
  bots.forEach(bot=>{
   const key=bot.key||({1:"safew",2:"mivra"})[bot.id];
   const card=document.querySelector('[data-bot-card="'+(cardMap[key]||key)+'"]');if(!card)return;
-  const state=card.querySelector(".bot-state"),running=!!bot.online||bot.status==="active",enabled=bot.enabled===true||bot.status==="active"||bot.status===true||Number(bot.status)===1;
-  state.textContent=running?"运行中":enabled?"已启用 · 未运行":"已停用";
-  state.className="bot-state "+(running?"running":enabled?"pending":"stopped");
+  const state=card.querySelector(".bot-state"),running=!!bot.online||bot.status==="active",enabled=bot.enabled===true||bot.status==="active"||bot.status===true||Number(bot.status)===1,identityOk=bot.identity_ok!==false;
+  state.textContent=!identityOk?"身份异常":running?"运行中":enabled?"已启用 · 未运行":"已停用";
+  state.title=bot.identity_status||"";
+  state.className="bot-state "+(!identityOk?"stopped":running?"running":enabled?"pending":"stopped");
   card.querySelector("[data-bot-pid]").textContent=bot.pid||"—";
   card.querySelector("[data-bot-enabled]").textContent=enabled?"已启用":"已停用";
-  card.querySelectorAll("[data-bot-action]").forEach(btn=>{btn.disabled=(btn.dataset.botAction==="start"&&running)||(btn.dataset.botAction==="stop"&&!running);});
+  card.querySelectorAll("[data-bot-action]").forEach(btn=>{btn.disabled=(!identityOk&&(btn.dataset.botAction==="start"||btn.dataset.botAction==="restart"))||(btn.dataset.botAction==="start"&&running)||(btn.dataset.botAction==="stop"&&!running);});
  });
  const statsBody=$("#botStatsBody");
  if(statsBody){
