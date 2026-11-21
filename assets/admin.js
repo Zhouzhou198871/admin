@@ -516,7 +516,7 @@ async function loadBotUsers(){
   }).join(""):'<tr><td colspan="7" class="table-empty">该机器人暂无用户记录</td></tr>';
   $("#botUsersCount").textContent="当前机器人 "+users.length.toLocaleString("zh-CN")+" 位用户";
   body.querySelectorAll("[data-bot-user-detail]").forEach(btn=>btn.addEventListener("click",()=>openBotUserDetail(users[Number(btn.dataset.botUserDetail)],bot)));
- }catch(e){body.innerHTML='<tr><td colspan="7" class="table-empty error-text">读取机器人用户失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';$("#botUsersCount").textContent="读取失败"}
+ }catch(e){body.innerHTML='<tr><td colspan="8" class="table-empty error-text">读取机器人用户失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';$("#botUsersCount").textContent="读取失败"}
 }
 function openBotUserDetail(u,bot){
  if(!u)return;
