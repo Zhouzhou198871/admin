@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f7fb">
   <title>晴天账号铺 · 管理后台</title>
-  <link rel="stylesheet" href="./assets/admin.css?v=20261121-20">
-  <script src="./assets/admin.js?v=20261121-46" defer></script>
+  <link rel="icon" href="https://shop.lynli.me/logo.jpg" type="image/jpeg">
+  <link rel="stylesheet" href="./assets/admin.css?v=20261122-01">
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
+  <script src="./assets/admin.js?v=20261122-01" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -18,13 +20,13 @@
       <div class="nav-label">管理导航</div>
       <nav class="nav" aria-label="管理模块">
         <section class="nav-group" data-nav-group="workspace">
-          <button class="nav-group-toggle" type="button" aria-expanded="true"><span>工作台</span><i>⌄</i></button>
+          <button class="nav-group-toggle" type="button" aria-expanded="true"><span>工作台</span><i data-lucide="chevron-down" class="nav-chevron" aria-hidden="true"></i></button>
           <div class="nav-group-items">
             <button class="nav-item active" data-page="overview"><span class="nav-icon">▦</span>经营总览</button>
           </div>
         </section>
         <section class="nav-group" data-nav-group="business">
-          <button class="nav-group-toggle" type="button" aria-expanded="false"><span>业务运营</span><i>⌄</i></button>
+          <button class="nav-group-toggle" type="button" aria-expanded="false"><span>业务运营</span><i data-lucide="chevron-down" class="nav-chevron" aria-hidden="true"></i></button>
           <div class="nav-group-items" hidden>
             <button class="nav-item" data-page="orders"><span class="nav-icon">▤</span>订单管理</button>
             <button class="nav-item" data-page="users"><span class="nav-icon">♙</span>用户管理</button>
@@ -33,21 +35,21 @@
           </div>
         </section>
         <section class="nav-group" data-nav-group="service">
-          <button class="nav-group-toggle" type="button" aria-expanded="false"><span>客户服务</span><i>⌄</i></button>
+          <button class="nav-group-toggle" type="button" aria-expanded="false"><span>客户服务</span><i data-lucide="chevron-down" class="nav-chevron" aria-hidden="true"></i></button>
           <div class="nav-group-items" hidden>
             <button class="nav-item" data-page="support"><span class="nav-icon">◉</span>在线客服</button>
             <button class="nav-item" data-page="email"><span class="nav-icon">✉</span>邮件系统</button>
           </div>
         </section>
         <section class="nav-group" data-nav-group="nodes">
-          <button class="nav-group-toggle" type="button" aria-expanded="false"><span>节点与机器人</span><i>⌄</i></button>
+          <button class="nav-group-toggle" type="button" aria-expanded="false"><span>节点与机器人</span><i data-lucide="chevron-down" class="nav-chevron" aria-hidden="true"></i></button>
           <div class="nav-group-items" hidden>
             <button class="nav-item" data-page="nodes"><span class="nav-icon">⌁</span>节点服务</button>
             <button class="nav-item" data-page="bots"><span class="nav-icon">⚙</span>机器人管理</button>
           </div>
         </section>
         <section class="nav-group" data-nav-group="finance">
-          <button class="nav-group-toggle" type="button" aria-expanded="false"><span>财务与 API</span><i>⌄</i></button>
+          <button class="nav-group-toggle" type="button" aria-expanded="false"><span>财务与 API</span><i data-lucide="chevron-down" class="nav-chevron" aria-hidden="true"></i></button>
           <div class="nav-group-items" hidden>
             <button class="nav-item" data-page="payments"><span class="nav-icon">￥</span>支付系统</button>
             <button class="nav-item" data-page="recharge"><span class="nav-icon">＋</span>余额充值</button>
@@ -55,7 +57,7 @@
           </div>
         </section>
         <section class="nav-group" data-nav-group="security">
-          <button class="nav-group-toggle" type="button" aria-expanded="false"><span>系统安全</span><i>⌄</i></button>
+          <button class="nav-group-toggle" type="button" aria-expanded="false"><span>系统安全</span><i data-lucide="chevron-down" class="nav-chevron" aria-hidden="true"></i></button>
           <div class="nav-group-items" hidden>
             <button class="nav-item" data-page="admins"><span class="nav-icon">♙</span>管理员与权限</button>
             <button class="nav-item" data-page="audit"><span class="nav-icon">▤</span>安全审计</button>
@@ -70,7 +72,7 @@
 
     <main class="main">
       <header class="topbar">
-        <button class="mobile-menu" id="menuToggle" aria-label="打开菜单">☰</button>
+        <button class="mobile-menu" id="menuToggle" aria-label="打开菜单" aria-expanded="false"><i data-lucide="menu" aria-hidden="true"></i></button>
         <div class="breadcrumbs"><span>管理后台</span><i>/</i><b id="pageCrumb">总览</b></div>
         <div class="top-actions">
           <span class="system-status"><i id="apiDot"></i><span id="apiStatus">正在检查 API</span></span>
@@ -84,7 +86,7 @@
         <div class="metric-grid overview-metrics">
           <button type="button" class="metric-card metric-action" data-go="orders"><div class="metric-top"><span>节点服务累计收入</span><span class="metric-icon green">¥</span></div><strong id="metricRevenue">¥—</strong><small>累计业务收入（按接口实际统计）</small><span class="metric-detail">查看销售明细 →</span></button>
           <button type="button" class="metric-card metric-action" data-go="orders"><div class="metric-top"><span>今日节点收入</span><span class="metric-icon green">¥</span></div><strong id="metricTodayRevenue">¥—</strong><small>今日已支付订单</small><span class="metric-detail">查看今日订单 →</span></button>
-          <button type="button" class="metric-card metric-action" data-go="orders"><div class="metric-top"><span>本月节点收入</span><span class="metric-icon green">¥</span></div><strong id="metricMonthRevenue">¥—</strong><small>近 30 天已支付订单</small><span class="metric-detail">查看收入明细 →</span></button>
+          <button type="button" class="metric-card metric-action" data-go="orders"><div class="metric-top"><span>本月节点收入</span><span class="metric-icon green">¥</span></div><strong id="metricMonthRevenue">¥—</strong><small>本月已支付订单</small><span class="metric-detail">查看收入明细 →</span></button>
           <button type="button" class="metric-card metric-action" data-go="users"><div class="metric-top"><span>付费用户</span><span class="metric-icon purple">♙</span></div><strong id="metricPaidUsers">—</strong><small>至少有一笔已支付订单</small><span class="metric-detail">查看付费客户 →</span></button>
           <button type="button" class="metric-card metric-action" data-go="users"><div class="metric-top"><span>付费转化率</span><span class="metric-icon blue">％</span></div><strong id="metricConversion">—</strong><small>付费用户 / 全站用户</small><span class="metric-detail">经营转化指标</span></button>
           <button type="button" class="metric-card metric-action" data-go="users"><div class="metric-top"><span>实时在线用户</span><span class="metric-icon orange">◉</span></div><strong id="metricOnlineUsers">—</strong><small>最近 5 分钟活跃用户</small><span class="metric-detail">查看用户管理 →</span></button>
@@ -180,7 +182,7 @@
           </article>
           <aside class="panel side-info"><div class="panel-heading"><div><h2>操作说明</h2><p>当前已存在的接口</p></div></div>
             <div class="endpoint"><small>POST</small><code>/api/admin/credit</code></div>
-            <ul><li>使用 <code>X-Admin-Key</code> 请求头鉴权</li><li>按邮箱定位已注册用户</li><li>金额精确到 4 位小数</li><li>充值完成后由服务端写入余额账本</li></ul>
+            <ul><li>使用当前管理员会话的 Bearer Token 鉴权（页面自动携带）</li><li>按邮箱定位已注册用户</li><li>金额精确到 4 位小数</li><li>充值完成后由服务端写入余额账本</li></ul>
             <div class="warning-box">充值是实际余额变更。提交前请确认邮箱与金额无误。</div>
           </aside>
         </div>
