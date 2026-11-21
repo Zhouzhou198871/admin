@@ -376,10 +376,10 @@
         <div class="node-view" id="nodeView-protocols">
           <div class="toolbar-row"><p class="field-hint">8 种主流协议与 Telegram MTProto 分开管理；当前已接入的协议会按真实节点与端口健康检查显示。</p><button class="btn btn-primary" id="protocolNodeAddBtn">＋ 新增协议节点</button></div>
           <div class="protocol-summary-strip">
-            <div><small>已配置协议类型</small><b id="protocolConfiguredCount">—</b></div>
+            <div><small>服务端已接入类型</small><b id="protocolConfiguredCount">—</b></div>
             <div><small>在线协议节点</small><b id="protocolOnlineCount">—</b></div>
-            <div><small>待接入主流协议</small><b id="protocolPendingCount">3</b></div>
-            <div><small>Telegram MTProto</small><b id="protocolMtprotoState">独立核验</b></div>
+            <div><small>待接入主流协议</small><b id="protocolPendingCount">—</b></div>
+            <div><small>Telegram MTProto</small><b id="protocolMtprotoState">读取中</b></div>
           </div>
           <div class="protocol-capability-grid" id="protocolCapabilityGrid">
             <div class="protocol-capability" data-proto-cap="vless"><b>VLESS</b><span>订阅支持</span><small>检测中</small></div>
@@ -392,6 +392,31 @@
             <div class="protocol-capability pending" data-proto-cap="ss2022"><b>Shadowsocks 2022</b><span>待接入</span><small>需补齐服务端订阅渲染</small></div>
             <div class="protocol-capability pending" data-proto-cap="http"><b>HTTP / HTTPS</b><span>待部署</span><small>当前渲染器未实现</small></div>
           </div>
+          <article class="panel data-panel">
+            <div class="panel-heading"><div><h2>商城节点产品状态</h2><p>读取生产 node_products；服务器未部署或配置未就绪的产品不能开售</p></div><button class="btn btn-secondary btn-small" id="nodeCatalogRefresh" type="button">刷新产品</button></div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>产品</th><th>协议</th><th>服务器</th><th>开通条件</th><th>销售状态</th><th>操作</th></tr></thead><tbody id="nodeCatalogBody"><tr><td colspan="6" class="table-empty">等待读取生产节点产品</td></tr></tbody></table></div>
+            <div class="table-foot"><span id="nodeCatalogCount">—</span><span>服务端就绪状态由服务器配置决定，后台不能强行伪造为已接入</span></div>
+          </article>
+          <article class="panel data-panel">
+            <div class="panel-heading"><div><h2>商城节点套餐</h2><p>管理新节点系统的人民币售价、周期、流量与设备数</p></div><button class="btn btn-primary btn-small" id="nodePackageAddBtn" type="button">＋ 新增套餐</button></div>
+            <article class="panel form-panel compact-form" id="nodePackageFormPanel" hidden>
+              <div class="panel-heading"><div><h3 id="nodePackageFormTitle">新增节点套餐</h3><p>套餐 ID 创建后固定；下架不会删除历史订单</p></div><button class="btn btn-secondary btn-small" id="nodePackageFormClose" type="button">关闭</button></div>
+              <form id="nodePackageForm" class="admin-form-grid">
+                <label>所属协议产品<select id="nodePackageProduct" required></select></label>
+                <label>套餐 ID<input id="nodePackageCode" required maxlength="64" pattern="[A-Za-z0-9][A-Za-z0-9-]{1,63}" placeholder="例如 mtproto-30d"></label>
+                <label>套餐名称<input id="nodePackageName" required maxlength="80" placeholder="例如：30 天"></label>
+                <label>售价（CNY）<input id="nodePackagePrice" type="number" min="0.01" max="100000" step="0.01" required></label>
+                <label>时长（天）<input id="nodePackageDays" type="number" min="1" max="3650" step="1" required value="30"></label>
+                <label>流量上限（GB）<input id="nodePackageTrafficGb" type="number" min="0" step="0.1" placeholder="留空表示不限流量"></label>
+                <label>最大设备数<input id="nodePackageDevices" type="number" min="1" max="20" step="1" value="1" required></label>
+                <label>排序<input id="nodePackageSort" type="number" step="1" value="100"></label>
+                <label>销售状态<select id="nodePackageActive"><option value="1">上架</option><option value="0">下架</option></select></label>
+                <div class="form-actions span-two"><button class="btn btn-primary" id="nodePackageSaveBtn" type="submit">保存套餐</button><span id="nodePackageFormResult" class="form-result"></span></div>
+              </form>
+            </article>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>产品</th><th>套餐</th><th>售价</th><th>时长</th><th>流量</th><th>设备</th><th>状态</th><th>操作</th></tr></thead><tbody id="nodePackagesBody"><tr><td colspan="8" class="table-empty">等待读取节点套餐</td></tr></tbody></table></div>
+            <div class="table-foot"><span id="nodePackagesCount">—</span><span>价格与上架状态会影响新订单，不改动已生成订单</span></div>
+          </article>
           <article class="panel form-panel compact-form" id="protocolNodeFormPanel" hidden>
             <div class="panel-heading"><div><h2 id="protocolNodeFormTitle">新增协议节点</h2><p>写入真实订阅节点配置；域名和端口必须能连通</p></div><button type="button" class="btn btn-secondary" id="protocolNodeFormClose">关闭</button></div>
             <form id="protocolNodeForm" class="admin-form-grid">
