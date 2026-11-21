@@ -513,3 +513,7 @@ html,body{min-height:100%;height:auto;overflow-x:hidden;overflow-y:auto}
 
 .domain-value-input{min-width:190px;max-width:260px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
 .domain-sort-input{width:72px;min-width:72px}
+
+
+/* Node bot settings controls */
+.check-field{display:flex!important;align-items:center;gap:10px;min-height:42px;padding:10px 12px;border:1px solid var(--line,#e5e9f0);border-radius:10px;background:var(--surface,#fff);font-weight:600}.check-field input{width:17px!important;height:17px!important;flex:0 0 auto;accent-color:var(--primary,#2563eb)}#botPlansBody .table-actions{display:flex;gap:6px;flex-wrap:wrap}
