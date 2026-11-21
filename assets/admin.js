@@ -5,7 +5,7 @@ const $=s=>document.querySelector(s);
 const REMEMBER_EMAIL_KEY="qingtian_admin_remembered_email";
 const rememberedEmail=localStorage.getItem(REMEMBER_EMAIL_KEY);
 if(rememberedEmail){$("#loginEmail").value=rememberedEmail;$("#rememberPassword").checked=true}
-const pageNames={overview:"经营总览",orders:"订单管理",users:"用户管理",products:"商品与库存",nodes:"节点服务",support:"在线客服",email:"邮件系统",notices:"公告管理",payments:"支付系统",recharge:"余额充值",bots:"机器人管理",admins:"管理员与权限",audit:"安全审计"};
+const pageNames={overview:"经营总览",orders:"订单管理",users:"用户管理",products:"商品与库存",nodes:"节点服务",support:"在线客服",email:"邮件系统",notices:"公告管理",payments:"支付系统",recharge:"余额充值",api:"API 管理",bots:"机器人管理",admins:"管理员与权限",audit:"安全审计"};
 let currentAdmin=null,activeNodeAccess=[],selectedUserRecord=null;
 let toastTimer;
 function toast(message){const el=$("#toast");el.textContent=message;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2600)}
@@ -13,8 +13,8 @@ function authHeaders(extra={}){return {...extra,Authorization:"Bearer "+(localSt
 async function adminRequest(path,options={}){const response=await fetchWithTimeout(API_BASE+path,{...options,headers:authHeaders(options.headers||{})},12000);let data={};try{data=await response.json()}catch{}if(!response.ok||!data.ok)throw new Error(data.error||"request_failed");return data}
 function adminHasPermission(permission){const p=currentAdmin?.permissions||[];return p.includes("*")||p.includes(permission)||(permission.endsWith(".read")&&p.includes("overview.read"))||p.includes(permission.replace(/\.read$/,".manage"))}
 function applyAdminAccess(){
- const needs={overview:"overview.read",orders:"orders.read",users:"users.read",products:"products.read",nodes:"nodes.read",support:"support.read",email:"email.read",notices:"notices.read",payments:"payments.read",recharge:"finance.manage",bots:"bots.read",admins:"staff.manage",audit:"staff.manage"};
- document.querySelectorAll(".nav-item").forEach(el=>{const p=needs[el.dataset.page];el.hidden=!!p&&!adminHasPermission(p)});
+ const needs={overview:"overview.read",orders:"orders.read",users:"users.read",products:"products.read",nodes:"nodes.read",support:"support.read",email:"email.read",notices:"notices.read",payments:"payments.read",recharge:"finance.manage",api:"staff.manage",bots:"bots.read",admins:"staff.manage",audit:"staff.manage"};
+ document.querySelectorAll(".nav-item").forEach(el=>{const p=needs[el.dataset.page];el.hidden=!!p&&!adminHasPermission(p)});document.querySelectorAll(".nav-group").forEach(g=>{g.hidden=!Array.from(g.querySelectorAll(".nav-item")).some(x=>!x.hidden)});
  if($("#adminAccountRole"))$("#adminAccountRole").textContent=currentAdmin?.role_label||"—";
  if($("#adminAccountEmail"))$("#adminAccountEmail").textContent=currentAdmin?.email||"—";
  if($("#adminAccountNickname"))$("#adminAccountNickname").textContent=currentAdmin?.nickname||"—";
@@ -48,8 +48,11 @@ $("#adminLoginForm").addEventListener("submit",async e=>{
 $("#togglePassword").addEventListener("click",()=>{const input=$("#loginPassword"),button=$("#togglePassword"),show=input.type==="password";input.type=show?"text":"password";button.textContent=show?"隐藏":"显示";button.setAttribute("aria-label",show?"隐藏密码":"显示密码");button.setAttribute("aria-pressed",String(show));});
 
 $("#logoutBtn").addEventListener("click",()=>{localStorage.removeItem(TOKEN_KEY);currentAdmin=null;document.body.classList.remove("authenticated");$("#loginPassword").value="";});
-function showPage(name){if(!pageNames[name])return;const need=({overview:"overview.read",orders:"orders.read",users:"users.read",products:"products.read",nodes:"nodes.read",support:"support.read",email:"email.read",notices:"notices.read",payments:"payments.read",recharge:"finance.manage",bots:"bots.read",admins:"staff.manage",audit:"staff.manage"})[name];if(need&&!adminHasPermission(need)){toast("当前管理员没有此模块权限");return}document.querySelectorAll(".page").forEach(el=>{const active=el.id==="page-"+name;el.classList.toggle("active",active);el.setAttribute("aria-hidden",String(!active))});document.querySelectorAll(".nav-item").forEach(el=>{const active=el.dataset.page===name;el.classList.toggle("active",active);if(active)el.setAttribute("aria-current","page");else el.removeAttribute("aria-current")});$("#pageCrumb").textContent=pageNames[name];$("#sidebar").classList.remove("open");$("#menuToggle").setAttribute("aria-expanded","false");window.scrollTo({top:0,behavior:"smooth"});const loaders={overview:loadOverview,orders:loadOrders,users:loadUsers,products:loadProducts,nodes:loadNodes,support:loadSupport,email:loadEmail,notices:loadNotices,payments:loadPayments,bots:loadBots,admins:loadAdmins,audit:loadAuditLogs};if(loaders[name])loaders[name]();}
+function showPage(name){if(!pageNames[name])return;const need=({overview:"overview.read",orders:"orders.read",users:"users.read",products:"products.read",nodes:"nodes.read",support:"support.read",email:"email.read",notices:"notices.read",payments:"payments.read",recharge:"finance.manage",api:"staff.manage",bots:"bots.read",admins:"staff.manage",audit:"staff.manage"})[name];if(need&&!adminHasPermission(need)){toast("当前管理员没有此模块权限");return}document.querySelectorAll(".page").forEach(el=>{const active=el.id==="page-"+name;el.classList.toggle("active",active);el.setAttribute("aria-hidden",String(!active))});document.querySelectorAll(".nav-item").forEach(el=>{const active=el.dataset.page===name;el.classList.toggle("active",active);if(active)el.setAttribute("aria-current","page");else el.removeAttribute("aria-current")});document.querySelectorAll(".nav-group").forEach(g=>{const active=!!g.querySelector(".nav-item.active");if(active){const items=g.querySelector(".nav-group-items"),toggle=g.querySelector(".nav-group-toggle");if(items)items.hidden=false;if(toggle)toggle.setAttribute("aria-expanded","true")}});$("#pageCrumb").textContent=pageNames[name];$("#sidebar").classList.remove("open");$("#menuToggle").setAttribute("aria-expanded","false");window.scrollTo({top:0,behavior:"smooth"});const loaders={overview:loadOverview,orders:loadOrders,users:loadUsers,products:loadProducts,nodes:loadNodes,support:loadSupport,email:loadEmail,notices:loadNotices,payments:loadPayments,api:loadApiManagement,bots:loadBots,admins:loadAdmins,audit:loadAuditLogs};if(loaders[name])loaders[name]();}
 document.querySelectorAll(".nav-item").forEach(btn=>btn.addEventListener("click",()=>showPage(btn.dataset.page)));
+document.querySelectorAll("[data-nav-group-toggle]").forEach(btn=>btn.addEventListener("click",()=>{const group=btn.closest(".nav-group"),items=group?.querySelector(".nav-group-items"),open=btn.getAttribute("aria-expanded")==="true";if(!items)return;btn.setAttribute("aria-expanded",String(!open));items.hidden=open;}));
+document.querySelectorAll(".nav-group-toggle").forEach(btn=>{if(!btn.hasAttribute("data-nav-group-toggle"))btn.dataset.navGroupToggle="1"});
+
 document.querySelectorAll("[data-go]").forEach(btn=>btn.addEventListener("click",()=>{showPage(btn.dataset.go);if(btn.dataset.productTab)switchProductTab(btn.dataset.productTab);if(btn.dataset.nodeTab)switchNodeTab(btn.dataset.nodeTab)}));
 $("#menuToggle").addEventListener("click",()=>{const open=$("#sidebar").classList.toggle("open");$("#menuToggle").setAttribute("aria-expanded",String(open))});
 $("#refreshBtn").addEventListener("click",async()=>{await Promise.allSettled([checkApi(),loadOverview()]);toast("经营数据已刷新")});
@@ -68,11 +71,53 @@ function statusText(status){return ({pending:"待处理",reserved:"已预留",de
 function statusPill(status){const value=String(status||"").toLowerCase();const cls=["delivered","paid","active"].includes(value)?"good":["failed","refunded","cancelled","expired","inactive"].includes(value)?"bad":"wait";return '<span class="status-pill '+cls+'">'+escapeHtml(statusText(value))+'</span>'}
 function unwrapLegacy(value){let v=value;for(let i=0;i<4;i++){if(!v||typeof v!=="object"||Array.isArray(v)||!Object.prototype.hasOwnProperty.call(v,"data"))break;if(v.ok===true||v.code!==undefined||v.status==="success")v=v.data;else break;}return v}
 async function legacyAdmin(path,options={}){return unwrapLegacy(await adminRequest("/api/admin/legacy"+path,options))}
+async function apiAdminRequest(path,options={}){
+ const response=await fetchWithTimeout(API_BASE+"/api/v1/admin/"+path,{...options,headers:authHeaders(options.headers||{})},15000);
+ let data={};try{data=await response.json()}catch{}
+ if(!response.ok||!(data.code===1||data.ok===true))throw new Error(data.msg||data.message||data.error||"API 管理请求失败");
+ return data.data??data;
+}
+
 function dataList(value){const v=unwrapLegacy(value);if(Array.isArray(v))return v;if(!v||typeof v!=="object")return [];return v.list||v.items||v.products||v.orders||v.users||v.rows||v.records||[]}
 function dataTotal(value,list){return Number(value?.total??value?.count??value?.total_count??list.length)}
 function cnyValue(value){const n=Number(value);return Number.isFinite(n)?n:0}
 function formatCny(value){return "¥"+cnyValue(value).toFixed(2)}
 function orderStatusLabel(value){const n=Number(value);if(Number.isFinite(n)&&String(value).trim()!=="")return ({0:"待支付",1:"待发货",2:"已发货",3:"已完成","-1":"已取消"})[n]||String(value);return statusText(value)}
+async function loadApiManagement(){
+ const keysBody=$("#apiKeysBody"),appsBody=$("#apiApplicationsBody"),logsBody=$("#apiLogsBody");
+ if(!keysBody||!appsBody||!logsBody)return;
+ keysBody.innerHTML='<tr><td colspan="9" class="table-empty">正在读取 API 密钥…</td></tr>';
+ appsBody.innerHTML='<tr><td colspan="7" class="table-empty">正在读取开发者申请…</td></tr>';
+ logsBody.innerHTML='<tr><td colspan="5" class="table-empty">正在读取调用日志…</td></tr>';
+ const results=await Promise.allSettled([apiAdminRequest("apikeys"),apiAdminRequest("apply/list"),apiAdminRequest("apilogs?limit=100")]);
+ const keys=results[0].status==="fulfilled"?(Array.isArray(results[0].value)?results[0].value:[]):[];
+ const apps=results[1].status==="fulfilled"?(Array.isArray(results[1].value)?results[1].value:[]):[];
+ const logs=results[2].status==="fulfilled"?(results[2].value.items||[]):[];
+ $("#apiKeyTotal").textContent=keys.length;$("#apiKeyEnabled").textContent=keys.filter(x=>Number(x.enabled)===1).length;$("#apiKeyDisabled").textContent=keys.filter(x=>Number(x.enabled)!==1).length;$("#apiApplyPending").textContent=apps.filter(x=>Number(x.status)===0).length;
+ const kw=($("#apiKeySearch").value||"").trim().toLowerCase();
+ const filtered=keys.filter(x=>!kw||String(x.name||"").toLowerCase().includes(kw)||String(x.key_hint||"").toLowerCase().includes(kw));
+ keysBody.innerHTML=filtered.length?filtered.map(x=>'<tr><td>'+Number(x.id)+'</td><td>'+escapeHtml(x.name||"未命名")+'</td><td class="mono">'+escapeHtml(x.key_hint||"—")+'</td><td>'+escapeHtml(x.scopes||"read")+'</td><td>'+Number(x.rate_limit||0)+'/分钟</td><td>'+Number(x.used||0)+'</td><td>'+statusPill(Number(x.enabled)===1?"active":"inactive")+'</td><td>'+escapeHtml(formatAdminDate(x.last_used_at||x.created_at))+'</td><td><div class="table-actions"><button class="btn btn-secondary btn-small" data-api-toggle="'+Number(x.id)+'" data-enabled="'+(Number(x.enabled)===1?"1":"0")+'">'+(Number(x.enabled)===1?"封禁":"解封")+'</button><button class="btn btn-danger btn-small" data-api-delete="'+Number(x.id)+'">撤销</button></div></td></tr>').join(""):'<tr><td colspan="9" class="table-empty">暂无 API 密钥</td></tr>';
+ $("#apiKeysCount").textContent=filtered.length+" / "+keys.length+" 个密钥";
+ keysBody.querySelectorAll("[data-api-toggle]").forEach(btn=>btn.addEventListener("click",async()=>{const enabled=btn.dataset.enabled!=="1";if(!confirm(enabled?"确认解封并启用此 API Key？":"确认封禁此 API Key？封禁后调用将立即失效。"))return;btn.disabled=true;try{await apiAdminRequest("apikeys/toggle",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(btn.dataset.apiToggle),enabled})});toast(enabled?"API Key 已解封":"API Key 已封禁");await loadApiManagement()}catch(e){toast("状态更新失败："+e.message);btn.disabled=false}}));
+ keysBody.querySelectorAll("[data-api-delete]").forEach(btn=>btn.addEventListener("click",async()=>{if(!confirm("永久撤销该 API Key？此操作不可恢复。"))return;btn.disabled=true;try{await apiAdminRequest("apikeys/delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(btn.dataset.apiDelete)})});toast("API Key 已撤销");await loadApiManagement()}catch(e){toast("撤销失败："+e.message);btn.disabled=false}}));
+ const filter=$("#apiApplyFilter").value;
+ const showApps=apps.filter(x=>filter===""||String(x.status)===filter);
+ const labels={0:"待审核",1:"已批准",2:"已拒绝"};
+ appsBody.innerHTML=showApps.length?showApps.map(x=>'<tr><td>'+escapeHtml(x.app_name||"—")+'</td><td>'+escapeHtml(x.contact||"—")+'</td><td>'+escapeHtml(x.use_case||"—")+'</td><td>'+escapeHtml(x.homepage||"—")+'</td><td>'+escapeHtml(labels[x.status]||"未知")+'</td><td>'+escapeHtml(formatAdminDate(x.created_at))+'</td><td>'+(Number(x.status)===0?'<div class="table-actions"><button class="btn btn-primary btn-small" data-api-approve="'+Number(x.id)+'">批准并签发</button><button class="btn btn-secondary btn-small" data-api-reject="'+Number(x.id)+'">拒绝</button></div>':'—')+'</td></tr>').join(""):'<tr><td colspan="7" class="table-empty">暂无申请</td></tr>';
+ appsBody.querySelectorAll("[data-api-approve]").forEach(btn=>btn.addEventListener("click",async()=>{if(!confirm("确认批准该开发者申请并签发 API Key？"))return;btn.disabled=true;try{const d=await apiAdminRequest("apply/review",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(btn.dataset.apiApprove),action:"approve",scopes:"read",rate_limit:60})});if(d.key)showOneTimeApiKey(d.key);toast("申请已批准，已签发 API Key");await loadApiManagement()}catch(e){toast("审核失败："+e.message);btn.disabled=false}}));
+ appsBody.querySelectorAll("[data-api-reject]").forEach(btn=>btn.addEventListener("click",async()=>{if(!confirm("确认拒绝该开发者申请？"))return;btn.disabled=true;try{await apiAdminRequest("apply/review",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(btn.dataset.apiReject),action:"reject"})});toast("申请已拒绝");await loadApiManagement()}catch(e){toast("审核失败："+e.message);btn.disabled=false}}));
+ logsBody.innerHTML=logs.length?logs.map(x=>'<tr><td>'+escapeHtml(formatAdminDate(x.ts))+'</td><td class="mono">'+escapeHtml(x.path||"—")+'</td><td>'+escapeHtml(x.method||"—")+'</td><td class="mono">'+escapeHtml(x.ip||"—")+'</td><td>'+escapeHtml(x.code||"—")+'</td></tr>').join(""):'<tr><td colspan="5" class="table-empty">暂无调用日志</td></tr>';
+ $("#apiLogsCount").textContent=logs.length+" 条 / 总计 "+Number(results[2].status==="fulfilled"?results[2].value.total:0);
+ [keysBody,appsBody,logsBody].forEach((el,i)=>{if(results[i]?.status==="rejected")el.innerHTML='<tr><td colspan="'+(i===0?9:i===1?7:5)+'" class="table-empty error-text">读取失败：'+escapeHtml(results[i].reason?.message||"接口错误")+'</td></tr>'});
+}
+function showOneTimeApiKey(key){$("#apiKeyOneTimeValue").textContent=key;$("#apiKeyOneTime").hidden=false;}
+$("#apiKeyCreateForm")?.addEventListener("submit",async e=>{e.preventDefault();const btn=$("#apiKeyCreateBtn"),status=$("#apiKeyCreateStatus");btn.disabled=true;btn.textContent="创建中…";try{const d=await apiAdminRequest("apikeys/create",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:$("#apiKeyName").value.trim(),scopes:$("#apiKeyScopes").value,rate_limit:Number($("#apiKeyRate").value)})});if(d.key)showOneTimeApiKey(d.key);status.textContent="密钥已创建，请立即复制保存";status.className="form-result success";$("#apiKeyCreateForm").reset();$("#apiKeyRate").value="60";await loadApiManagement()}catch(e){status.textContent=e.message||"创建失败";status.className="form-result error"}finally{btn.disabled=false;btn.textContent="创建 API Key"}});
+$("#apiKeyCopy")?.addEventListener("click",()=>{const key=$("#apiKeyOneTimeValue").textContent;if(key)navigator.clipboard?.writeText(key).then(()=>toast("API Key 已复制")).catch(()=>toast("复制失败，请手动选择密钥"))});
+$("#apiManagementRefresh")?.addEventListener("click",loadApiManagement);
+$("#apiKeySearch")?.addEventListener("input",loadApiManagement);
+$("#apiApplyFilter")?.addEventListener("change",loadApiManagement);
+$("#apiLogsClear")?.addEventListener("click",async()=>{if(!confirm("清理 7 天前的 API 调用日志？近期日志会保留。"))return;try{await apiAdminRequest("apilogs/clear",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});toast("旧日志已清理");loadApiManagement()}catch(e){toast("清理失败："+e.message)}});
+
 async function loadPayments(){
  const body=$("#paymentStatsBody");if(!body)return;body.innerHTML='<tr><td colspan="3" class="table-empty">正在读取支付配置和收款记录…</td></tr>';
  try{
@@ -609,20 +654,59 @@ async function loadSupport(){
  }else if(ticketsBody)ticketsBody.innerHTML='<tr><td colspan="7" class="table-empty error-text">工单读取失败：'+escapeHtml(ticketResult.reason?.message||"接口错误")+'</td></tr>';
 }
 let activeChatId=0,activeChatHandoff=0,activeChatUserId=0,activeChatEmail="";
-async function loadChatHistory(id,userId=activeChatUserId,email=activeChatEmail){
- activeChatId=id;activeChatUserId=userId||0;activeChatEmail=email||"";
- $("#chatRoomTitle").textContent="客户会话 #"+id;$("#chatRoomMeta").textContent="用户 ID："+(activeChatUserId||"—")+" · "+(activeChatEmail||"未绑定邮箱")+" · 正在读取消息…";
- $("#chatMessages").innerHTML='<div class="empty-state">正在读取聊天记录…</div>';$("#chatReplyText").disabled=false;$("#chatReplyBtn").disabled=false;$("#chatHandoffBtn").disabled=false;
+function renderChatMessage(m){
+ const sender=m.sender==="user"?"客户":m.sender==="ai"?"AI 客服":m.sender==="admin"?"人工客服":"系统";
+ const safeUrl=/^https?:\/\//i.test(String(m.media_url||""))?String(m.media_url):"";
+ let media="";
+ if(safeUrl&&m.media_type==="image")media='<a class="chat-media-image" href="'+escapeHtml(safeUrl)+'" target="_blank" rel="noopener noreferrer"><img src="'+escapeHtml(safeUrl)+'" alt="'+escapeHtml(m.file_name||"聊天图片")+'" loading="lazy"></a>';
+ else if(safeUrl&&m.media_type==="video")media='<video class="chat-media-video" controls preload="metadata" src="'+escapeHtml(safeUrl)+'"></video>';
+ else if(safeUrl&&m.media_type==="file")media='<a class="chat-media-file" href="'+escapeHtml(safeUrl)+'" target="_blank" rel="noopener noreferrer">📎 '+escapeHtml(m.file_name||"下载附件")+'</a>';
+ return '<div class="chat-message '+(m.sender==="admin"?"outgoing":"incoming")+'"><small>'+sender+' · '+escapeHtml(formatAdminDate(m.created_at))+'</small>'+(m.content&& !/^\[(图片|视频|文件)\]$/.test(m.content)?'<p>'+escapeHtml(m.content)+'</p>':'')+media+'</div>';
+}
+let activeChatOldestId=0,activeChatHasMore=false;
+async function loadChatHistory(id,userId=activeChatUserId,email=activeChatEmail,beforeId=0,append=false){
+ activeChatId=id;activeChatUserId=userId||activeChatUserId||0;activeChatEmail=email||activeChatEmail||"";
+ const area=$("#chatMessages"),older=$("#chatLoadOlder"),status=$("#chatHistoryStatus");
+ if(!append){$("#chatRoomTitle").textContent="客户会话 #"+id;$("#chatRoomMeta").textContent="用户 ID："+(activeChatUserId||"—")+" · "+(activeChatEmail||"未绑定邮箱")+" · 正在读取消息…";area.innerHTML='<div class="empty-state">正在读取聊天记录…</div>';$("#chatReplyText").disabled=false;$("#chatReplyBtn").disabled=false;$("#chatHandoffBtn").disabled=false;$("#chatEmojiToggle").disabled=false;$("#chatAttachment").disabled=false;}
  try{
-  const d=await legacyAdmin("/chat/history?id="+id),messages=d.messages||d.items||[];
-  activeChatHandoff=Number(d.handoff||0);
+  const q="?id="+id+"&limit=100"+(beforeId?"&before_id="+beforeId:"");
+  const d=await legacyAdmin("/chat/history"+q),messages=d.messages||d.items||[];
+  activeChatHandoff=Number(d.handoff||0);activeChatHasMore=!!d.has_more;
   $("#chatRoomMeta").textContent=(activeChatHandoff?"人工客服接管中":"AI 客服自动回复中")+" · 用户 ID："+(activeChatUserId||"—")+" · "+(activeChatEmail||"未绑定邮箱");
   $("#chatHandoffBtn").textContent=activeChatHandoff?"交还 AI":"接管会话";
-  $("#chatMessages").innerHTML=messages.map(m=>'<div class="chat-message '+(m.sender==="admin"?"outgoing":"incoming")+'"><small>'+escapeHtml(m.sender==="user"?"客户":m.sender==="ai"?"AI 客服":"人工客服")+' · '+escapeHtml(formatAdminDate(m.created_at))+'</small><p>'+escapeHtml(m.content)+'</p></div>').join("")||'<div class="empty-state">暂无消息</div>';
-  $("#chatMessages").scrollTop=$("#chatMessages").scrollHeight;
- }catch(e){$("#chatMessages").innerHTML='<div class="empty-state error-text">读取失败：'+escapeHtml(e.message||"接口错误")+'</div>'}
+  const markup=messages.map(renderChatMessage).join("");
+  if(append){const oldHeight=area.scrollHeight;area.insertAdjacentHTML("afterbegin",markup);area.scrollTop=area.scrollHeight-oldHeight;}
+  else{area.innerHTML=markup||'<div class="empty-state">暂无消息</div>';area.scrollTop=area.scrollHeight;}
+  activeChatOldestId=messages.length?Number(messages[0].id||0):activeChatOldestId;
+  older.hidden=!activeChatHasMore;
+  status.textContent="历史消息已保留 · 当前显示最近 "+(append?"更早的 ":"")+messages.length+" 条";
+ }catch(e){if(!append)area.innerHTML='<div class="empty-state error-text">读取失败：'+escapeHtml(e.message||"接口错误")+'</div>';status.textContent="历史读取失败"}
 }
-$("#chatReplyForm")?.addEventListener("submit",async e=>{e.preventDefault();const content=$("#chatReplyText").value.trim();if(!activeChatId||!content)return;$("#chatReplyBtn").disabled=true;try{await legacyAdmin("/chat/reply",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:activeChatId,content})});$("#chatReplyText").value="";toast("客服回复已发送");loadChatHistory(activeChatId)}catch(e){toast("发送失败："+e.message)}finally{$("#chatReplyBtn").disabled=false}});
+$("#chatLoadOlder")?.addEventListener("click",async()=>{if(activeChatId&&activeChatOldestId&&activeChatHasMore){$("#chatLoadOlder").disabled=true;await loadChatHistory(activeChatId,activeChatUserId,activeChatEmail,activeChatOldestId,true);$("#chatLoadOlder").disabled=false}});
+const CHAT_EMOJIS=["😀","😃","😄","😁","😆","😅","😂","🙂","😉","😊","😍","🥰","😘","😎","🤔","🙄","😢","😭","😡","🙏","👍","👎","👏","🤝","❤️","💖","🔥","🎉","✅","❌","💯","🚀","📦","📎","🌹","☀️"];
+const emojiPicker=$("#chatEmojiPicker");
+if(emojiPicker){emojiPicker.innerHTML=CHAT_EMOJIS.map(e=>'<button type="button" data-chat-emoji="'+e+'" aria-label="插入 '+e+'">'+e+'</button>').join("");emojiPicker.querySelectorAll("[data-chat-emoji]").forEach(btn=>btn.addEventListener("click",()=>{const input=$("#chatReplyText"),emoji=btn.dataset.chatEmoji,start=input.selectionStart??input.value.length,end=input.selectionEnd??input.value.length;input.value=input.value.slice(0,start)+emoji+input.value.slice(end);input.focus();input.setSelectionRange(start+emoji.length,start+emoji.length)}));}
+$("#chatEmojiToggle")?.addEventListener("click",()=>{emojiPicker.hidden=!emojiPicker.hidden});
+$("#chatAttachment")?.addEventListener("change",()=>{$("#chatAttachmentName").textContent=$("#chatAttachment").files?.[0]?.name||""});
+async function uploadChatAttachment(file){
+ if(file.size>50*1024*1024)throw new Error("单个附件不能超过 50MB");
+ const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error("读取附件失败"));reader.readAsDataURL(file)});
+ const uploaded=await legacyAdmin("/upload",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:file.name,data})});
+ const url=uploaded.url||uploaded.data?.url;if(!url)throw new Error("附件上传没有返回可用地址");
+ return {media_url:url,media_type:file.type.startsWith("image/")?"image":file.type.startsWith("video/")?"video":"file",file_name:file.name,file_size:file.size};
+}
+$("#chatReplyForm")?.addEventListener("submit",async e=>{
+ e.preventDefault();const content=$("#chatReplyText").value.trim(),file=$("#chatAttachment").files?.[0];
+ if(!activeChatId||(!content&&!file))return;
+ const btn=$("#chatReplyBtn");btn.disabled=true;btn.textContent="发送中…";
+ try{
+  const media=file?await uploadChatAttachment(file):{};
+  await legacyAdmin("/chat/reply",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:activeChatId,content,...media})});
+  $("#chatReplyText").value="";$("#chatAttachment").value="";$("#chatAttachmentName").textContent="";emojiPicker.hidden=true;
+  toast("客服消息已发送并保存");await loadChatHistory(activeChatId);
+ }catch(e){toast("发送失败："+(e.message||"未知错误"))}
+ finally{btn.disabled=false;btn.textContent="发送回复"}
+});
 $("#chatHandoffBtn")?.addEventListener("click",async()=>{if(!activeChatId)return;const next=activeChatHandoff?0:1;try{await legacyAdmin("/chat/handoff",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:activeChatId,handoff:next})});toast(next?"已接管客户会话":"已交还 AI 客服");loadChatHistory(activeChatId)}catch(e){toast("操作失败："+e.message)}});
 
 async function openTicket(id){
