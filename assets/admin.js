@@ -605,25 +605,28 @@ async function loadProtocolNodes(){
   body.innerHTML=nodes.length?nodes.map(n=>{
    const h=healthById[String(n.id)]||{},checks=h.domains||[],up=checks.filter(x=>x.reachable).length;
    const domains=checks.length?up+"/"+checks.length+" 可达":"未检测";
-   const state=Number(n.enabled)?"已启用":"已停用";
    return '<tr><td><b>'+escapeHtml(n.name||"—")+'</b></td><td>'+escapeHtml(String(n.protocol||"").toUpperCase())+'</td><td>'+escapeHtml(h.region||"—")+'</td><td>'+Number(n.port||0)+'</td><td>'+escapeHtml(domains)+(h.reachable?' · 在线':' · 不可达')+'</td><td>'+statusPill(Number(n.enabled)&&h.reachable?"active":Number(n.enabled)?"unreachable":"inactive")+'</td><td><div class="table-actions"><button class="btn btn-secondary btn-small" data-proto-edit="'+n.id+'">编辑</button><button class="btn btn-secondary btn-small" data-proto-toggle="'+n.id+'" data-enabled="'+(Number(n.enabled)?0:1)+'">'+(Number(n.enabled)?"停用":"启用")+'</button><button class="btn btn-danger btn-small" data-proto-delete="'+n.id+'">删除</button></div></td></tr>';
-  }).join(""):'<tr><td colspan="7" class="table-empty">暂无协议节点，添加后才会出现在客户订阅中</td></tr>';
-  $("#protocolNodesCount").textContent="共 "+nodes.length+" 个协议节点 · "+nodes.filter(x=>Number(x.enabled)).length+" 个启用";
+  }).join(""):'<tr><td colspan="7" class="table-empty">暂无传统协议线路节点；商城协议产品状态见上方产品表</td></tr>';
+  $("#protocolNodesCount").textContent="共 "+nodes.length+" 个线路节点 · "+nodes.filter(x=>Number(x.enabled)).length+" 个启用";
+  const products=nodeCatalogCache.products||[],packages=nodeCatalogCache.packages||[];
+  const productIds={vless:"vless",vmess:"vmess",trojan:"trojan",hysteria2:"hysteria2",ss:"shadowsocks",socks5:"socks5",mtproto:"mtproto",ss2022:"shadowsocks-2022",http:"http-connect"};
   document.querySelectorAll("[data-proto-cap]").forEach(card=>{
-   const proto=card.dataset.protoCap;
-   if(proto==="mtproto"){card.querySelector("small").textContent="Telegram 专属代理 · 独立服务状态待接入";card.classList.add("pending");return}
-   if(["socks5","ss2022","http"].includes(proto)){card.querySelector("small").textContent="待补齐服务端订阅渲染与真实节点配置";card.classList.add("pending");return}
-   const aliases={shadowsocks:"ss","shadowsocks-2022":"ss2022",shadowsocks2022:"ss2022",socks:"socks5","http/https":"http"};
-   const group=nodes.filter(x=>(aliases[String(x.protocol||"").toLowerCase()]||String(x.protocol||"").toLowerCase())===proto),enabled=group.filter(x=>Number(x.enabled)),online=enabled.filter(x=>healthById[String(x.id)]?.reachable);
-   card.querySelector("small").textContent=enabled.length?"启用 "+enabled.length+" · 在线 "+online.length:"尚无启用节点";
-   card.classList.toggle("pending",!enabled.length);
+   const proto=card.dataset.protoCap,product=products.find(p=>p.product_id===productIds[proto]);
+   const status=card.querySelector("span"),detail=card.querySelector("small");
+   if(!product){if(status)status.textContent="状态未返回";if(detail)detail.textContent="产品状态接口暂不可用";card.classList.add("pending");return}
+   const ready=nodeProductReady(product),active=!!product.active,activePackages=packages.filter(p=>p.product_id===product.product_id&&p.active).length;
+   if(status)status.textContent=ready?(active?"已接入 · 可销售":"已接入 · 已停用"):"待接入";
+   if(detail)detail.textContent=ready?(active?activePackages+" 个在售套餐":"服务器已就绪，产品已停用"):(!product.server_present?"服务器尚未部署":"服务器配置尚未就绪");
+   card.classList.toggle("pending",!ready||!active);
   });
-  const activeProtocolTypes=new Set(nodes.filter(n=>Number(n.enabled)).map(n=>({shadowsocks:"ss",shadowsocks2022:"ss2022","shadowsocks-2022":"ss2022",socks:"socks5","http/https":"http"}[String(n.protocol||"").toLowerCase()]||String(n.protocol||"").toLowerCase())).filter(p=>["vless","vmess","trojan","hysteria2","ss","socks5","http","ss2022"].includes(p)));
+  const mainProducts=products.filter(p=>p.protocol!=="mtproto");
+  const readyProducts=mainProducts.filter(p=>nodeProductReady(p)&&p.active);
   const onlineProtocolNodes=nodes.filter(n=>Number(n.enabled)&&healthById[String(n.id)]?.reachable).length;
-  $("#protocolConfiguredCount").textContent=activeProtocolTypes.size+" / 8";
+  $("#protocolConfiguredCount").textContent=readyProducts.length+" / "+mainProducts.length;
   $("#protocolOnlineCount").textContent=onlineProtocolNodes+" / "+nodes.filter(n=>Number(n.enabled)).length;
-  $("#protocolPendingCount").textContent=["socks5","http","ss2022"].filter(p=>!activeProtocolTypes.has(p)).length+" 种";
-  $("#protocolMtprotoState").textContent="独立服务待核验";
+  $("#protocolPendingCount").textContent=mainProducts.length-readyProducts.length+" 种";
+  const mtproto=products.find(p=>p.product_id==="mtproto");
+  $("#protocolMtprotoState").textContent=mtproto&&nodeProductReady(mtproto)&&mtproto.active?"已接入":mtproto&&nodeProductReady(mtproto)?"已就绪 · 已停用":"待接入";
   body.querySelectorAll("[data-proto-edit]").forEach(btn=>btn.addEventListener("click",()=>{const n=nodes.find(x=>String(x.id)===btn.dataset.protoEdit);if(n)editProtocolNode(n)}));
   body.querySelectorAll("[data-proto-toggle]").forEach(btn=>btn.addEventListener("click",async()=>{try{await legacyAdmin("/nodes/toggle",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(btn.dataset.protoToggle),enabled:Number(btn.dataset.enabled)})});toast(Number(btn.dataset.enabled)?"协议节点已启用":"协议节点已停用");await loadProtocolNodes()}catch(e){toast("协议状态更新失败："+(e.message||"接口错误"))}}));
   body.querySelectorAll("[data-proto-delete]").forEach(btn=>btn.addEventListener("click",async()=>{if(!confirm("删除该协议节点后，它会从客户订阅中移除。确认删除？"))return;try{await legacyAdmin("/nodes/delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(btn.dataset.protoDelete)})});toast("协议节点已删除");await loadProtocolNodes()}catch(e){toast("删除失败："+(e.message||"接口错误"))}}));
@@ -644,7 +647,107 @@ $("#applyRobotPrice")?.addEventListener("click",()=>{
  const raw=$("#robotPriceTemplate").value;if(!raw){toast("先选择机器人套餐价格");return}
  const [gb,price]=raw.split("|");$("#planTraffic").value=gb;$("#planMonthPrice").value=Number(price).toFixed(2);$("#planQuarterPrice").value="";$("#planHalfPrice").value="";$("#planYearPrice").value="";$("#planType").value="monthly";$("#planName").value=gb+"GB·月付";$("#planContent").value="30天 / "+gb+"GB（采用机器人现行价）";toast("已填入机器人当前套餐价格，保存后才会生效");
 });
-async function loadNodes(){await Promise.allSettled([loadPlans(),loadNodeServers(),loadNodeHealth(),loadNodeHealthHistory(),loadNodeOrders(),loadProtocolNodes()])}
+let nodeCatalogCache={products:[],packages:[]};
+function nodeProductReady(p){return !!p&&!!p.server_present&&!!p.provisioning_ready}
+function renderNodeCatalog(){
+ const products=nodeCatalogCache.products||[],packages=nodeCatalogCache.packages||[];
+ const body=$("#nodeCatalogBody"),packageBody=$("#nodePackagesBody");
+ if(body){
+  body.innerHTML=products.length?products.map(p=>{
+   const ready=nodeProductReady(p),active=!!p.active,count=packages.filter(x=>x.product_id===p.product_id).length;
+   const sale=ready&&active?"可销售":active?"已登记 · 服务端未就绪":"已停用";
+   const action=active?"停用":"启用";
+   return '<tr><td><b>'+escapeHtml(p.name||p.product_id)+'</b><small class="muted-inline">'+escapeHtml(p.product_id)+'</small></td><td>'+escapeHtml(String(p.protocol||"").toUpperCase())+'</td><td>'+ (p.server_present?"已部署":"未部署")+'</td><td>'+ (p.provisioning_ready?"已就绪":"未就绪")+'</td><td>'+escapeHtml(sale)+'</td><td><div class="table-actions"><span>'+count+' 个套餐</span><button class="btn btn-secondary btn-small" data-node-product-toggle="'+escapeHtml(p.product_id)+'" data-active="'+(active?"0":"1")+'" '+(!ready&&!active?"disabled":"")+'>'+action+'</button></div></td></tr>';
+  }).join(""):'<tr><td colspan="6" class="table-empty">没有读取到节点产品</td></tr>';
+  $("#nodeCatalogCount").textContent=products.length+" 个协议产品 · "+products.filter(p=>nodeProductReady(p)&&p.active).length+" 个可销售";
+ }
+ if(packageBody){
+  packageBody.innerHTML=packages.length?packages.map(p=>{
+   const product=products.find(x=>x.product_id===p.product_id),ready=nodeProductReady(product),active=!!p.active;
+   const traffic=p.traffic_limit_bytes===null?"不限":(Number(p.traffic_limit_bytes)/1073741824).toFixed(2)+" GB";
+   const sale=ready&&active?"上架":active?"服务端未就绪":"下架";
+   return '<tr><td>'+escapeHtml(product?.name||p.product_id)+'</td><td><b>'+escapeHtml(p.name)+'</b><small class="muted-inline">'+escapeHtml(p.package_id)+'</small></td><td>¥'+Number(p.price_cny).toFixed(2)+'</td><td>'+Number(p.duration_days)+' 天</td><td>'+traffic+'</td><td>'+Number(p.max_devices||1)+'</td><td>'+escapeHtml(sale)+'</td><td><div class="table-actions"><button class="btn btn-secondary btn-small" data-node-package-edit="'+escapeHtml(p.package_id)+'">编辑</button><button class="btn btn-secondary btn-small" data-node-package-toggle="'+escapeHtml(p.package_id)+'" data-active="'+(active?"0":"1")+'" '+(!ready&&!active?"disabled":"")+'>'+(active?"下架":"上架")+'</button></div></td></tr>';
+  }).join(""):'<tr><td colspan="8" class="table-empty">暂无商城节点套餐</td></tr>';
+  $("#nodePackagesCount").textContent=packages.length+" 个套餐 · "+packages.filter(p=>p.active).length+" 个启用";
+ }
+ const productSelect=$("#nodePackageProduct");
+ if(productSelect){
+  const selected=productSelect.value;
+  productSelect.innerHTML=products.map(p=>'<option value="'+escapeHtml(p.product_id)+'">'+escapeHtml(p.name)+' · '+String(p.protocol||"").toUpperCase()+'</option>').join("");
+  if(products.some(p=>p.product_id===selected))productSelect.value=selected;
+ }
+ body?.querySelectorAll("[data-node-product-toggle]").forEach(btn=>btn.addEventListener("click",async()=>{
+  const productId=btn.dataset.nodeProductToggle,active=btn.dataset.active==="1";
+  if(!confirm(active?"确认开售该节点产品？只有服务器部署和配置就绪的产品可以开售。":"确认停用该节点产品？现有订单和账户记录不会删除。"))return;
+  btn.disabled=true;
+  try{await adminRequest("/api/admin/node-products/"+encodeURIComponent(productId),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({active})});toast(active?"节点产品已开售":"节点产品已停用");await loadNodeCatalog();await loadProtocolNodes()}
+  catch(e){toast("产品状态更新失败："+(e.message||"接口错误"));btn.disabled=false}
+ }));
+ packageBody?.querySelectorAll("[data-node-package-edit]").forEach(btn=>btn.addEventListener("click",()=>{
+  const pkg=packages.find(x=>x.package_id===btn.dataset.nodePackageEdit);if(pkg)openNodePackageForm(pkg);
+ }));
+ packageBody?.querySelectorAll("[data-node-package-toggle]").forEach(btn=>btn.addEventListener("click",async()=>{
+  const pkg=packages.find(x=>x.package_id===btn.dataset.nodePackageToggle);if(!pkg)return;
+  const active=btn.dataset.active==="1";
+  if(!confirm(active?"确认上架该套餐？":"确认下架该套餐？历史订单不会删除。"))return;
+  btn.disabled=true;
+  try{
+   await adminRequest("/api/admin/node-packages/"+encodeURIComponent(pkg.package_id),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...pkg,active})});
+   toast(active?"节点套餐已上架":"节点套餐已下架");await loadNodeCatalog();await loadProtocolNodes();
+  }catch(e){toast("套餐状态更新失败："+(e.message||"接口错误"));btn.disabled=false}
+ }));
+}
+async function loadNodeCatalog(){
+ const body=$("#nodeCatalogBody"),packagesBody=$("#nodePackagesBody");
+ if(body)body.innerHTML='<tr><td colspan="6" class="table-empty">正在读取生产节点产品…</td></tr>';
+ if(packagesBody)packagesBody.innerHTML='<tr><td colspan="8" class="table-empty">正在读取节点套餐…</td></tr>';
+ try{
+  const d=await adminRequest("/api/admin/node-catalog");
+  nodeCatalogCache={products:Array.isArray(d.products)?d.products:[],packages:Array.isArray(d.packages)?d.packages:[]};
+  renderNodeCatalog();
+  return nodeCatalogCache;
+ }catch(e){
+  if(body)body.innerHTML='<tr><td colspan="6" class="table-empty error-text">节点产品读取失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';
+  if(packagesBody)packagesBody.innerHTML='<tr><td colspan="8" class="table-empty error-text">节点套餐读取失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';
+  $("#nodeCatalogCount").textContent="读取失败";$("#nodePackagesCount").textContent="读取失败";
+  throw e;
+ }
+}
+function openNodePackageForm(pkg=null){
+ const form=$("#nodePackageForm");if(!form)return;
+ form.reset();renderNodeCatalog();
+ $("#nodePackageCode").readOnly=!!pkg;
+ $("#nodePackageCode").value=pkg?.package_id||"";
+ $("#nodePackageProduct").value=pkg?.product_id||nodeCatalogCache.products[0]?.product_id||"";
+ $("#nodePackageName").value=pkg?.name||"";
+ $("#nodePackagePrice").value=pkg?.price_cny??"";
+ $("#nodePackageDays").value=pkg?.duration_days??30;
+ $("#nodePackageTrafficGb").value=pkg?.traffic_limit_bytes===null||pkg?.traffic_limit_bytes===undefined?"":(Number(pkg.traffic_limit_bytes)/1073741824).toFixed(2);
+ $("#nodePackageDevices").value=pkg?.max_devices??1;
+ $("#nodePackageSort").value=pkg?.display_order??100;
+ $("#nodePackageActive").value=pkg?.active?"1":"0";
+ $("#nodePackageFormTitle").textContent=pkg?"编辑节点套餐":"新增节点套餐";
+ $("#nodePackageFormResult").textContent="";
+ $("#nodePackageFormPanel").hidden=false;
+ $("#nodePackageFormPanel").scrollIntoView({behavior:"smooth",block:"start"});
+}
+$("#nodePackageAddBtn")?.addEventListener("click",()=>openNodePackageForm());
+$("#nodePackageFormClose")?.addEventListener("click",()=>$("#nodePackageFormPanel").hidden=true);
+$("#nodePackageForm")?.addEventListener("submit",async e=>{
+ e.preventDefault();const btn=$("#nodePackageSaveBtn"),result=$("#nodePackageFormResult");btn.disabled=true;result.className="form-result";result.textContent="正在保存节点套餐…";
+ const trafficText=$("#nodePackageTrafficGb").value.trim(),traffic=trafficText===""?null:Math.round(Number(trafficText)*1073741824);
+ const payload={package_id:$("#nodePackageCode").value.trim(),product_id:$("#nodePackageProduct").value,name:$("#nodePackageName").value.trim(),price_cny:Number($("#nodePackagePrice").value),duration_days:Number($("#nodePackageDays").value),traffic_limit_bytes:traffic,max_devices:Number($("#nodePackageDevices").value),display_order:Number($("#nodePackageSort").value||0),active:$("#nodePackageActive").value==="1"};
+ const existing=nodeCatalogCache.packages.some(p=>p.package_id===payload.package_id),path=existing?"/api/admin/node-packages/"+encodeURIComponent(payload.package_id):"/api/admin/node-packages";
+ try{
+  await adminRequest(path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+  result.className="form-result success";result.textContent="套餐保存成功";
+  $("#nodePackageFormPanel").hidden=true;await loadNodeCatalog();await loadProtocolNodes();toast("节点套餐已保存");
+ }catch(e){result.className="form-result error";result.textContent=e.message||"套餐保存失败"}
+ finally{btn.disabled=false}
+});
+$("#nodeCatalogRefresh")?.addEventListener("click",async()=>{await loadNodeCatalog();await loadProtocolNodes()});
+
+async function loadNodes(){await Promise.allSettled([loadPlans(),loadNodeServers(),loadNodeHealth(),loadNodeHealthHistory(),loadNodeOrders(),loadNodeCatalog()]);await loadProtocolNodes()}
 async function loadAiStatus(){
  try{const d=await legacyAdmin("/config/ai");$("#zhipuModel").textContent=d.model||"GLM-4-Flash";$("#zhipuStatus").textContent=d.configured?"已连接":"未配置";$("#zhipuStatus").className="tag "+(d.configured?"tag-green":"")}
  catch(e){$("#zhipuStatus").textContent="状态读取失败";$("#zhipuStatus").className="tag"}
