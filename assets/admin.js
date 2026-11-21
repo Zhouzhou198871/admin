@@ -100,11 +100,13 @@ async function loadOverview(){
   legacyAdmin("/notices"),
   legacyAdmin("/config/mail"),
   adminRequest("/api/admin/bots"),
-  legacyAdmin("/nodes/health")
+  legacyAdmin("/nodes/health"),
+  legacyAdmin("/chat/users")
  ]);
  const val=i=>jobs[i].status==="fulfilled"?jobs[i].value:null;
  const shop=val(0)||{},stats=val(1)||{},accounts=val(2)||{},tickets=val(3)||{},nodes=dataList(val(4)),plans=dataList(val(5)),ordersData=val(6)||{},productsData=val(7)||{};
  const orders=dataList(ordersData),products=dataList(productsData),notices=dataList(val(8)),mail=val(9)||{},bots=val(10)?.bots||[];
+ const chatSessions=dataList(val(12));
  const userTotal=Number(stats.users_total??0);
  const orderTotal=Number(shop.orders_pending||0)+Number(shop.orders_toship||0)+Number(shop.orders_shipped||0)+Number(shop.orders_done||0);
  const productTotal=Number(shop.products_online??shop.products_total??productsData.total??products.length);
@@ -127,6 +129,7 @@ async function loadOverview(){
  $("#metricInventory").textContent=available.toLocaleString("zh-CN");
  $("#metricSoldInventory").textContent="已售 "+sold.toLocaleString("zh-CN");
  $("#metricTickets").textContent=pendingSupport.toLocaleString("zh-CN");
+ if($("#metricChatSessions"))$("#metricChatSessions").textContent=chatSessions.length.toLocaleString("zh-CN");
  $("#metricNodes").textContent=nodes.length.toLocaleString("zh-CN");
  $("#metricPlans").textContent="节点套餐 "+plans.length.toLocaleString("zh-CN");
  $("#metricNotices").textContent=notices.filter(n=>Number(n.status)===1).length.toLocaleString("zh-CN");
@@ -505,15 +508,29 @@ async function loadBotUsers(){
  try{
   const d=await legacyAdmin("/bots/matrix/users?bot_name="+encodeURIComponent(bot));
   const users=dataList(d);
-  body.innerHTML=users.length?users.slice(0,500).map(u=>{
+  body.innerHTML=users.length?users.slice(0,500).map((u,index)=>{
    const traffic=(Number(u.traffic_mb||0)/1024).toFixed(2)+" GB";
    const expire=Number(u.expire||0)>0?formatAdminDate(u.expire):"未开通";
    const status=Number(u.banned)?"已封禁":Number(u.activated)?"正常":"未激活";
-   return '<tr><td class="mono">'+escapeHtml(u.tg_id||"—")+'</td><td>'+escapeHtml(u.nickname||u.username||"—")+'</td><td>'+traffic+'</td><td>'+escapeHtml(expire)+'</td><td>'+Number(u.balance||0).toFixed(2)+' USDT</td><td>'+statusPill(status)+'</td><td>'+escapeHtml(u.last_sign||"—")+'</td></tr>';
+   return '<tr><td class="mono">'+escapeHtml(u.tg_id||u.user_id||"—")+'</td><td><b>'+escapeHtml(u.nickname||[u.first_name,u.last_name].filter(Boolean).join(" ")||"—")+'</b><small class="muted-inline">@'+escapeHtml(String(u.username||"未设置").replace(/^@/,""))+'</small></td><td>'+traffic+'</td><td>'+escapeHtml(expire)+'</td><td>'+Number(u.balance||0).toFixed(2)+' USDT</td><td>'+statusPill(status)+'</td><td>'+escapeHtml(u.last_sign||"—")+'</td><td><button class="btn btn-secondary btn-small" data-bot-user-detail="'+index+'">查看详情</button></td></tr>';
   }).join(""):'<tr><td colspan="7" class="table-empty">该机器人暂无用户记录</td></tr>';
   $("#botUsersCount").textContent="当前机器人 "+users.length.toLocaleString("zh-CN")+" 位用户";
+  body.querySelectorAll("[data-bot-user-detail]").forEach(btn=>btn.addEventListener("click",()=>openBotUserDetail(users[Number(btn.dataset.botUserDetail)],bot)));
  }catch(e){body.innerHTML='<tr><td colspan="7" class="table-empty error-text">读取机器人用户失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';$("#botUsersCount").textContent="读取失败"}
 }
+function openBotUserDetail(u,bot){
+ if(!u)return;
+ const avatar=u.avatar_url||u.photo_url||u.avatar||u.photo||"";
+ const name=u.nickname||[u.first_name,u.last_name].filter(Boolean).join(" ")||"未设置昵称";
+ $("#botUserAvatar").src=avatar;$("#botUserAvatar").hidden=!avatar;$("#botUserAvatarFallback").hidden=!!avatar;
+ $("#botUserName").textContent=name;$("#botUserMeta").textContent="@"+String(u.username||"未设置").replace(/^@/,"")+" · "+(u.tg_id||u.user_id||"ID 未返回");
+ const fields=[["Telegram 用户 ID",u.tg_id||u.user_id],["用户名",u.username?"@"+String(u.username).replace(/^@/,""):"未设置"],["名字",u.first_name],["姓氏",u.last_name],["机器人",bot],["流量",(Number(u.traffic_mb||0)/1024).toFixed(2)+" GB"],["余额",Number(u.balance||0).toFixed(2)+" USDT"],["到期时间",Number(u.expire||0)>0?formatAdminDate(u.expire):"未开通"],["最后签到",u.last_sign]];
+ $("#botUserProfileGrid").innerHTML=fields.map(([k,v])=>'<div class="user-detail-item"><small>'+escapeHtml(k)+'</small><b>'+escapeHtml(v??"接口暂未返回")+'</b></div>').join("");
+ const renderList=items=>Array.isArray(items)&&items.length?items.map(x=>'<li>'+escapeHtml(typeof x==="string"?x:(x.title||x.name||x.username||x.id||"未知项目"))+'</li>').join(""):'<li class="muted-inline">接口暂未返回频道/群组资料</li>';
+ $("#botUserChannels").innerHTML=renderList(u.channels||u.subscribed_channels);$("#botUserGroups").innerHTML=renderList(u.groups||u.joined_groups);
+ $("#botUserDetailModal").hidden=false;
+}
+$("#botUserDetailClose")?.addEventListener("click",()=>$("#botUserDetailModal").hidden=true);
 $("#botUsersRefresh")?.addEventListener("click",loadBotUsers);
 $("#botUserFilter")?.addEventListener("change",loadBotUsers);
 
