@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f5f7fb">
   <title>晴天账号铺 · 管理后台</title>
   <link rel="stylesheet" href="./assets/admin.css?v=20261121-17">
-  <script src="./assets/admin.js?v=20261121-21" defer></script>
+  <script src="./assets/admin.js?v=20261121-22" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -421,17 +421,17 @@
             </div>
           </article>
           <article class="panel form-panel">
-            <div class="panel-heading"><div><h2>添加管理员</h2><p>先注册晴天号铺账户，再按邮箱授权后台角色</p></div></div>
+            <div class="panel-heading"><div><h2>添加管理员</h2><p>沿用成员原有商城账号密码；不另建密码或登录体系</p></div></div>
             <form id="adminAddForm" class="admin-form-grid">
               <label class="span-two">成员注册邮箱<input id="newAdminEmail" type="email" required placeholder="输入已注册的晴天号铺邮箱"></label>
               <label class="span-two">管理员等级<select id="newAdminRole" required><option value="operations_admin">运营管理员</option><option value="support_admin">客服管理员</option><option value="node_admin">节点管理员</option><option value="viewer">只读管理员</option><option value="super_admin">超级管理员</option></select></label>
-              <div class="form-actions span-two"><button class="btn btn-primary" id="adminAddBtn" type="submit">添加管理员</button><span class="form-result" id="adminAddResult"></span></div>
+              <div class="form-actions span-two"><button class="btn btn-primary" id="adminAddBtn" type="submit">添加管理员</button><span class="form-result" id="adminAddResult"></span></div><p class="field-hint span-two">运营：商品、订单、邮件、公告；客服：客服会话与用户只读；节点：节点配置与用户节点授权；只读：仅查看；超级管理员：完整权限。</p>
             </form>
           </article>
         </div>
         <article class="panel data-panel">
           <div class="panel-heading"><div><h2>管理员列表</h2><p>变更角色或移除权限不会删除成员原有商城账户</p></div><span class="tag" id="adminCount">—</span></div>
-          <div class="table-wrap"><table class="data-table"><thead><tr><th>账户</th><th>等级</th><th>状态</th><th>添加时间</th><th>更新时间</th><th>操作</th></tr></thead><tbody id="adminUsersBody"><tr><td colspan="6" class="table-empty">登录后加载</td></tr></tbody></table></div>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>账户</th><th>用户 ID</th><th>等级</th><th>状态</th><th>添加时间</th><th>更新时间</th><th>操作</th></tr></thead><tbody id="adminUsersBody"><tr><td colspan="7" class="table-empty">登录后加载</td></tr></tbody></table></div>
         </article>
       </section>
       <footer class="footer"><span>晴天账号铺 · 独立管理后台</span><span>Build by GitHub Actions</span></footer>
