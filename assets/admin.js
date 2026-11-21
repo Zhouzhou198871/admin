@@ -566,18 +566,29 @@ async function loadBotUsers(){
   body.querySelectorAll("[data-bot-user-detail]").forEach(btn=>btn.addEventListener("click",()=>openBotUserDetail(users[Number(btn.dataset.botUserDetail)],bot)));
  }catch(e){body.innerHTML='<tr><td colspan="8" class="table-empty error-text">读取机器人用户失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';$("#botUsersCount").textContent="读取失败"}
 }
-function openBotUserDetail(u,bot){
+async function openBotUserDetail(u,bot){
  if(!u)return;
- const avatar=u.avatar_url||u.photo_url||u.avatar||u.photo||"";
- const name=u.nickname||[u.first_name,u.last_name].filter(Boolean).join(" ")||"未设置昵称";
- $("#botUserAvatar").src=avatar;$("#botUserAvatar").hidden=!avatar;$("#botUserAvatarFallback").hidden=!!avatar;
- $("#botUserName").textContent=name;$("#botUserMeta").textContent="@"+String(u.username||"未设置").replace(/^@/,"")+" · "+(u.tg_id||u.user_id||"ID 未返回");
- const fields=[["Telegram 用户 ID",u.tg_id||u.user_id],["用户名",u.username?"@"+String(u.username).replace(/^@/,""):"未设置"],["名字",u.first_name],["姓氏",u.last_name],["机器人",bot],["流量",(Number(u.traffic_mb||0)/1024).toFixed(2)+" GB"],["余额",Number(u.balance||0).toFixed(2)+" USDT"],["到期时间",Number(u.expire||0)>0?formatAdminDate(u.expire):"未开通"],["最后签到",u.last_sign]];
- $("#botUserProfileGrid").innerHTML=fields.map(([k,v])=>'<div class="user-detail-item"><small>'+escapeHtml(k)+'</small><b>'+escapeHtml(v??"接口暂未返回")+'</b></div>').join("");
- const renderList=items=>Array.isArray(items)&&items.length?items.map(x=>'<li>'+escapeHtml(typeof x==="string"?x:(x.title||x.name||x.username||x.id||"未知项目"))+'</li>').join(""):'<li class="muted-inline">接口暂未返回频道/群组资料</li>';
- $("#botUserChannels").innerHTML=renderList(u.channels||u.subscribed_channels);$("#botUserGroups").innerHTML=renderList(u.groups||u.joined_groups);
+ const uid=u.tg_id||u.user_id||"",name=u.nickname||[u.first_name,u.last_name].filter(Boolean).join(" ")||"未设置昵称";
+ $("#botUserAvatar").src="";$("#botUserAvatar").hidden=true;$("#botUserAvatarFallback").hidden=false;
+ $("#botUserName").textContent=name;$("#botUserMeta").textContent="@"+String(u.username||"未设置").replace(/^@/,"")+" · "+(uid||"ID 未返回");
+ const fields=[["Telegram 用户 ID",uid],["用户名",u.username?"@"+String(u.username).replace(/^@/,""):"未设置"],["名字",u.first_name],["姓氏",u.last_name],["机器人",bot],["流量",(Number(u.traffic_mb||0)/1024).toFixed(2)+" GB"],["余额",Number(u.balance||0).toFixed(2)+" USDT"],["到期时间",Number(u.expire||0)>0?formatAdminDate(u.expire):"未开通"],["最后签到",u.last_sign],["语言",u.language_code],["Premium",u.is_premium===true?"是":u.is_premium===false?"否":undefined]];
+ $("#botUserProfileGrid").innerHTML=fields.filter(([k,v])=>v!==undefined&&v!==null&&v!=="").map(([k,v])=>'<div class="user-detail-item"><small>'+escapeHtml(k)+'</small><b>'+escapeHtml(v)+'</b></div>').join("");
+ $("#botUserChannels").innerHTML='<li class="muted-inline">正在核验机器人可访问的频道…</li>';
+ $("#botUserGroups").innerHTML='<li class="muted-inline">正在核验机器人可访问的群组…</li>';
+ $("#botUserMembershipScope").textContent="正在查询机器人已配置的频道与群组…";
  $("#botUserDetailModal").hidden=false;
+ if(uid){
+  try{const avatar=await legacyAdmin("/bots/matrix/avatar?bot="+encodeURIComponent(bot)+"&uid="+encodeURIComponent(uid));if(avatar.avatar){$("#botUserAvatar").src=avatar.avatar;$("#botUserAvatar").hidden=false;$("#botUserAvatarFallback").hidden=true}}catch{}
+  try{
+   const memberships=await legacyAdmin("/bots/matrix/memberships?bot="+encodeURIComponent(bot)+"&uid="+encodeURIComponent(uid));
+   const renderList=items=>Array.isArray(items)&&items.length?items.map(x=>'<li><b>'+escapeHtml(x.title||x.chat_id||"未命名")+'</b><small class="muted-inline">'+escapeHtml(x.type||"")+' · '+escapeHtml(x.status||"无法核验")+(x.is_member?" · 已加入":"")+'</small></li>').join(""):'<li class="muted-inline">没有可核验的项目</li>';
+   $("#botUserChannels").innerHTML=renderList(memberships.channels);
+   $("#botUserGroups").innerHTML=renderList(memberships.groups);
+   $("#botUserMembershipScope").textContent=memberships.scope||"仅显示机器人可访问的已配置群组/频道。";
+  }catch(e){$("#botUserChannels").innerHTML='<li class="muted-inline">频道资料暂不可用</li>';$("#botUserGroups").innerHTML='<li class="muted-inline">群组资料暂不可用</li>';$("#botUserMembershipScope").textContent="当前无法连接 Telegram 查询频道/群组。"}
+ }
 }
+
 $("#botUserDetailClose")?.addEventListener("click",()=>$("#botUserDetailModal").hidden=true);
 $("#botUsersRefresh")?.addEventListener("click",loadBotUsers);
 $("#botUserFilter")?.addEventListener("change",loadBotUsers);
