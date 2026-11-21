@@ -652,6 +652,54 @@ $("#botBroadcastForm")?.addEventListener("submit",async e=>{
  finally{btn.disabled=false}
 });
 $("#botUserFilter")?.addEventListener("change",()=>{const el=$("#botBroadcastBot");if(el)el.value=$("#botUserFilter").value});
+
+let botSettingsCache={bot:"",data:null};
+function renderBotPlans(){
+ const body=$("#botPlansBody");if(!body)return;const plans=botSettingsCache.data?.plans||[];
+ body.innerHTML=plans.length?plans.map((p,i)=>'<tr><td class="mono">'+escapeHtml(p.id)+'</td><td>'+escapeHtml(p.name)+'</td><td>'+Number(p.days)+'</td><td>'+Number(p.gb)+' GB</td><td>¥'+Number(p.cny).toFixed(2)+'</td><td><div class="table-actions"><button class="btn btn-secondary btn-small" data-plan-edit="'+i+'">编辑</button><button class="btn btn-danger btn-small" data-plan-delete="'+i+'">删除</button></div></td></tr>').join(""):'<tr><td colspan="6" class="table-empty">当前机器人没有套餐配置</td></tr>';
+ body.querySelectorAll("[data-plan-edit]").forEach(btn=>btn.addEventListener("click",()=>{const p=plans[Number(btn.dataset.planEdit)];$("#botPlanId").value=p.id||"";$("#botPlanName").value=p.name||"";$("#botPlanDays").value=p.days||30;$("#botPlanGb").value=p.gb||0;$("#botPlanCny").value=p.cny||0;$("#botPlanId").readOnly=true;$("#botPlanName").focus()}));
+ body.querySelectorAll("[data-plan-delete]").forEach(btn=>btn.addEventListener("click",async()=>{const i=Number(btn.dataset.planDelete),next=plans.filter((_,n)=>n!==i);if(!confirm("确认删除套餐 "+plans[i].id+"？"))return;await saveBotSettings({plans:next})}));
+}
+async function loadBotSettings(){
+ const bot=$("#botSettingsBot")?.value||$("#botUserFilter")?.value||"safew",result=$("#botSettingsResult");
+ result.textContent="正在读取配置…";
+ try{
+  const d=await legacyAdmin("/bots/matrix/settings?bot="+encodeURIComponent(bot));botSettingsCache={bot,data:d||{}};
+  const v=d||{};
+  $("#botSettingAdShow").checked=!!Number(v.ad_show);
+  $("#botSettingVerify").checked=v.verify_enabled!==false&&Number(v.verify_enabled??1)!==0;
+  $("#botSettingAi").checked=v.ai_enabled!==false&&Number(v.ai_enabled??1)!==0;
+  $("#botSettingAddress").value=v.trc_address||"";
+  $("#botSettingAdText").value=v.ad_text||"";
+  $("#botSettingAdUrl").value=v.ad_url||"";
+  $("#botSettingStartText").value=v.start_text||"";
+  $("#botSettingPoster").value=v.start_poster||"";
+  $("#botWhitelistIds").value=(v.ai_whitelist||[]).join("\n");
+  renderBotPlans();result.className="form-result success";result.textContent="配置已读取";
+ }catch(e){result.className="form-result error";result.textContent="读取失败："+(e.message||"接口错误")}
+}
+async function saveBotSettings(changes){
+ const bot=$("#botSettingsBot")?.value||"safew",result=$("#botSettingsResult");result.textContent="正在保存…";
+ try{await legacyAdmin("/bots/matrix/settings/save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({bot,...changes})});result.className="form-result success";result.textContent="保存成功，机器人将在下一轮配置刷新时应用";await loadBotSettings()}
+ catch(e){result.className="form-result error";result.textContent=e.message||"保存失败";throw e}
+}
+$("#botSettingsRefresh")?.addEventListener("click",loadBotSettings);
+$("#botSettingsBot")?.addEventListener("change",loadBotSettings);
+$("#botUserFilter")?.addEventListener("change",()=>{const x=$("#botSettingsBot");if(x)x.value=$("#botUserFilter").value;loadBotSettings()});
+$("#botSettingsForm")?.addEventListener("submit",async e=>{
+ e.preventDefault();await saveBotSettings({ad_show:$("#botSettingAdShow").checked,verify_enabled:$("#botSettingVerify").checked,ai_enabled:$("#botSettingAi").checked,trc_address:$("#botSettingAddress").value.trim(),ad_text:$("#botSettingAdText").value.trim(),ad_url:$("#botSettingAdUrl").value.trim(),start_text:$("#botSettingStartText").value,start_poster:$("#botSettingPoster").value.trim()});
+});
+$("#botPlanClear")?.addEventListener("click",()=>{$("#botPlanForm").reset();$("#botPlanId").readOnly=false});
+$("#botPlanForm")?.addEventListener("submit",async e=>{
+ e.preventDefault();const p={id:$("#botPlanId").value.trim(),name:$("#botPlanName").value.trim(),days:Number($("#botPlanDays").value),gb:Number($("#botPlanGb").value),cny:Number($("#botPlanCny").value)};
+ const plans=[...(botSettingsCache.data?.plans||[])],i=plans.findIndex(x=>x.id===p.id);if(i>=0)plans[i]=p;else plans.push(p);
+ try{await saveBotSettings({plans});$("#botPlanForm").reset();$("#botPlanId").readOnly=false}catch(e){}
+});
+$("#botWhitelistForm")?.addEventListener("submit",async e=>{
+ e.preventDefault();const ids=$("#botWhitelistIds").value.split(/[\s,，]+/).filter(Boolean);
+ try{await legacyAdmin("/bots/matrix/settings/save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({bot:$("#botSettingsBot").value,ai_whitelist:ids})});$("#botWhitelistResult").className="form-result success";$("#botWhitelistResult").textContent="白名单已保存"}
+ catch(e){$("#botWhitelistResult").className="form-result error";$("#botWhitelistResult").textContent=e.message||"保存失败"}
+});
 async function loadBotChats(){
  const body=$("#botChatsBody");if(!body)return;const bot=$("#botUserFilter")?.value||"safew";
  body.innerHTML='<tr><td colspan="3" class="table-empty">正在读取频道/群组配置…</td></tr>';
