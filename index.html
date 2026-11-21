@@ -162,14 +162,15 @@
       <section class="page" id="page-users">
         <div class="page-heading"><div><p class="eyebrow">CUSTOMER CENTER</p><h1>用户管理</h1><p class="subheading">注册邮箱、登录 IP、设备、订单、套餐与客服记录</p></div><button class="btn btn-secondary" id="usersRefresh">↻ 刷新</button></div>
         <article class="panel data-panel">
-          <div class="table-toolbar"><input id="userSearch" type="search" placeholder="搜索用户邮箱或昵称"><button class="btn btn-primary" id="userSearchBtn">查询</button></div>
+          <div class="table-toolbar"><input id="userSearch" type="search" placeholder="搜索邮箱、昵称、Telegram ID、用户编号或登录 IP"><select id="userStatusFilter"><option value="">全部账号</option><option value="active">正常/有效</option><option value="paid">付费有效</option><option value="expired">已到期</option><option value="free">免费/未开通</option><option value="banned">已封禁</option></select><button class="btn btn-primary" id="userSearchBtn">查询</button></div>
           <div class="table-wrap"><table class="data-table"><thead><tr><th>注册邮箱</th><th>昵称</th><th>Telegram ID</th><th>佣金余额</th><th>注册时间</th><th>最近登录 IP</th><th>最近登录</th><th>详情</th></tr></thead><tbody id="usersBody"><tr><td colspan="8" class="table-empty">登录后加载用户数据</td></tr></tbody></table></div>
-          <div class="table-foot"><span id="usersCount">—</span><span>展示最近 50 位；点击详情查看登录 IP 与历史记录</span></div>
+          <div class="table-foot"><span id="usersCount">—</span><div class="table-actions"><button class="btn btn-secondary btn-small" id="usersPrev" type="button" disabled>上一页</button><span id="usersPageInfo">第 1 页</span><button class="btn btn-secondary btn-small" id="usersNext" type="button" disabled>下一页</button></div></div>
         </article>
       </section>
       <div class="modal-overlay" id="userDetailModal" hidden>
         <article class="panel modal-card user-detail-card">
           <div class="panel-heading"><div><h2 id="userDetailTitle">客户详情</h2><p id="userDetailMeta">正在读取用户资料…</p></div><button class="btn btn-secondary" type="button" id="userDetailClose">关闭</button></div>
+          <div class="table-actions user-admin-actions"><button class="btn btn-secondary btn-small" id="userExtendBtn" type="button">延长有效期</button><button class="btn btn-secondary btn-small" id="userResetTrafficBtn" type="button">重置流量</button><button class="btn btn-secondary btn-small" id="userSubTokenBtn" type="button">重置订阅凭证</button><button class="btn btn-danger btn-small" id="userBanToggleBtn" type="button">封禁账号</button></div>
           <div id="userDetailSummary" class="user-detail-grid"><div class="empty-state">正在读取真实用户资料…</div></div>
           <div class="user-detail-columns">
             <section><h3>最近登录记录</h3><div class="table-wrap"><table class="data-table"><thead><tr><th>IP 地址</th><th>设备 / 浏览器</th><th>时间</th></tr></thead><tbody id="userLoginHistory"><tr><td colspan="3" class="table-empty">等待加载</td></tr></tbody></table></div></section>
