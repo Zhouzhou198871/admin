@@ -1,5 +1,3 @@
-[Reading 1000 lines from start (total: 1148 lines, 148 remaining)]
-
 "use strict";
 const API_BASE="https://shop.lynli.me";
 const TOKEN_KEY="qingtian_shop_token";
@@ -749,6 +747,49 @@ $("#nodePackageForm")?.addEventListener("submit",async e=>{
  }catch(e){result.className="form-result error";result.textContent=e.message||"套餐保存失败"}
  finally{btn.disabled=false}
 });
+
+const ROBOT_NODE_PACKAGE_SPECS=[
+ {gb:188,price:38.88,days:30},
+ {gb:288,price:48.88,days:30},
+ {gb:388,price:58.88,days:30},
+ {gb:488,price:68.88,days:30},
+ {gb:588,price:78.88,days:30}
+];
+function robotNodePackageId(productId,gb){
+ const base=String(productId||"protocol").toLowerCase().replace(/[^a-z0-9-]+/g,"-").replace(/^-+|-+$/g,"").slice(0,38)||"protocol";
+ return base+"-bot-"+gb+"g-30d";
+}
+$("#nodePackageSyncRobotBtn")?.addEventListener("click",async()=>{
+ const btn=$("#nodePackageSyncRobotBtn"),result=$("#nodePackageSyncResult");
+ if(!confirm("将读取生产节点目录，并为全部 8 个协议各创建 5 档机器人套餐（共最多 40 条）。规格为 30 天、188/288/388/488/588GB，对应 ¥38.88/48.88/58.88/68.88/78.88。已有套餐不覆盖；新套餐先全部下架，避免流量计量尚未接入时误售。继续？"))return;
+ btn.disabled=true;btn.textContent="正在同步…";
+ let created=0,skipped=0,failed=[];
+ try{
+  const catalog=await adminRequest("/api/admin/node-catalog");
+  const allProducts=Array.isArray(catalog.products)?catalog.products:[],products=allProducts.filter(p=>String(p.protocol||"").toLowerCase()!=="mtproto"),packages=Array.isArray(catalog.packages)?catalog.packages:[];
+  if(products.length!==8)throw new Error("生产目录当前返回 "+products.length+" 个主流协议产品（MTProto 单独排除），不是预期的 8 个；为避免错配，本次未创建任何套餐。请先核对协议目录。");
+  for(let pi=0;pi<products.length;pi++){
+   const product=products[pi];
+   if(!product.product_id) {failed.push("第 "+(pi+1)+" 个协议缺少 product_id");continue}
+   for(const spec of ROBOT_NODE_PACKAGE_SPECS){
+    const traffic=spec.gb*1073741824;
+    const exact=packages.some(p=>p.product_id===product.product_id&&Number(p.duration_days)===spec.days&&Number(p.traffic_limit_bytes)===traffic&&Math.abs(Number(p.price_cny)-spec.price)<0.001);
+    if(exact){skipped++;continue}
+    let packageId=robotNodePackageId(product.product_id,spec.gb),suffix=1;
+    while(packages.some(p=>p.package_id===packageId)){suffix++;packageId=robotNodePackageId(product.product_id,spec.gb).slice(0,58)+"-"+suffix}
+    const payload={package_id:packageId,product_id:product.product_id,name:spec.gb+"GB·30天",price_cny:spec.price,duration_days:spec.days,traffic_limit_bytes:traffic,max_devices:1,display_order:100+spec.gb,active:false};
+    try{await adminRequest("/api/admin/node-packages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});packages.push(payload);created++}
+    catch(error){failed.push(String(product.protocol||product.product_id)+" / "+spec.gb+"GB："+(error.message||"保存失败"))}
+   }
+  }
+  await loadNodeCatalog();await loadProtocolNodes();
+  const summary="机器人套餐同步完成：新增 "+created+" 条，已存在跳过 "+skipped+" 条，失败 "+failed.length+" 条。新建套餐均为下架状态。";
+  if(result){result.className="form-result "+(failed.length?"error":"success");result.textContent=summary+(failed.length?"\n"+failed.join("\n"):"")}
+  toast(summary);
+ }catch(error){if(result){result.className="form-result error";result.textContent=error.message||"同步失败"}toast("节点套餐同步失败："+(error.message||"接口错误"))}
+ finally{btn.disabled=false;btn.textContent="同步机器人五档到 8 个协议"}
+});
+
 $("#nodeCatalogRefresh")?.addEventListener("click",async()=>{await loadNodeCatalog();await loadProtocolNodes()});
 
 async function loadNodes(){await Promise.allSettled([loadPlans(),loadNodeServers(),loadNodeHealth(),loadNodeHealthHistory(),loadNodeOrders(),loadNodeCatalog()]);await loadProtocolNodes()}
@@ -1000,3 +1041,151 @@ $("#botCredentialForm")?.addEventListener("submit",async e=>{
 });
 function renderBotPlans(){
  const body=$("#botPlansBody");if(!body)return;const plans=botSettingsCache.data?.plans||[];
+ body.innerHTML=plans.length?plans.map((p,i)=>'<tr><td class="mono">'+escapeHtml(p.id)+'</td><td>'+escapeHtml(p.name)+'</td><td>'+Number(p.days)+'</td><td>'+Number(p.gb)+' GB</td><td>¥'+Number(p.cny).toFixed(2)+'</td><td><div class="table-actions"><button class="btn btn-secondary btn-small" data-plan-edit="'+i+'">编辑</button><button class="btn btn-danger btn-small" data-plan-delete="'+i+'">删除</button></div></td></tr>').join(""):'<tr><td colspan="6" class="table-empty">当前机器人没有套餐配置</td></tr>';
+ body.querySelectorAll("[data-plan-edit]").forEach(btn=>btn.addEventListener("click",()=>{const p=plans[Number(btn.dataset.planEdit)];$("#botPlanId").value=p.id||"";$("#botPlanName").value=p.name||"";$("#botPlanDays").value=p.days||30;$("#botPlanGb").value=p.gb||0;$("#botPlanCny").value=p.cny||0;$("#botPlanId").readOnly=true;$("#botPlanName").focus()}));
+ body.querySelectorAll("[data-plan-delete]").forEach(btn=>btn.addEventListener("click",async()=>{const i=Number(btn.dataset.planDelete),next=plans.filter((_,n)=>n!==i);if(!confirm("确认删除套餐 "+plans[i].id+"？"))return;await saveBotSettings({plans:next})}));
+}
+async function loadBotSettings(){
+ const bot=$("#botSettingsBot")?.value||$("#botUserFilter")?.value||"safew",result=$("#botSettingsResult");
+ result.textContent="正在读取配置…";
+ try{
+  const d=await legacyAdmin("/bots/matrix/settings?bot="+encodeURIComponent(bot));botSettingsCache={bot,data:d||{}};
+  const v=d||{};
+  $("#botSettingAdShow").checked=!!Number(v.ad_show);
+  $("#botSettingVerify").checked=v.verify_enabled!==false&&Number(v.verify_enabled??1)!==0;
+  $("#botSettingAi").checked=v.ai_enabled!==false&&Number(v.ai_enabled??1)!==0;
+  $("#botSettingAddress").value=v.trc_address||"";
+  $("#botSettingAdText").value=v.ad_text||"";
+  $("#botSettingAdUrl").value=v.ad_url||"";
+  $("#botSettingStartText").value=v.start_text||"";
+  $("#botSettingPoster").value=v.start_poster||"";
+  $("#botWhitelistIds").value=(v.ai_whitelist||[]).join("\n");
+  renderBotPlans();result.className="form-result success";result.textContent="配置已读取";
+ }catch(e){result.className="form-result error";result.textContent="读取失败："+(e.message||"接口错误")}
+}
+async function saveBotSettings(changes){
+ const bot=$("#botSettingsBot")?.value||"safew",result=$("#botSettingsResult");result.textContent="正在保存…";
+ try{await legacyAdmin("/bots/matrix/settings/save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({bot,...changes})});result.className="form-result success";result.textContent="保存成功，机器人将在下一轮配置刷新时应用";await loadBotSettings()}
+ catch(e){result.className="form-result error";result.textContent=e.message||"保存失败";throw e}
+}
+$("#botSettingsRefresh")?.addEventListener("click",loadBotSettings);
+$("#botSettingsBot")?.addEventListener("change",loadBotSettings);
+$("#botUserFilter")?.addEventListener("change",()=>{const x=$("#botSettingsBot");if(x)x.value=$("#botUserFilter").value;loadBotSettings()});
+$("#botSettingsForm")?.addEventListener("submit",async e=>{
+ e.preventDefault();let poster=$("#botSettingPoster").value.trim();const file=$("#botSettingPosterFile")?.files?.[0];
+ try{if(file){if(file.size>20*1024*1024)throw new Error("海报不能超过 20MB");const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error("读取海报失败"));reader.readAsDataURL(file)});const uploaded=await legacyAdmin("/upload",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:file.name,data})});poster=uploaded.url||"";if(!poster)throw new Error("海报上传没有返回 URL")}
+ await saveBotSettings({ad_show:$("#botSettingAdShow").checked,verify_enabled:$("#botSettingVerify").checked,ai_enabled:$("#botSettingAi").checked,trc_address:$("#botSettingAddress").value.trim(),ad_text:$("#botSettingAdText").value.trim(),ad_url:$("#botSettingAdUrl").value.trim(),start_text:$("#botSettingStartText").value,start_poster:poster});if(file)$("#botSettingPosterFile").value=""}
+ catch(err){$("#botSettingsResult").className="form-result error";$("#botSettingsResult").textContent=err.message||"配置保存失败"}
+});
+$("#botPlanClear")?.addEventListener("click",()=>{$("#botPlanForm").reset();$("#botPlanId").readOnly=false});
+$("#botPlanForm")?.addEventListener("submit",async e=>{
+ e.preventDefault();const p={id:$("#botPlanId").value.trim(),name:$("#botPlanName").value.trim(),days:Number($("#botPlanDays").value),gb:Number($("#botPlanGb").value),cny:Number($("#botPlanCny").value)};
+ const plans=[...(botSettingsCache.data?.plans||[])],i=plans.findIndex(x=>x.id===p.id);if(i>=0)plans[i]=p;else plans.push(p);
+ try{await saveBotSettings({plans});$("#botPlanForm").reset();$("#botPlanId").readOnly=false}catch(e){}
+});
+$("#botWhitelistForm")?.addEventListener("submit",async e=>{
+ e.preventDefault();const ids=$("#botWhitelistIds").value.split(/[\s,，]+/).filter(Boolean);
+ try{await legacyAdmin("/bots/matrix/settings/save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({bot:$("#botSettingsBot").value,ai_whitelist:ids})});$("#botWhitelistResult").className="form-result success";$("#botWhitelistResult").textContent="白名单已保存"}
+ catch(e){$("#botWhitelistResult").className="form-result error";$("#botWhitelistResult").textContent=e.message||"保存失败"}
+});
+async function loadBotChats(){
+ const body=$("#botChatsBody");if(!body)return;const bot=$("#botUserFilter")?.value||"safew";
+ body.innerHTML='<tr><td colspan="3" class="table-empty">正在读取频道/群组配置…</td></tr>';
+ try{
+  const chats=dataList(await legacyAdmin("/bots/matrix/chats?bot="+encodeURIComponent(bot)));
+  $("#botChatsCount").textContent="已配置 "+chats.length+" 项";
+  body.innerHTML=chats.length?chats.map(x=>'<tr><td class="mono">'+escapeHtml(x.chat_id)+'</td><td>'+escapeHtml(x.title||"未命名")+'</td><td><button class="btn btn-danger btn-small" data-bot-chat-delete="'+escapeHtml(x.chat_id)+'">删除</button></td></tr>').join(""):'<tr><td colspan="3" class="table-empty">当前机器人尚未配置频道或群组</td></tr>';
+  body.querySelectorAll("[data-bot-chat-delete]").forEach(btn=>btn.addEventListener("click",async()=>{if(!confirm("确认移除该频道/群组配置？"))return;try{await legacyAdmin("/bots/matrix/chats/delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({bot,chat_id:btn.dataset.botChatDelete})});toast("配置已移除");await loadBotChats()}catch(e){toast("删除失败："+e.message)}}));
+ }catch(e){body.innerHTML='<tr><td colspan="3" class="table-empty error-text">读取失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>'}
+}
+$("#botChatsManageBtn")?.addEventListener("click",async()=>{const panel=$("#botChatManagerPanel");panel.hidden=!panel.hidden;if(!panel.hidden){panel.scrollIntoView({behavior:"smooth",block:"start"});await loadBotChats()}});
+$("#botChatForm")?.addEventListener("submit",async e=>{
+ e.preventDefault();const btn=$("#botChatSaveBtn"),bot=$("#botUserFilter").value,chat_id=$("#botChatId").value.trim(),title=$("#botChatTitle").value.trim();btn.disabled=true;
+ try{await legacyAdmin("/bots/matrix/chats/save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({bot,chat_id,title})});$("#botChatId").value="";$("#botChatTitle").value="";toast("频道 / 群组配置已保存");await loadBotChats()}catch(err){toast("保存失败："+(err.message||"接口错误"))}finally{btn.disabled=false}
+});
+async function openBotUserDetail(u,bot){
+ if(!u)return;
+ const uid=u.tg_id||u.user_id||"",name=u.nickname||[u.first_name,u.last_name].filter(Boolean).join(" ")||"未设置昵称";
+ $("#botUserAvatar").src="";$("#botUserAvatar").hidden=true;$("#botUserAvatarFallback").hidden=false;
+ $("#botUserName").textContent=name;$("#botUserMeta").textContent="@"+String(u.username||"未设置").replace(/^@/,"")+" · "+(uid||"ID 未返回");
+ const fields=[["Telegram 用户 ID",uid],["用户名",u.username?"@"+String(u.username).replace(/^@/,""):"未设置"],["名字",u.first_name||name],["姓氏",u.last_name],["机器人",bot],["账号状态",Number(u.activated)?"已激活":"未激活"],["节点账号",u.suser],["MTProto 账号",u.mtp_user],["流量",(Number(u.traffic_mb||0)/1024).toFixed(2)+" GB"],["余额",Number(u.balance||0).toFixed(2)+" USDT"],["到期时间",Number(u.expire||0)>0?formatAdminDate(u.expire):"未开通"],["邀请人数",u.invite_count],["邀请人 ID",u.inviter],["最后签到",u.last_sign],["语言",u.language_code],["Premium",u.is_premium===true?"是":u.is_premium===false?"否":undefined]];
+ $("#botUserProfileGrid").innerHTML=fields.filter(([k,v])=>v!==undefined&&v!==null&&v!=="").map(([k,v])=>'<div class="user-detail-item"><small>'+escapeHtml(k)+'</small><b>'+escapeHtml(v)+'</b></div>').join("");
+ $("#botUserChannels").innerHTML='<li class="muted-inline">正在核验机器人可访问的频道…</li>';
+ $("#botUserGroups").innerHTML='<li class="muted-inline">正在核验机器人可访问的群组…</li>';
+ $("#botUserMembershipScope").textContent="正在查询机器人已配置的频道与群组…";
+ $("#botUserDetailModal").hidden=false;
+ if(uid){
+  try{const avatar=await legacyAdmin("/bots/matrix/avatar?bot="+encodeURIComponent(bot)+"&uid="+encodeURIComponent(uid));if(avatar.avatar){$("#botUserAvatar").src=avatar.avatar;$("#botUserAvatar").hidden=false;$("#botUserAvatarFallback").hidden=true;$("#botUserAvatarStatus").textContent="头像已读取"}else{$("#botUserAvatarStatus").textContent=avatar.reason||"头像暂不可用"}}catch(e){$("#botUserAvatarStatus").textContent="头像读取失败："+(e.message||"接口错误")}
+  try{
+   const memberships=await legacyAdmin("/bots/matrix/memberships?bot="+encodeURIComponent(bot)+"&uid="+encodeURIComponent(uid));
+   const renderList=items=>Array.isArray(items)&&items.length?items.map(x=>'<li><b>'+escapeHtml(x.title||x.chat_id||"未命名")+'</b><small class="muted-inline">'+escapeHtml(x.type||"")+' · '+escapeHtml(x.status||"无法核验")+(x.is_member?" · 已加入":"")+'</small></li>').join(""):'<li class="muted-inline">没有可核验的项目</li>';
+   $("#botUserChannels").innerHTML=renderList(memberships.channels);
+   $("#botUserGroups").innerHTML=renderList(memberships.groups);
+   $("#botUserUnavailable").innerHTML=renderList(memberships.unavailable);
+   $("#botUserMembershipScope").textContent=memberships.scope||"仅显示机器人可访问的已配置群组/频道。";
+  }catch(e){$("#botUserChannels").innerHTML='<li class="muted-inline">频道资料暂不可用</li>';$("#botUserGroups").innerHTML='<li class="muted-inline">群组资料暂不可用</li>';$("#botUserUnavailable").innerHTML='<li class="muted-inline">查询失败</li>';$("#botUserMembershipScope").textContent="当前无法连接 Telegram 查询频道/群组。"}
+ }
+}
+
+$("#botUserDetailClose")?.addEventListener("click",()=>$("#botUserDetailModal").hidden=true);
+$("#botUsersRefresh")?.addEventListener("click",loadBotUsers);
+$("#botUserFilter")?.addEventListener("change",()=>{loadBotUsers();if(!$("#botChatManagerPanel")?.hidden)loadBotChats()});
+
+$("#botsRefreshBtn")?.addEventListener("click",loadBots);
+document.querySelectorAll("[data-bot-action]").forEach(btn=>btn.addEventListener("click",async()=>{
+ const bot=btn.dataset.bot,action=btn.dataset.botAction;
+ const verb={start:"启动",stop:"停止",restart:"重启"}[action];
+ if(action!=="start"&&!confirm("确定要"+verb+botNames[bot]+"？"))return;
+ const buttons=document.querySelectorAll('[data-bot="'+bot+'"]');buttons.forEach(b=>b.disabled=true);
+ try{
+  await adminRequest("/api/admin/bots/action",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({bot,action})});
+  toast(botNames[bot]+verb+"指令已执行");
+ }catch(error){toast("操作失败："+(error.message||"请稍后重试"))}
+ finally{await loadBots()}
+}));
+document.querySelectorAll("[data-bot-logs]").forEach(btn=>btn.addEventListener("click",async()=>{
+ const bot=btn.dataset.botLogs;$("#botLogTitle").textContent=botNames[bot]+" · 运行日志";$("#botLogStatus").textContent="读取中";$("#botLogs").textContent="正在读取日志…";
+ try{const data=await adminRequest("/api/admin/bots/logs?bot="+encodeURIComponent(bot));$("#botLogs").textContent=data.logs||"暂无日志";$("#botLogStatus").textContent="读取完成"}
+ catch(error){$("#botLogs").textContent="日志读取失败："+(error.message||"服务暂不可用");$("#botLogStatus").textContent="读取失败"}
+}));
+
+let auditPage=1;
+const auditPageSize=50;
+async function loadAuditLogs(resetPage=true){
+ const body=$("#auditLogsBody");if(!body)return;
+ if(resetPage)auditPage=1;
+ body.innerHTML='<tr><td colspan="6" class="table-empty">正在读取安全审计记录…</td></tr>';
+ const q=$("#auditSearch")?.value.trim()||"",params=new URLSearchParams({q,page:String(auditPage),size:String(auditPageSize)});
+ try{
+  const d=await legacyAdmin("/logs?"+params.toString()),items=dataList(d),total=Number(d.total??items.length),pages=Math.max(1,Number(d.pages??Math.ceil(total/auditPageSize)));
+  body.innerHTML=items.length?items.map(x=>'<tr><td>'+escapeHtml(formatAdminDate(x.created_at))+'</td><td><b>'+escapeHtml(x.admin_display||x.admin||"—")+'</b></td><td>'+escapeHtml(x.action||"—")+'</td><td>'+escapeHtml(x.target||"—")+'</td><td>'+escapeHtml(x.detail||"—")+'</td><td class="mono">'+escapeHtml(x.ip||"—")+'</td></tr>').join(""):'<tr><td colspan="6" class="table-empty">暂无匹配的操作记录</td></tr>';
+  $("#auditCount").textContent="共 "+total.toLocaleString("zh-CN")+" 条审计记录";
+  if($("#auditPrev"))$("#auditPrev").disabled=auditPage<=1;
+  if($("#auditNext"))$("#auditNext").disabled=auditPage>=pages;
+  if($("#auditPageInfo"))$("#auditPageInfo").textContent="第 "+auditPage+" / "+pages+" 页";
+ }catch(e){body.innerHTML='<tr><td colspan="6" class="table-empty error-text">审计记录读取失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';$("#auditCount").textContent="读取失败"}
+}
+$("#auditSearchBtn")?.addEventListener("click",()=>loadAuditLogs(true));
+$("#auditSearch")?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();loadAuditLogs(true)}});
+$("#auditRefresh")?.addEventListener("click",()=>loadAuditLogs(false));
+$("#auditPrev")?.addEventListener("click",()=>{if(auditPage>1){auditPage--;loadAuditLogs(false)}});
+$("#auditNext")?.addEventListener("click",()=>{auditPage++;loadAuditLogs(false)});
+async function loadAdmins(){
+ const body=$("#adminUsersBody");if(!body)return;body.innerHTML='<tr><td colspan="6" class="table-empty">正在读取管理员列表…</td></tr>';
+ try{
+  const d=await adminRequest("/api/admin/staff");
+  const roleOptions=Object.entries(d.roles||{}).map(([k,v])=>'<option value="'+k+'">'+escapeHtml(v)+'</option>').join("");
+  body.innerHTML=(d.admins||[]).length?d.admins.map(a=>'<tr><td><b>'+escapeHtml(a.email||"—")+'</b><small class="muted-inline">'+escapeHtml(a.nickname||"")+'</small></td><td class="mono">'+escapeHtml(a.user_id||"—")+'</td><td><select data-staff-role="'+escapeHtml(a.user_id)+'">'+Object.entries(d.roles||{}).map(([k,v])=>'<option value="'+k+'" '+(k===a.role?"selected":"")+'>'+escapeHtml(v)+'</option>').join("")+'</select></td><td><select data-staff-status="'+escapeHtml(a.user_id)+'"><option value="active" '+(a.status==="active"?"selected":"")+'>启用</option><option value="disabled" '+(a.status!=="active"?"selected":"")+'>停用</option></select></td><td>'+escapeHtml(formatAdminDate(a.created_at))+'</td><td>'+escapeHtml(formatAdminDate(a.updated_at))+'</td><td><div class="table-actions"><button class="btn btn-secondary btn-small" data-staff-save="'+escapeHtml(a.user_id)+'">保存</button><button class="btn btn-danger btn-small" data-staff-remove="'+escapeHtml(a.user_id)+'">移除</button></div></td></tr>').join(""):'<tr><td colspan="7" class="table-empty">暂未添加其他管理员</td></tr>';
+  body.querySelectorAll("[data-staff-save]").forEach(b=>b.addEventListener("click",async()=>{const role=body.querySelector('[data-staff-role="'+CSS.escape(b.dataset.staffSave)+'"]').value,status=body.querySelector('[data-staff-status="'+CSS.escape(b.dataset.staffSave)+'"]').value;try{await adminRequest("/api/admin/staff",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({user_id:b.dataset.staffSave,role,status})});toast("管理员权限已更新");loadAdmins()}catch(e){toast("更新失败："+e.message)}}));
+  body.querySelectorAll("[data-staff-remove]").forEach(b=>b.addEventListener("click",async()=>{if(!confirm("确认移除该管理员权限？其原商城账号和密码不会被删除。"))return;try{await adminRequest("/api/admin/staff/"+encodeURIComponent(b.dataset.staffRemove),{method:"DELETE"});toast("管理员权限已移除");loadAdmins()}catch(e){toast("移除失败："+e.message)}}));
+  $("#adminCount").textContent="已配置 "+(d.admins||[]).length+" 位管理员（不含主账号）";
+  applyAdminAccess();
+ }catch(e){body.innerHTML='<tr><td colspan="6" class="table-empty error-text">读取管理员失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>'}
+}
+$("#adminAddForm")?.addEventListener("submit",async e=>{e.preventDefault();const email=$("#newAdminEmail").value.trim(),role=$("#newAdminRole").value,btn=$("#adminAddBtn"),result=$("#adminAddResult");btn.disabled=true;result.textContent="正在添加…";try{await adminRequest("/api/admin/staff",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,role})});result.className="form-result success";result.textContent="管理员已添加。对方使用自己原有的晴天号铺账号密码登录。";$("#newAdminEmail").value="";await loadAdmins()}catch(err){result.className="form-result error";result.textContent=err.message||"添加失败"}finally{btn.disabled=false}});
+
+function nodeStatus(value){return ({fulfilled:"已开通",provisioning:"开通中",refunded:"已退款",failed:"失败",active:"使用中",expired:"已到期"})[String(value||"").toLowerCase()]||String(value||"未知")}
+$("#nodesRefresh")?.addEventListener("click",loadNodes);
+
+
+(async()=>{const authenticated=await verifyAdmin();checkApi();if(authenticated)loadOverview()})();
