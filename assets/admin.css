@@ -571,5 +571,3 @@ html,body{min-height:100%;height:auto;overflow-x:hidden;overflow-y:auto}
 .nav-group-toggle[aria-expanded="true"] .nav-chevron{transform:rotate(180deg)}
 .login-security>span .material-symbols-rounded,.empty-state>span .material-symbols-rounded{font-size:24px}
 @media(max-height:720px) and (min-width:761px){.sidebar{padding-top:18px;padding-bottom:18px}.brand{padding-bottom:20px}.nav-item{padding-top:9px;padding-bottom:9px}}
-
-[executed on device: iZj6cakb7vguedvzvbqrvbZ (14411471-502a-43de-a2d7-530edf7bf831)]
