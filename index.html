@@ -6,9 +6,9 @@
   <meta name="theme-color" content="#f5f7fb">
   <title>晴天账号铺 · 管理后台</title>
   <link rel="icon" href="https://shop.lynli.me/logo.jpg" type="image/jpeg">
-  <link rel="stylesheet" href="./assets/admin.css?v=20261122-03">
+  <link rel="stylesheet" href="./assets/admin.css?v=20261122-04">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0,0">
-  <script src="./assets/admin.js?v=20261122-08" defer></script>
+  <script src="./assets/admin.js?v=20261122-09" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -190,7 +190,7 @@
       </section>
 
       <section class="page" id="page-orders">
-        <div class="page-heading"><div><p class="eyebrow">ORDER CENTER</p><h1>订单管理</h1><p class="subheading">统一查看商城订单与节点订单，不触发采购或交付操作</p></div><button class="btn btn-secondary" id="ordersRefresh">↻ 刷新</button></div>
+        <div class="page-heading"><div><p class="eyebrow">ORDER CENTER</p><h1>订单管理</h1><p class="subheading">统一查看商城订单与节点订单，管理订单状态、交付内容与物流</p></div><button class="btn btn-secondary" id="ordersRefresh">↻ 刷新</button></div>
         <article class="panel data-panel">
           <div class="table-toolbar"><input id="orderSearch" type="search" placeholder="搜索订单号"><select id="orderStatus"><option value="">全部状态</option><option value="0">待支付</option><option value="1">待发货</option><option value="2">已发货</option><option value="3">已完成</option></select><button class="btn btn-primary" id="orderSearchBtn">查询</button></div>
           <div class="table-wrap"><table class="data-table"><thead><tr><th>订单号</th><th>类型</th><th>用户</th><th>商品 ID</th><th>金额</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead><tbody id="ordersBody"><tr><td colspan="8" class="table-empty">登录后加载订单数据</td></tr></tbody></table></div>
@@ -209,7 +209,7 @@
             <label><span>覆盖已有交付内容</span><select id="orderDeliveryOverwrite"><option value="0">否（默认保护）</option><option value="1">是（确认后覆盖）</option></select></label>
             <label class="span-two">上传账号 / 卡密 / 授权内容<textarea id="orderDeliveryContent" rows="5" placeholder="粘贴本订单的交付内容。支持多行，最多 20000 字符。"></textarea><small class="field-hint">仅已付款订单允许交付；保存后客户可在订单详情中查看。已有不同交付内容时默认拒绝覆盖。</small></label>
           </div>
-          <div class="form-actions"><button class="btn btn-secondary" id="orderPurchaseCopy" type="button">复制采购信息</button><button class="btn btn-secondary" id="orderStatusSave" type="button">保存订单状态</button><button class="btn btn-secondary" id="orderDeliverBtn" type="button">上传并交付</button><button class="btn btn-primary" id="orderShipBtn" type="button">确认发货</button></div>
+          <div class="form-actions"><button class="btn btn-secondary" id="orderStatusSave" type="button">保存订单状态</button><button class="btn btn-secondary" id="orderDeliverBtn" type="button">上传并交付</button><button class="btn btn-primary" id="orderShipBtn" type="button">确认发货</button></div>
           <div class="form-result" id="orderModalResult" role="status"></div>
         </article>
       </div>
@@ -639,3 +639,5 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </body>
 </html>
+
+[executed on device: iZj6cakb7vguedvzvbqrvbZ (14411471-502a-43de-a2d7-530edf7bf831)]

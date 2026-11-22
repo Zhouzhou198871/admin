@@ -359,9 +359,9 @@ async function loadProducts(){
 }
 
 
-let activeOrder=null,activePurchaseText="";
+let activeOrder=null;
 async function openOrderDetail(tradeNo){
- const modal=$("#orderModal");modal.hidden=false;$("#orderModalTitle").textContent="订单 "+tradeNo;$("#orderModalMeta").textContent="正在读取订单详情…";$("#orderModalContent").textContent="正在读取订单商品、客户和物流信息…";$("#orderModalResult").textContent="";$("#orderDeliveryContent").value="";activeOrder=null;activePurchaseText="";
+ const modal=$("#orderModal");modal.hidden=false;$("#orderModalTitle").textContent="订单 "+tradeNo;$("#orderModalMeta").textContent="正在读取订单详情…";$("#orderModalContent").textContent="正在读取订单商品、客户和物流信息…";$("#orderModalResult").textContent="";$("#orderDeliveryContent").value="";activeOrder=null;
  try{
   const d=await legacyAdmin("/shop/order/detail?trade_no="+encodeURIComponent(tradeNo));activeOrder=d;
   const items=d.items||[];
@@ -382,7 +382,6 @@ async function openOrderDetail(tradeNo){
    ...items.map(x=>"· "+(x.title||("商品 #"+x.product_id))+" × "+Number(x.qty||1)+" / "+formatCny(x.price))
   ].join(String.fromCharCode(10));
   $("#orderModalStatus").value=String(d.status??0);$("#orderTrackingCompany").value=d.tracking_company||"";$("#orderTrackingNo").value=d.tracking_no||"";
-  try{const p=await legacyAdmin("/shop/order/purchase?trade_no="+encodeURIComponent(tradeNo));activePurchaseText=p.text||""}catch{}
  }catch(e){$("#orderModalContent").textContent="读取失败："+(e.message||"接口错误")}
 }
 $("#orderModalClose")?.addEventListener("click",()=>$("#orderModal").hidden=true);
@@ -401,7 +400,6 @@ $("#orderDeliverBtn")?.addEventListener("click",async()=>{
  finally{btn.disabled=false}
 });
 $("#orderShipBtn")?.addEventListener("click",async()=>{if(!activeOrder)return;const tracking_no=$("#orderTrackingNo").value.trim();if(!tracking_no){$("#orderModalResult").textContent="请先填写物流单号";return}if(!confirm("确认发货并将订单状态改为已发货？"))return;try{await legacyAdmin("/shop/order/ship",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({trade_no:activeOrder.trade_no,tracking_no,tracking_company:$("#orderTrackingCompany").value.trim()})});toast("订单已发货");$("#orderModal").hidden=true;loadOrders()}catch(e){$("#orderModalResult").textContent=e.message||"发货失败"}});
-$("#orderPurchaseCopy")?.addEventListener("click",async()=>{if(!activePurchaseText){toast("该订单暂无可复制的采购信息");return}try{await navigator.clipboard.writeText(activePurchaseText);toast("采购信息已复制")}catch{const t=document.createElement("textarea");t.value=activePurchaseText;document.body.appendChild(t);t.select();try{document.execCommand("copy");toast("采购信息已复制")}catch{toast("复制失败，请手动查看")};t.remove()}});
 $("#ordersRefresh")?.addEventListener("click",loadOrders);
 $("#orderSearchBtn")?.addEventListener("click",loadOrders);
 $("#orderStatus")?.addEventListener("change",loadOrders);
@@ -1000,6 +998,8 @@ $("#botCredentialForm")?.addEventListener("submit",async e=>{
  finally{btn.disabled=false}
 });
 function renderBotPlans(){
+
+[executed on device: iZj6cakb7vguedvzvbqrvbZ (14411471-502a-43de-a2d7-530edf7bf831)]
  const body=$("#botPlansBody");if(!body)return;const plans=botSettingsCache.data?.plans||[];
  body.innerHTML=plans.length?plans.map((p,i)=>'<tr><td class="mono">'+escapeHtml(p.id)+'</td><td>'+escapeHtml(p.name)+'</td><td>'+Number(p.days)+'</td><td>'+Number(p.gb)+' GB</td><td>¥'+Number(p.cny).toFixed(2)+'</td><td><div class="table-actions"><button class="btn btn-secondary btn-small" data-plan-edit="'+i+'">编辑</button><button class="btn btn-danger btn-small" data-plan-delete="'+i+'">删除</button></div></td></tr>').join(""):'<tr><td colspan="6" class="table-empty">当前机器人没有套餐配置</td></tr>';
  body.querySelectorAll("[data-plan-edit]").forEach(btn=>btn.addEventListener("click",()=>{const p=plans[Number(btn.dataset.planEdit)];$("#botPlanId").value=p.id||"";$("#botPlanName").value=p.name||"";$("#botPlanDays").value=p.days||30;$("#botPlanGb").value=p.gb||0;$("#botPlanCny").value=p.cny||0;$("#botPlanId").readOnly=true;$("#botPlanName").focus()}));
@@ -1144,21 +1144,10 @@ async function loadAdmins(){
 }
 $("#adminAddForm")?.addEventListener("submit",async e=>{e.preventDefault();const email=$("#newAdminEmail").value.trim(),role=$("#newAdminRole").value,btn=$("#adminAddBtn"),result=$("#adminAddResult");btn.disabled=true;result.textContent="正在添加…";try{await adminRequest("/api/admin/staff",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,role})});result.className="form-result success";result.textContent="管理员已添加。对方使用自己原有的晴天号铺账号密码登录。";$("#newAdminEmail").value="";await loadAdmins()}catch(err){result.className="form-result error";result.textContent=err.message||"添加失败"}finally{btn.disabled=false}});
 
-function moneyCny(value){const n=Number(value);return Number.isFinite(n)?"¥"+n.toFixed(2):"—"}
 function nodeStatus(value){return ({fulfilled:"已开通",provisioning:"开通中",refunded:"已退款",failed:"失败",active:"使用中",expired:"已到期"})[String(value||"").toLowerCase()]||String(value||"未知")}
+$("#nodesRefresh")?.addEventListener("click",loadNodes);
 
-async function refreshUpstream(){
- const body=$("#upstreamOrdersBody");$("#upstreamApiStatus").textContent="检查中";$("#upstreamBalanceStatus").textContent="查询中";body.innerHTML='<tr><td colspan="6" class="table-empty">正在读取上游采购记录…</td></tr>';
- try{
-  const d=await legacyAdmin("/upstream/overview");
-  $("#upstreamApiStatus").textContent="在线";
-  if(d.balance_cny===null||d.balance_cny===undefined){$("#upstreamBalanceStatus").textContent="接口未提供";$("#upstreamBalance").textContent="暂不可查询";$("#upstreamBalanceHint").textContent="上游当前没有开放余额查询接口，不显示估算值"}
-  else{$("#upstreamBalanceStatus").textContent="实时";$("#upstreamBalance").textContent=moneyCny(d.balance_cny);$("#upstreamBalanceHint").textContent="实时读取 · "+formatAdminDate(d.updated_at)}
-  const os=d.orders||[];
-  body.innerHTML=os.length?os.map(o=>'<tr><td class="mono">'+escapeHtml(o.supplier_order_id||o.supplier_order_no||"—")+'</td><td class="mono">'+escapeHtml(o.idempotency_key||"—")+'</td><td>'+escapeHtml(o.product_id||"—")+' × '+Number(o.count||0)+'</td><td class="money">—</td><td>'+statusPill(o.status)+'</td><td>'+escapeHtml(formatAdminDate(o.created_at))+'</td></tr>').join(""):'<tr><td colspan="6" class="table-empty">当前没有通过本采购代理创建的上游订单</td></tr>';
-  $("#upstreamOrderCount")&&($("#upstreamOrderCount").textContent=Number(d.orders_total??os.length).toLocaleString("zh-CN")+" 条真实采购记录");
- }catch(e){$("#upstreamApiStatus").textContent="待接入";$("#upstreamBalanceStatus").textContent="接口未提供";$("#upstreamBalance").textContent="暂不可查询";body.innerHTML='<tr><td colspan="6" class="table-empty error-text">读取上游采购记录失败：'+escapeHtml(e.message||"接口不可用")+'</td></tr>'}
-}
-$("#nodesRefresh")?.addEventListener("click",loadNodes);$("#upstreamRefresh")?.addEventListener("click",refreshUpstream);
 
 (async()=>{const authenticated=await verifyAdmin();checkApi();if(authenticated)loadOverview()})();
+
+[executed on device: iZj6cakb7vguedvzvbqrvbZ (14411471-502a-43de-a2d7-530edf7bf831)]
