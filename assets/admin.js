@@ -6,6 +6,12 @@ const REMEMBER_EMAIL_KEY="qingtian_admin_remembered_email";
 const rememberedEmail=localStorage.getItem(REMEMBER_EMAIL_KEY);
 if(rememberedEmail){$("#loginEmail").value=rememberedEmail;$("#rememberPassword").checked=true}
 const pageNames={overview:"经营总览",orders:"订单管理",users:"用户管理",products:"商品与库存",nodes:"节点服务",support:"在线客服",email:"邮件系统",notices:"公告管理",payments:"支付系统",recharge:"余额充值",api:"API 管理",bots:"机器人管理",admins:"管理员与权限",audit:"安全审计"};
+const PAGE_PERMISSIONS={
+ overview:"overview.read",orders:"orders.read",users:"users.read",products:"products.read",
+ nodes:"nodes.read",support:"support.read",email:"email.read",notices:"notices.read",
+ payments:"payments.read",recharge:"finance.manage",api:"staff.manage",bots:"bots.read",
+ admins:"staff.manage",audit:"staff.manage"
+};
 let currentAdmin=null,activeNodeAccess=[],selectedUserRecord=null;
 let toastTimer;
 function toast(message){const el=$("#toast");if(!el)return;el.textContent=message;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2600)}
@@ -22,8 +28,7 @@ function authHeaders(extra={}){return {...extra,Authorization:"Bearer "+(localSt
 async function adminRequest(path,options={}){const response=await fetchWithTimeout(API_BASE+path,{...options,headers:authHeaders(options.headers||{})},12000);let data={};try{data=await response.json()}catch{}if(!response.ok||!data.ok)throw new Error(data.error||"request_failed");return data}
 function adminHasPermission(permission){const p=currentAdmin?.permissions||[];return p.includes("*")||p.includes(permission)||(permission.endsWith(".read")&&p.includes("overview.read"))||p.includes(permission.replace(/\.read$/,".manage"))}
 function applyAdminAccess(){
- const needs={overview:"overview.read",orders:"orders.read",users:"users.read",products:"products.read",nodes:"nodes.read",support:"support.read",email:"email.read",notices:"notices.read",payments:"payments.read",recharge:"finance.manage",api:"staff.manage",bots:"bots.read",admins:"staff.manage",audit:"staff.manage"};
- document.querySelectorAll(".nav-item").forEach(el=>{const p=needs[el.dataset.page];el.hidden=!!p&&!adminHasPermission(p)});document.querySelectorAll(".nav-group").forEach(g=>{g.hidden=!Array.from(g.querySelectorAll(".nav-item")).some(x=>!x.hidden)});
+ document.querySelectorAll(".nav-item").forEach(el=>{const permission=PAGE_PERMISSIONS[el.dataset.page];el.hidden=!!permission&&!adminHasPermission(permission)});document.querySelectorAll(".nav-group").forEach(g=>{g.hidden=!Array.from(g.querySelectorAll(".nav-item")).some(x=>!x.hidden)});
  if($("#adminAccountRole"))$("#adminAccountRole").textContent=currentAdmin?.role_label||"—";
  if($("#adminAccountEmail"))$("#adminAccountEmail").textContent=currentAdmin?.email||"—";
  if($("#adminAccountNickname"))$("#adminAccountNickname").textContent=currentAdmin?.nickname||"—";
@@ -57,7 +62,7 @@ $("#adminLoginForm").addEventListener("submit",async e=>{
 $("#togglePassword").addEventListener("click",()=>{const input=$("#loginPassword"),button=$("#togglePassword"),show=input.type==="password";input.type=show?"text":"password";button.textContent=show?"隐藏":"显示";button.setAttribute("aria-label",show?"隐藏密码":"显示密码");button.setAttribute("aria-pressed",String(show));});
 
 $("#logoutBtn").addEventListener("click",()=>{localStorage.removeItem(TOKEN_KEY);currentAdmin=null;document.body.classList.remove("authenticated");$("#loginPassword").value="";});
-function showPage(name){if(!pageNames[name])return;hydrateIcons();const need=({overview:"overview.read",orders:"orders.read",users:"users.read",products:"products.read",nodes:"nodes.read",support:"support.read",email:"email.read",notices:"notices.read",payments:"payments.read",recharge:"finance.manage",api:"staff.manage",bots:"bots.read",admins:"staff.manage",audit:"staff.manage"})[name];if(need&&!adminHasPermission(need)){toast("当前管理员没有此模块权限");return}document.querySelectorAll(".page").forEach(el=>{const active=el.id==="page-"+name;el.classList.toggle("active",active);el.setAttribute("aria-hidden",String(!active))});document.querySelectorAll(".nav-item").forEach(el=>{const active=el.dataset.page===name;el.classList.toggle("active",active);if(active)el.setAttribute("aria-current","page");else el.removeAttribute("aria-current")});document.querySelectorAll(".nav-group").forEach(g=>{const active=!!g.querySelector(".nav-item.active");if(active){const items=g.querySelector(".nav-group-items"),toggle=g.querySelector(".nav-group-toggle");if(items)items.hidden=false;if(toggle)toggle.setAttribute("aria-expanded","true")}});$("#pageCrumb").textContent=pageNames[name];$("#sidebar").classList.remove("open");$("#menuToggle").setAttribute("aria-expanded","false");window.scrollTo({top:0,behavior:"smooth"});const loaders={overview:loadOverview,orders:loadOrders,users:loadUsers,products:loadProducts,nodes:loadNodes,support:loadSupport,email:loadEmail,notices:loadNotices,payments:loadPayments,api:loadApiManagement,bots:loadBots,admins:loadAdmins,audit:loadAuditLogs};if(loaders[name])loaders[name]();}
+function showPage(name){if(!pageNames[name])return;hydrateIcons();const need=PAGE_PERMISSIONS[name];if(need&&!adminHasPermission(need)){toast("当前管理员没有此模块权限");return}document.querySelectorAll(".page").forEach(el=>{const active=el.id==="page-"+name;el.classList.toggle("active",active);el.setAttribute("aria-hidden",String(!active))});document.querySelectorAll(".nav-item").forEach(el=>{const active=el.dataset.page===name;el.classList.toggle("active",active);if(active)el.setAttribute("aria-current","page");else el.removeAttribute("aria-current")});document.querySelectorAll(".nav-group").forEach(g=>{const active=!!g.querySelector(".nav-item.active");if(active){const items=g.querySelector(".nav-group-items"),toggle=g.querySelector(".nav-group-toggle");if(items)items.hidden=false;if(toggle)toggle.setAttribute("aria-expanded","true")}});$("#pageCrumb").textContent=pageNames[name];$("#sidebar").classList.remove("open");$("#menuToggle").setAttribute("aria-expanded","false");window.scrollTo({top:0,behavior:"smooth"});const loaders={overview:loadOverview,orders:loadOrders,users:loadUsers,products:loadProducts,nodes:loadNodes,support:loadSupport,email:loadEmail,notices:loadNotices,payments:loadPayments,api:loadApiManagement,bots:loadBots,admins:loadAdmins,audit:loadAuditLogs};if(loaders[name])loaders[name]();}
 document.querySelectorAll(".nav-item").forEach(btn=>btn.addEventListener("click",()=>showPage(btn.dataset.page)));
 document.querySelectorAll(".nav-group-toggle").forEach(btn=>btn.addEventListener("click",()=>{const group=btn.closest(".nav-group"),items=group?.querySelector(".nav-group-items"),open=btn.getAttribute("aria-expanded")==="true";if(!items)return;btn.setAttribute("aria-expanded",String(!open));items.hidden=open;}));
 
@@ -1141,7 +1146,7 @@ $("#adminAddForm")?.addEventListener("submit",async e=>{e.preventDefault();const
 
 function moneyCny(value){const n=Number(value);return Number.isFinite(n)?"¥"+n.toFixed(2):"—"}
 function nodeStatus(value){return ({fulfilled:"已开通",provisioning:"开通中",refunded:"已退款",failed:"失败",active:"使用中",expired:"已到期"})[String(value||"").toLowerCase()]||String(value||"未知")}
-async function loadNodes(){await Promise.allSettled([loadPlans(),loadNodeServers()])}
+
 async function refreshUpstream(){
  const body=$("#upstreamOrdersBody");$("#upstreamApiStatus").textContent="检查中";$("#upstreamBalanceStatus").textContent="查询中";body.innerHTML='<tr><td colspan="6" class="table-empty">正在读取上游采购记录…</td></tr>';
  try{

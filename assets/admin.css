@@ -520,10 +520,11 @@ html,body{min-height:100%;height:auto;overflow-x:hidden;overflow-y:auto}
 
 /* Navigation drawers */
 .nav{display:flex;flex-direction:column;gap:7px;overflow-y:auto;min-height:0;padding:0 2px 14px}
-.nav-group{border:1px solid #ffffff0d;border-radius:12px;background:#ffffff05;overflow:hidden}
-.nav-group-toggle{width:100%;border:0;background:transparent;color:#d0d7e4;padding:11px 12px;display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:700;letter-spacing:.25px;text-align:left;cursor:pointer}
-.nav-group-toggle:hover{background:#ffffff0a;color:#fff}
-.nav-group-toggle i{font-style:normal;color:#8290a8;transition:transform .18s}
+.nav-group{border:1px solid #edf0f5;border-radius:12px;background:#fff;overflow:hidden}
+.nav-group-toggle{width:100%;border:0;background:transparent;color:#526078;padding:11px 12px;display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:700;letter-spacing:.25px;text-align:left;cursor:pointer;transition:background .18s,color .18s}
+.nav-group-toggle:hover{background:#f7f8fc;color:#29354b}
+.nav-group-toggle:focus-visible{outline:2px solid #8b7cf0;outline-offset:-2px}
+.nav-group-toggle i{font-style:normal;color:#8994a6;transition:transform .18s}
 .nav-group-toggle[aria-expanded="true"] i{transform:rotate(180deg)}
 .nav-group-items{display:grid;gap:3px;padding:0 5px 6px}
 .nav-group-items[hidden]{display:none}
