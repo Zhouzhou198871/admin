@@ -998,8 +998,6 @@ $("#botCredentialForm")?.addEventListener("submit",async e=>{
  finally{btn.disabled=false}
 });
 function renderBotPlans(){
-
-[executed on device: iZj6cakb7vguedvzvbqrvbZ (14411471-502a-43de-a2d7-530edf7bf831)]
  const body=$("#botPlansBody");if(!body)return;const plans=botSettingsCache.data?.plans||[];
  body.innerHTML=plans.length?plans.map((p,i)=>'<tr><td class="mono">'+escapeHtml(p.id)+'</td><td>'+escapeHtml(p.name)+'</td><td>'+Number(p.days)+'</td><td>'+Number(p.gb)+' GB</td><td>¥'+Number(p.cny).toFixed(2)+'</td><td><div class="table-actions"><button class="btn btn-secondary btn-small" data-plan-edit="'+i+'">编辑</button><button class="btn btn-danger btn-small" data-plan-delete="'+i+'">删除</button></div></td></tr>').join(""):'<tr><td colspan="6" class="table-empty">当前机器人没有套餐配置</td></tr>';
  body.querySelectorAll("[data-plan-edit]").forEach(btn=>btn.addEventListener("click",()=>{const p=plans[Number(btn.dataset.planEdit)];$("#botPlanId").value=p.id||"";$("#botPlanName").value=p.name||"";$("#botPlanDays").value=p.days||30;$("#botPlanGb").value=p.gb||0;$("#botPlanCny").value=p.cny||0;$("#botPlanId").readOnly=true;$("#botPlanName").focus()}));
@@ -1149,5 +1147,3 @@ $("#nodesRefresh")?.addEventListener("click",loadNodes);
 
 
 (async()=>{const authenticated=await verifyAdmin();checkApi();if(authenticated)loadOverview()})();
-
-[executed on device: iZj6cakb7vguedvzvbqrvbZ (14411471-502a-43de-a2d7-530edf7bf831)]
