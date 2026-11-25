@@ -359,7 +359,7 @@ async function loadLegacyProducts(){
   $("#productsCount").textContent="共 "+dataTotal(data,products).toLocaleString("zh-CN")+" 件商品";
   body.querySelectorAll("[data-product-edit]").forEach(btn=>btn.addEventListener("click",()=>{const p=products.find(x=>String(x.id)===btn.dataset.productEdit);if(p)editProduct(p)}));
   body.querySelectorAll("[data-product-toggle]").forEach(btn=>btn.addEventListener("click",async()=>{btn.disabled=true;try{await legacyAdmin("/shop/product/status",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(btn.dataset.productToggle),status:Number(btn.dataset.status)})});toast("商品状态已更新");await loadLegacyProducts()}catch(e){toast("更新失败："+e.message)}finally{btn.disabled=false}}));
-  body.querySelectorAll("[data-product-delete]").forEach(btn=>btn.addEventListener("click",async()=>{if(!confirm("确定删除这件商品？删除后不会影响已完成订单。"))return;btn.disabled=true;try{await legacyAdmin("/shop/product/delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(btn.dataset.productDelete)})});toast("商品已删除");await loadProducts()}catch(e){toast("删除失败："+e.message)}finally{btn.disabled=false}}));
+  body.querySelectorAll("[data-product-delete]").forEach(btn=>btn.addEventListener("click",async()=>{if(!confirm("确定删除这件商品？删除后不会影响已完成订单。"))return;btn.disabled=true;try{await legacyAdmin("/shop/product/delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(btn.dataset.productDelete)})});toast("商品已删除");await loadLegacyProducts()}catch(e){toast("删除失败："+e.message)}finally{btn.disabled=false}}));
  }catch(error){body.innerHTML='<tr><td colspan="7" class="table-empty error-text">读取失败：'+escapeHtml(error.message||"请求失败")+'</td></tr>';$("#productsCount").textContent="读取失败"}
 }
 
@@ -487,7 +487,7 @@ $("#productForm")?.addEventListener("submit",async e=>{
  const payload={id:Number($("#productId").value)||undefined,title:$("#productTitle").value.trim(),name:$("#productTitle").value.trim(),category:$("#productCategory").value.trim(),price:Number($("#productPrice").value),cost:Number($("#productCost").value||0),stock:Number($("#productStock").value),sort:Number($("#productSort").value||0),image:$("#productImage").value.trim(),subtitle:$("#productSubtitle").value.trim(),detail:$("#productDetail").value.trim(),description:$("#productDetail").value.trim(),status:Number($("#productStatus").value)};
  if(!payload.title||!payload.category||!Number.isFinite(payload.price)||payload.price<0||payload.stock<0){result.textContent="请检查商品名称、分类、价格和库存";result.className="form-result error";return}
  btn.disabled=true;result.textContent="正在保存…";
- try{await legacyAdmin("/shop/product/save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});result.className="form-result success";result.textContent="商品已保存";toast("商品保存成功");$("#productFormPanel").hidden=true;await loadProducts()}
+ try{await legacyAdmin("/shop/product/save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});result.className="form-result success";result.textContent="商品已保存";toast("商品保存成功");$("#productFormPanel").hidden=true;await loadLegacyProducts()}
  catch(error){result.className="form-result error";result.textContent=error.message||"保存失败"}
  finally{btn.disabled=false}
 });
