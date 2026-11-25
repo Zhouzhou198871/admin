@@ -390,7 +390,7 @@ async function openOrderDetail(tradeNo){
  }catch(e){$("#orderModalContent").textContent="读取失败："+(e.message||"接口错误")}
 }
 $("#orderModalClose")?.addEventListener("click",()=>$("#orderModal").hidden=true);
-$("#orderStatusSave")?.addEventListener("click",async()=>{if(!activeOrder)return;const status=Number($("#orderModalStatus").value);if(!confirm("确认将订单状态更新为「"+orderStatusLabel(status)+"」？"))return;try{await legacyAdmin("/shop/order/status",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({trade_no:activeOrder.trade_no,status})});toast("订单状态已更新");$("#orderModal").hidden=true;loadOrders()}catch(e){$("#orderModalResult").textContent=e.message||"更新失败"}});
+$("#orderStatusSave")?.addEventListener("click",async()=>{if(!activeOrder)return;const status=Number($("#orderModalStatus").value);if(!confirm("确认将订单状态更新为「"+orderStatusLabel(status)+"」？"))return;try{await legacyAdmin("/shop/order/status",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({trade_no:activeOrder.trade_no,status})});toast("订单状态已更新");$("#orderModal").hidden=true;loadLegacyOrders()}catch(e){$("#orderModalResult").textContent=e.message||"更新失败"}});
 $("#orderDeliverBtn")?.addEventListener("click",async()=>{
  if(!activeOrder)return;
  const content=$("#orderDeliveryContent").value.trim();
@@ -400,11 +400,11 @@ $("#orderDeliverBtn")?.addEventListener("click",async()=>{
  const btn=$("#orderDeliverBtn");btn.disabled=true;$("#orderModalResult").textContent="正在安全写入订单交付记录…";
  try{
   const d=await legacyAdmin("/shop/order/deliver",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({trade_no:activeOrder.trade_no,delivery_content:content,delivery_type:$("#orderDeliveryType").value,overwrite})});
-  $("#orderDeliveryContent").value="";$("#orderModalResult").textContent=d.message||"交付内容已写入";toast("订单交付成功，客户可在订单详情查看");await openOrderDetail(activeOrder.trade_no);await loadOrders()
+  $("#orderDeliveryContent").value="";$("#orderModalResult").textContent=d.message||"交付内容已写入";toast("订单交付成功，客户可在订单详情查看");await openOrderDetail(activeOrder.trade_no);await loadLegacyOrders()
  }catch(e){$("#orderModalResult").textContent=e.message||"交付失败";toast("交付失败："+(e.message||"请检查订单状态"))}
  finally{btn.disabled=false}
 });
-$("#orderShipBtn")?.addEventListener("click",async()=>{if(!activeOrder)return;const tracking_no=$("#orderTrackingNo").value.trim();if(!tracking_no){$("#orderModalResult").textContent="请先填写物流单号";return}if(!confirm("确认发货并将订单状态改为已发货？"))return;try{await legacyAdmin("/shop/order/ship",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({trade_no:activeOrder.trade_no,tracking_no,tracking_company:$("#orderTrackingCompany").value.trim()})});toast("订单已发货");$("#orderModal").hidden=true;loadOrders()}catch(e){$("#orderModalResult").textContent=e.message||"发货失败"}});
+$("#orderShipBtn")?.addEventListener("click",async()=>{if(!activeOrder)return;const tracking_no=$("#orderTrackingNo").value.trim();if(!tracking_no){$("#orderModalResult").textContent="请先填写物流单号";return}if(!confirm("确认发货并将订单状态改为已发货？"))return;try{await legacyAdmin("/shop/order/ship",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({trade_no:activeOrder.trade_no,tracking_no,tracking_company:$("#orderTrackingCompany").value.trim()})});toast("订单已发货");$("#orderModal").hidden=true;loadLegacyOrders()}catch(e){$("#orderModalResult").textContent=e.message||"发货失败"}});
 $("#ordersRefresh")?.addEventListener("click",()=>document.querySelector('[data-order-view].active')?.dataset.orderView==="legacy"?loadLegacyOrders():loadStorefrontOrders());
 $("#orderSearchBtn")?.addEventListener("click",loadLegacyOrders);
 $("#orderStatus")?.addEventListener("change",loadLegacyOrders);
