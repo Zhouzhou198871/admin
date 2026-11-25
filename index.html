@@ -101,6 +101,14 @@
           <button type="button" class="metric-card metric-action" data-go="email"><div class="metric-top"><span>邮件通道</span><span class="metric-icon green">✉</span></div><strong id="metricEmail">—</strong><small>SMTP 发信配置</small><span class="metric-detail">进入邮件系统 →</span></button>
           <button type="button" class="metric-card metric-action" data-go="bots"><div class="metric-top"><span>机器人运行</span><span class="metric-icon purple">⚙</span></div><strong id="metricBots">—</strong><small>两台节点机器人服务状态</small><span class="metric-detail">查看运行状态 →</span></button>
         </div>
+        <article class="panel data-panel" id="storefrontOverviewPanel">
+          <div class="panel-heading"><div><h2>当前商城实时数据</h2><p>直接统计 shop.lynli.me 正式生产数据库，与前台商品、用户和订单使用同一数据源</p></div><span class="tag tag-green">当前站点</span></div>
+          <div class="metric-grid">
+            <article class="metric-card"><div class="metric-top"><span>商城注册用户</span></div><strong id="storefrontMetricUsers">—</strong><small>当前商城 users 表</small></article>
+            <article class="metric-card"><div class="metric-top"><span>商城订单</span></div><strong id="storefrontMetricOrders">—</strong><small id="storefrontMetricOrderSplit">商城订单与节点订单</small></article>
+            <article class="metric-card"><div class="metric-top"><span>商品目录总数</span></div><strong id="storefrontMetricCatalog">—</strong><small id="storefrontMetricPurchasable">当前可购买数量</small></article>
+          </div>
+        </article>
         <div class="overview-columns">
           <article class="panel">
             <div class="panel-heading"><div><h2>待办事项</h2><p>需要优先处理的业务</p></div><span class="tag tag-orange">运营提醒</span></div>
