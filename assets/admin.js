@@ -189,11 +189,17 @@ async function loadOverview(){
  const shop=val(0)||{},stats=val(1)||{},accounts=val(2)||{},tickets=val(3)||{},nodes=dataList(val(4)),plans=dataList(val(5)),ordersData=val(6)||{},productsData=val(7)||{};
  const orders=dataList(ordersData),products=dataList(productsData),notices=dataList(val(8)),mail=val(9)||{},bots=dataList(val(10));
  const chatSessions=dataList(val(12)),onlineStats=val(13)||{},storefront=val(14)?.overview||{};
- if($("#storefrontMetricUsers"))$("#storefrontMetricUsers").textContent=Number(storefront.users||0).toLocaleString("zh-CN");
- if($("#storefrontMetricOrders"))$("#storefrontMetricOrders").textContent=Number(storefront.orders||0).toLocaleString("zh-CN");
- if($("#storefrontMetricOrderSplit"))$("#storefrontMetricOrderSplit").textContent="商城 "+Number(storefront.web_orders||0).toLocaleString("zh-CN")+" · 节点 "+Number(storefront.node_orders||0).toLocaleString("zh-CN");
- if($("#storefrontMetricCatalog"))$("#storefrontMetricCatalog").textContent=Number(storefront.catalog_products||0).toLocaleString("zh-CN");
- if($("#storefrontMetricPurchasable"))$("#storefrontMetricPurchasable").textContent="当前可购买 "+Number(storefront.purchasable_products||0).toLocaleString("zh-CN")+" 件";
+ if(jobs[14].status==="fulfilled"&&val(14)?.overview){
+  if($("#storefrontMetricUsers"))$("#storefrontMetricUsers").textContent=Number(storefront.users||0).toLocaleString("zh-CN");
+  if($("#storefrontMetricOrders"))$("#storefrontMetricOrders").textContent=Number(storefront.orders||0).toLocaleString("zh-CN");
+  if($("#storefrontMetricOrderSplit"))$("#storefrontMetricOrderSplit").textContent="商城 "+Number(storefront.web_orders||0).toLocaleString("zh-CN")+" · 节点 "+Number(storefront.node_orders||0).toLocaleString("zh-CN");
+  if($("#storefrontMetricCatalog"))$("#storefrontMetricCatalog").textContent=Number(storefront.catalog_products||0).toLocaleString("zh-CN");
+  if($("#storefrontMetricPurchasable"))$("#storefrontMetricPurchasable").textContent="当前可购买 "+Number(storefront.purchasable_products||0).toLocaleString("zh-CN")+" 件";
+ }else{
+  ["storefrontMetricUsers","storefrontMetricOrders","storefrontMetricCatalog"].forEach(id=>{if($("#"+id))$("#"+id).textContent="读取失败"});
+  if($("#storefrontMetricOrderSplit"))$("#storefrontMetricOrderSplit").textContent="当前商城 API 暂不可用";
+  if($("#storefrontMetricPurchasable"))$("#storefrontMetricPurchasable").textContent="未取得实时数据";
+ }
  const userTotal=Number(stats.users_total??0);
  const orderTotal=Number(shop.orders_pending||0)+Number(shop.orders_toship||0)+Number(shop.orders_shipped||0)+Number(shop.orders_done||0);
  const productTotal=Number(shop.products_online??shop.products_total??productsData.total??products.length);
