@@ -112,7 +112,7 @@
           <article class="panel">
             <div class="panel-heading"><div><h2>快捷操作</h2><p>常用运营动作，直接进入工作区</p></div></div>
             <div class="quick-action-grid">
-              <button class="quick-action" data-go="products" data-product-tab="catalog"><span class="action-icon blue">＋</span><b>新增商品</b><small>名称、价格、库存</small></button>
+              <button class="quick-action" data-go="products" data-product-tab="legacy"><span class="action-icon blue">＋</span><b>新增商品</b><small>名称、价格、库存</small></button>
               <button class="quick-action" data-go="products" data-product-tab="accounts"><span class="action-icon green">⇧</span><b>上传账号卡密</b><small>批量导入库存</small></button>
               <button class="quick-action" data-go="nodes"><span class="action-icon purple">⌁</span><b>维护节点套餐</b><small>线路、流量、价格</small></button>
               <button class="quick-action" data-go="email"><span class="action-icon orange">✉</span><b>发送邮件</b><small>模板与群发</small></button>
@@ -189,12 +189,22 @@
       </section>
 
       <section class="page" id="page-orders">
-        <div class="page-heading"><div><p class="eyebrow">ORDER CENTER</p><h1>订单管理</h1><p class="subheading">统一查看商城订单与节点订单，管理订单状态、交付内容与物流</p></div><button class="btn btn-secondary" id="ordersRefresh">↻ 刷新</button></div>
+        <div class="page-heading"><div><p class="eyebrow">ORDER CENTER</p><h1>订单管理</h1><p class="subheading">当前商城订单与旧节点业务订单分开展示，避免跨系统混淆</p></div><button class="btn btn-secondary" id="ordersRefresh">↻ 刷新</button></div>
+        <div class="tab-bar" id="orderTabs"><button class="tab-button active" data-order-view="storefront">当前商城订单</button><button class="tab-button" data-order-view="legacy">旧业务订单</button></div>
+        <div class="order-view" id="orderView-storefront">
+          <article class="panel data-panel">
+            <div class="table-toolbar"><input id="storefrontOrderSearch" type="search" placeholder="搜索商城订单号、用户邮箱或商品 ID"><select id="storefrontOrderStatus"><option value="">全部状态</option><option value="pending">待处理</option><option value="processing">处理中</option><option value="paid">已支付</option><option value="delivered">已交付</option><option value="failed">失败</option><option value="refunded">已退款</option></select><button class="btn btn-primary" id="storefrontOrderSearchBtn">查询</button></div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>订单号</th><th>用户</th><th>商品 ID</th><th>金额</th><th>状态</th><th>创建时间</th><th>更新时间</th></tr></thead><tbody id="storefrontOrdersBody"><tr><td colspan="7" class="table-empty">登录后加载当前商城订单</td></tr></tbody></table></div>
+            <div class="table-foot"><span id="storefrontOrdersCount">—</span><span>来源：当前商城生产数据库 web_purchases / node_orders</span></div>
+          </article>
+        </div>
+        <div class="order-view" id="orderView-legacy" hidden>
         <article class="panel data-panel">
           <div class="table-toolbar"><input id="orderSearch" type="search" placeholder="搜索订单号"><select id="orderStatus"><option value="">全部状态</option><option value="0">待支付</option><option value="1">待发货</option><option value="2">已发货</option><option value="3">已完成</option></select><button class="btn btn-primary" id="orderSearchBtn">查询</button></div>
           <div class="table-wrap"><table class="data-table"><thead><tr><th>订单号</th><th>类型</th><th>用户</th><th>商品 ID</th><th>金额</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead><tbody id="ordersBody"><tr><td colspan="8" class="table-empty">登录后加载订单数据</td></tr></tbody></table></div>
-          <div class="table-foot"><span id="ordersCount">—</span><span>最多显示最近 50 条</span></div>
+          <div class="table-foot"><span id="ordersCount">—</span><span>旧节点业务最多显示最近 50 条</span></div>
         </article>
+        </div>
       </section>
       <div class="modal-overlay" id="orderModal" hidden>
         <article class="panel modal-card">
@@ -213,12 +223,22 @@
         </article>
       </div>
       <section class="page" id="page-users">
-        <div class="page-heading"><div><p class="eyebrow">CUSTOMER CENTER</p><h1>用户管理</h1><p class="subheading">注册邮箱、登录 IP、设备、订单、套餐与客服记录</p></div><button class="btn btn-secondary" id="usersRefresh">↻ 刷新</button></div>
+        <div class="page-heading"><div><p class="eyebrow">CUSTOMER CENTER</p><h1>用户管理</h1><p class="subheading">当前商城账户与旧节点订阅用户分开展示，分别对应各自系统</p></div><button class="btn btn-secondary" id="usersRefresh">↻ 刷新</button></div>
+        <div class="tab-bar" id="userTabs"><button class="tab-button active" data-user-view="storefront">当前商城用户</button><button class="tab-button" data-user-view="legacy">旧节点用户</button></div>
+        <div class="user-view" id="userView-storefront">
+          <article class="panel data-panel">
+            <div class="table-toolbar"><input id="storefrontUserSearch" type="search" placeholder="搜索当前商城注册邮箱或昵称"><button class="btn btn-primary" id="storefrontUserSearchBtn">查询</button></div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>用户 ID</th><th>注册邮箱</th><th>昵称</th><th>Telegram ID</th><th>账户余额</th><th>注册时间</th><th>更新时间</th></tr></thead><tbody id="storefrontUsersBody"><tr><td colspan="7" class="table-empty">登录后加载当前商城用户</td></tr></tbody></table></div>
+            <div class="table-foot"><span id="storefrontUsersCount">—</span><div class="table-actions"><button class="btn btn-secondary btn-small" id="storefrontUsersPrev" type="button" disabled>上一页</button><span id="storefrontUsersPageInfo">第 1 页</span><button class="btn btn-secondary btn-small" id="storefrontUsersNext" type="button" disabled>下一页</button></div></div>
+          </article>
+        </div>
+        <div class="user-view" id="userView-legacy" hidden>
         <article class="panel data-panel">
           <div class="table-toolbar"><input id="userSearch" type="search" placeholder="搜索邮箱、昵称、Telegram ID、用户编号或登录 IP"><select id="userStatusFilter"><option value="">全部账号</option><option value="active">正常/有效</option><option value="paid">付费有效</option><option value="expired">已到期</option><option value="free">免费/未开通</option><option value="banned">已封禁</option></select><button class="btn btn-primary" id="userSearchBtn">查询</button></div>
           <div class="table-wrap"><table class="data-table"><thead><tr><th>注册邮箱</th><th>昵称</th><th>Telegram ID</th><th>佣金余额</th><th>注册时间</th><th>最近登录 IP</th><th>最近登录</th><th>详情</th></tr></thead><tbody id="usersBody"><tr><td colspan="8" class="table-empty">登录后加载用户数据</td></tr></tbody></table></div>
           <div class="table-foot"><span id="usersCount">—</span><div class="table-actions"><button class="btn btn-secondary btn-small" id="usersPrev" type="button" disabled>上一页</button><span id="usersPageInfo">第 1 页</span><button class="btn btn-secondary btn-small" id="usersNext" type="button" disabled>下一页</button></div></div>
         </article>
+        </div>
       </section>
       <div class="modal-overlay" id="userDetailModal" hidden>
         <article class="panel modal-card user-detail-card">
@@ -240,8 +260,16 @@
       </div>
       <section class="page" id="page-products">
         <div class="page-heading"><div><p class="eyebrow">PRODUCT & INVENTORY</p><h1>商品与库存</h1><p class="subheading">商品上架、价格库存、账号卡密批量导入与库存状态</p></div><button class="btn btn-secondary" id="productsRefresh">↻ 刷新数据</button></div>
-        <div class="tab-bar" id="productTabs"><button class="tab-button active" data-product-tab="catalog">商品管理</button><button class="tab-button" data-product-tab="accounts">账号 / 卡密库存</button></div>
-        <div class="product-view active" id="productView-catalog">
+        <div class="tab-bar" id="productTabs"><button class="tab-button active" data-product-tab="storefront">当前商城目录</button><button class="tab-button" data-product-tab="legacy">旧业务商品</button><button class="tab-button" data-product-tab="accounts">账号 / 卡密库存</button></div>
+        <div class="product-view active" id="productView-storefront">
+          <article class="panel data-panel">
+            <div class="panel-heading"><div><h2>当前商城实际展示目录</h2><p>直接读取与 shop.lynli.me 相同的生产 shop_catalog；上游同步目录只读，不在此处伪造改价或上下架操作</p></div><span class="tag tag-green">生产数据</span></div>
+            <div class="table-toolbar"><input id="storefrontProductSearch" type="search" placeholder="搜索商品名称、分类或商品 ID"><button class="btn btn-primary" id="storefrontProductSearchBtn">查询</button></div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>商品</th><th>分类</th><th>售价（CNY）</th><th>售价（USDT）</th><th>库存</th><th>商城状态</th><th>类型</th><th>更新时间</th></tr></thead><tbody id="storefrontProductsBody"><tr><td colspan="8" class="table-empty">登录后读取当前商城目录</td></tr></tbody></table></div>
+            <div class="table-foot"><span id="storefrontProductsCount">—</span><div class="table-actions"><button class="btn btn-secondary btn-small" id="storefrontProductsPrev" type="button" disabled>上一页</button><span id="storefrontProductsPageInfo">第 1 页</span><button class="btn btn-secondary btn-small" id="storefrontProductsNext" type="button" disabled>下一页</button></div></div>
+          </article>
+        </div>
+        <div class="product-view" id="productView-legacy">
           <div class="toolbar-row"><div class="table-toolbar"><input id="productSearch" type="search" placeholder="搜索商品名称、分类或商品 ID"><button class="btn btn-primary" id="productSearchBtn">查询</button></div><button class="btn btn-primary" id="productAddBtn">＋ 新增商品</button></div>
           <article class="panel form-panel compact-form" id="productFormPanel" hidden>
             <div class="panel-heading"><div><h2 id="productFormTitle">新增商品</h2><p>保存后同步到商城商品目录</p></div><button type="button" class="btn btn-secondary" id="productFormClose">关闭</button></div>
