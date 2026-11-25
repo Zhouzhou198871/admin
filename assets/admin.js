@@ -62,7 +62,7 @@ $("#adminLoginForm").addEventListener("submit",async e=>{
 $("#togglePassword").addEventListener("click",()=>{const input=$("#loginPassword"),button=$("#togglePassword"),show=input.type==="password";input.type=show?"text":"password";button.textContent=show?"隐藏":"显示";button.setAttribute("aria-label",show?"隐藏密码":"显示密码");button.setAttribute("aria-pressed",String(show));});
 
 $("#logoutBtn").addEventListener("click",()=>{localStorage.removeItem(TOKEN_KEY);currentAdmin=null;document.body.classList.remove("authenticated");$("#loginPassword").value="";});
-function showPage(name){if(!pageNames[name])return;hydrateIcons();const need=PAGE_PERMISSIONS[name];if(need&&!adminHasPermission(need)){toast("当前管理员没有此模块权限");return}document.querySelectorAll(".page").forEach(el=>{const active=el.id==="page-"+name;el.classList.toggle("active",active);el.setAttribute("aria-hidden",String(!active))});document.querySelectorAll(".nav-item").forEach(el=>{const active=el.dataset.page===name;el.classList.toggle("active",active);if(active)el.setAttribute("aria-current","page");else el.removeAttribute("aria-current")});document.querySelectorAll(".nav-group").forEach(g=>{const active=!!g.querySelector(".nav-item.active");if(active){const items=g.querySelector(".nav-group-items"),toggle=g.querySelector(".nav-group-toggle");if(items)items.hidden=false;if(toggle)toggle.setAttribute("aria-expanded","true")}});$("#pageCrumb").textContent=pageNames[name];$("#sidebar").classList.remove("open");$("#menuToggle").setAttribute("aria-expanded","false");window.scrollTo({top:0,behavior:"smooth"});const loaders={overview:loadOverview,orders:loadOrders,users:loadUsers,products:loadProducts,nodes:loadNodes,support:loadSupport,email:loadEmail,notices:loadNotices,payments:loadPayments,api:loadApiManagement,bots:loadBots,admins:loadAdmins,audit:loadAuditLogs};if(loaders[name])loaders[name]();}
+function showPage(name){if(!pageNames[name])return;hydrateIcons();const need=PAGE_PERMISSIONS[name];if(need&&!adminHasPermission(need)){toast("当前管理员没有此模块权限");return}document.querySelectorAll(".page").forEach(el=>{const active=el.id==="page-"+name;el.classList.toggle("active",active);el.setAttribute("aria-hidden",String(!active))});document.querySelectorAll(".nav-item").forEach(el=>{const active=el.dataset.page===name;el.classList.toggle("active",active);if(active)el.setAttribute("aria-current","page");else el.removeAttribute("aria-current")});document.querySelectorAll(".nav-group").forEach(g=>{const active=!!g.querySelector(".nav-item.active");if(active){const items=g.querySelector(".nav-group-items"),toggle=g.querySelector(".nav-group-toggle");if(items)items.hidden=false;if(toggle)toggle.setAttribute("aria-expanded","true")}});$("#pageCrumb").textContent=pageNames[name];$("#sidebar").classList.remove("open");$("#menuToggle").setAttribute("aria-expanded","false");window.scrollTo({top:0,behavior:"smooth"});const loaders={overview:loadOverview,orders:loadStorefrontOrders,users:loadStorefrontUsers,products:loadStorefrontProducts,nodes:loadNodes,support:loadSupport,email:loadEmail,notices:loadNotices,payments:loadPayments,api:loadApiManagement,bots:loadBots,admins:loadAdmins,audit:loadAuditLogs};if(loaders[name])loaders[name]();}
 document.querySelectorAll(".nav-item").forEach(btn=>btn.addEventListener("click",()=>showPage(btn.dataset.page)));
 document.querySelectorAll(".nav-group-toggle").forEach(btn=>btn.addEventListener("click",()=>{const group=btn.closest(".nav-group"),items=group?.querySelector(".nav-group-items"),open=btn.getAttribute("aria-expanded")==="true";if(!items)return;btn.setAttribute("aria-expanded",String(!open));items.hidden=open;}));
 
@@ -332,7 +332,7 @@ $("#userNodeAccessResetBtn")?.addEventListener("click",async()=>{
  catch(e){toast("恢复失败："+(e.message||"接口错误"))}
 });
 
-async function loadOrders(){
+async function loadLegacyOrders(){
  const body=$("#ordersBody");if(!body)return;body.innerHTML='<tr><td colspan="8" class="table-empty">正在读取订单数据…</td></tr>';
  const q=$("#orderSearch")?.value.trim()||"",status=$("#orderStatus")?.value||"";
  try{
@@ -343,7 +343,7 @@ async function loadOrders(){
   body.querySelectorAll("[data-order-detail]").forEach(btn=>btn.addEventListener("click",()=>openOrderDetail(btn.dataset.orderDetail)));
  }catch(error){body.innerHTML='<tr><td colspan="8" class="table-empty error-text">读取失败：'+escapeHtml(error.message||"请求失败")+'</td></tr>';$("#ordersCount").textContent="读取失败"}
 }
-async function loadProducts(){
+async function loadLegacyProducts(){
  const body=$("#productsBody");if(!body)return;body.innerHTML='<tr><td colspan="7" class="table-empty">正在读取商品目录…</td></tr>';
  const q=$("#productSearch")?.value.trim()||"";
  try{
@@ -352,7 +352,7 @@ async function loadProducts(){
   body.innerHTML=products.length?products.map(p=>'<tr><td><b>'+escapeHtml(p.title||p.name||"未命名商品")+'</b><small class="muted-inline">#'+escapeHtml(p.id)+'</small></td><td>'+escapeHtml(p.category||"—")+'</td><td class="money">'+formatCny(p.price)+'</td><td class="money">'+formatCny(p.cost)+'</td><td>'+Number(p.stock||0).toLocaleString("zh-CN")+'</td><td>'+statusPill(Number(p.status??p.is_active??0)?"active":"inactive")+'</td><td><div class="table-actions"><button class="btn btn-secondary btn-small" data-product-edit="'+escapeHtml(p.id)+'">编辑</button><button class="btn btn-secondary btn-small" data-product-toggle="'+escapeHtml(p.id)+'" data-status="'+(Number(p.status??p.is_active??0)?0:1)+'">'+(Number(p.status??p.is_active??0)?"下架":"上架")+'</button><button class="btn btn-danger btn-small" data-product-delete="'+escapeHtml(p.id)+'">删除</button></div></td></tr>').join(""):'<tr><td colspan="7" class="table-empty">暂无商品，请新增商品或检查数据接口</td></tr>';
   $("#productsCount").textContent="共 "+dataTotal(data,products).toLocaleString("zh-CN")+" 件商品";
   body.querySelectorAll("[data-product-edit]").forEach(btn=>btn.addEventListener("click",()=>{const p=products.find(x=>String(x.id)===btn.dataset.productEdit);if(p)editProduct(p)}));
-  body.querySelectorAll("[data-product-toggle]").forEach(btn=>btn.addEventListener("click",async()=>{btn.disabled=true;try{await legacyAdmin("/shop/product/status",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(btn.dataset.productToggle),status:Number(btn.dataset.status)})});toast("商品状态已更新");await loadProducts()}catch(e){toast("更新失败："+e.message)}finally{btn.disabled=false}}));
+  body.querySelectorAll("[data-product-toggle]").forEach(btn=>btn.addEventListener("click",async()=>{btn.disabled=true;try{await legacyAdmin("/shop/product/status",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(btn.dataset.productToggle),status:Number(btn.dataset.status)})});toast("商品状态已更新");await loadLegacyProducts()}catch(e){toast("更新失败："+e.message)}finally{btn.disabled=false}}));
   body.querySelectorAll("[data-product-delete]").forEach(btn=>btn.addEventListener("click",async()=>{if(!confirm("确定删除这件商品？删除后不会影响已完成订单。"))return;btn.disabled=true;try{await legacyAdmin("/shop/product/delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number(btn.dataset.productDelete)})});toast("商品已删除");await loadProducts()}catch(e){toast("删除失败："+e.message)}finally{btn.disabled=false}}));
  }catch(error){body.innerHTML='<tr><td colspan="7" class="table-empty error-text">读取失败：'+escapeHtml(error.message||"请求失败")+'</td></tr>';$("#productsCount").textContent="读取失败"}
 }
@@ -399,22 +399,67 @@ $("#orderDeliverBtn")?.addEventListener("click",async()=>{
  finally{btn.disabled=false}
 });
 $("#orderShipBtn")?.addEventListener("click",async()=>{if(!activeOrder)return;const tracking_no=$("#orderTrackingNo").value.trim();if(!tracking_no){$("#orderModalResult").textContent="请先填写物流单号";return}if(!confirm("确认发货并将订单状态改为已发货？"))return;try{await legacyAdmin("/shop/order/ship",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({trade_no:activeOrder.trade_no,tracking_no,tracking_company:$("#orderTrackingCompany").value.trim()})});toast("订单已发货");$("#orderModal").hidden=true;loadOrders()}catch(e){$("#orderModalResult").textContent=e.message||"发货失败"}});
-$("#ordersRefresh")?.addEventListener("click",loadOrders);
-$("#orderSearchBtn")?.addEventListener("click",loadOrders);
-$("#orderStatus")?.addEventListener("change",loadOrders);
-$("#usersRefresh")?.addEventListener("click",loadUsers);
+$("#ordersRefresh")?.addEventListener("click",()=>document.querySelector('[data-order-view].active')?.dataset.orderView==="legacy"?loadLegacyOrders():loadStorefrontOrders());
+$("#orderSearchBtn")?.addEventListener("click",loadLegacyOrders);
+$("#orderStatus")?.addEventListener("change",loadLegacyOrders);
+$("#usersRefresh")?.addEventListener("click",()=>document.querySelector('[data-user-view].active')?.dataset.userView==="legacy"?loadUsers():loadStorefrontUsers());
 $("#userSearchBtn")?.addEventListener("click",loadUsers);
 $("#userSearch")?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();loadUsers()}});
-$("#productsRefresh")?.addEventListener("click",loadProducts);
-$("#productSearchBtn")?.addEventListener("click",loadProducts);
-$("#productSearch")?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();loadProducts()}});
+$("#productsRefresh")?.addEventListener("click",()=>document.querySelector('[data-product-tab].active')?.dataset.productTab==="legacy"?loadLegacyProducts():document.querySelector('[data-product-tab].active')?.dataset.productTab==="accounts"?loadAccountPool():loadStorefrontProducts());
+$("#productSearchBtn")?.addEventListener("click",loadLegacyProducts);
+$("#productSearch")?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();loadLegacyProducts()}});
 
 
 function switchProductTab(tab){
  document.querySelectorAll("[data-product-tab]").forEach(b=>b.classList.toggle("active",b.dataset.productTab===tab));
  document.querySelectorAll(".product-view").forEach(v=>v.classList.toggle("active",v.id==="productView-"+tab));
- if(tab==="accounts")loadAccountPool();else loadProducts();
+ if(tab==="accounts")loadAccountPool();else if(tab==="legacy")loadLegacyProducts();else loadStorefrontProducts();
 }
+
+let storefrontProductPage=1,storefrontUserPage=1;
+const storefrontPageSize=50;
+async function loadStorefrontProducts(resetPage=true){
+ const body=$("#storefrontProductsBody");if(!body)return;
+ if(resetPage)storefrontProductPage=1;
+ body.innerHTML='<tr><td colspan="8" class="table-empty">正在读取当前商城生产目录…</td></tr>';
+ const q=$("#storefrontProductSearch")?.value.trim()||"";
+ try{
+  const params=new URLSearchParams({q,page:String(storefrontProductPage),limit:String(storefrontPageSize)});
+  const data=await adminRequest("/api/admin/products?"+params.toString());
+  const products=data.products||[],total=Number(data.total||0),pages=Math.max(1,Math.ceil(total/storefrontPageSize));
+  body.innerHTML=products.length?products.map(p=>'<tr><td><div style="display:flex;align-items:center;gap:9px"><img src="'+escapeHtml(p.icon_url||"")+'" alt="" loading="lazy" referrerpolicy="no-referrer" style="width:34px;height:34px;object-fit:contain;border-radius:8px;background:#f3f5f8;padding:3px"><span><b>'+escapeHtml(p.name||"未命名商品")+'</b><small class="muted-inline">#'+escapeHtml(p.product_id||"—")+' · 上游 SKU '+escapeHtml(p.supplier_product_id||"—")+'</small></span></div></td><td>'+escapeHtml(p.category_name||"—")+'</td><td class="money">'+formatCny(p.price_cny)+'</td><td>'+Number(p.price_usdt||0).toFixed(4)+' USDT</td><td>'+Number(p.stock||0).toLocaleString("zh-CN")+'</td><td>'+statusPill(p.is_on_sale?(p.purchasable?"active":"unknown"):"inactive")+'<small class="muted-inline">'+(p.purchasable?"可购买":p.is_on_sale?"暂不可购买":"前台下架")+'</small></td><td>'+(p.is_local_inventory?"本地库存":"上游商品")+'</td><td>'+escapeHtml(formatAdminDate(p.updated_at))+'</td></tr>').join(""):'<tr><td colspan="8" class="table-empty">当前商城目录没有匹配商品</td></tr>';
+  $("#storefrontProductsCount").textContent="当前商城目录 "+total.toLocaleString("zh-CN")+" 件 · 第 "+storefrontProductPage+" / "+pages+" 页";
+  $("#storefrontProductsPrev").disabled=storefrontProductPage<=1;$("#storefrontProductsNext").disabled=storefrontProductPage>=pages;$("#storefrontProductsPageInfo").textContent="第 "+storefrontProductPage+" / "+pages+" 页";
+ }catch(e){body.innerHTML='<tr><td colspan="8" class="table-empty error-text">读取当前商城目录失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';$("#storefrontProductsCount").textContent="读取失败"}
+}
+async function loadStorefrontOrders(){
+ const body=$("#storefrontOrdersBody");if(!body)return;body.innerHTML='<tr><td colspan="7" class="table-empty">正在读取当前商城订单…</td></tr>';
+ const q=$("#storefrontOrderSearch")?.value.trim()||"",status=$("#storefrontOrderStatus")?.value||"";
+ try{const params=new URLSearchParams({q,status,limit:"100"});const data=await adminRequest("/api/admin/orders?"+params.toString());const rows=data.orders||[];
+  body.innerHTML=rows.length?rows.map(o=>'<tr><td class="mono">'+escapeHtml(o.order_id||"—")+'</td><td>'+escapeHtml(o.email||o.user_id||"—")+'</td><td class="mono">'+escapeHtml(o.product_id||"—")+'</td><td class="money">'+formatCny(o.amount)+'</td><td>'+statusPill(o.status)+'</td><td>'+escapeHtml(formatAdminDate(o.created_at))+'</td><td>'+escapeHtml(formatAdminDate(o.updated_at))+'</td></tr>').join(""):'<tr><td colspan="7" class="table-empty">当前商城暂无符合条件的订单</td></tr>';
+  $("#storefrontOrdersCount").textContent="当前商城订单 "+rows.length+" 条（最多显示 100 条）";
+ }catch(e){body.innerHTML='<tr><td colspan="7" class="table-empty error-text">读取当前商城订单失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';$("#storefrontOrdersCount").textContent="读取失败"}
+}
+async function loadStorefrontUsers(resetPage=true){
+ const body=$("#storefrontUsersBody");if(!body)return;if(resetPage)storefrontUserPage=1;
+ body.innerHTML='<tr><td colspan="7" class="table-empty">正在读取当前商城用户…</td></tr>';
+ const q=$("#storefrontUserSearch")?.value.trim()||"";
+ try{const params=new URLSearchParams({q,page:String(storefrontUserPage),limit:String(storefrontPageSize)});const data=await adminRequest("/api/admin/users?"+params.toString());const rows=data.users||[],total=Number(data.total||0),pages=Math.max(1,Math.ceil(total/storefrontPageSize));
+  body.innerHTML=rows.length?rows.map(u=>'<tr><td class="mono">'+escapeHtml(u.id||"—")+'</td><td><b>'+escapeHtml(u.email||"—")+'</b></td><td>'+escapeHtml(u.nickname||"—")+'</td><td class="mono">'+escapeHtml(u.tg_user_id||"—")+'</td><td class="money">'+formatCny(u.balance)+'</td><td>'+escapeHtml(formatAdminDate(u.created_at))+'</td><td>'+escapeHtml(formatAdminDate(u.updated_at))+'</td></tr>').join(""):'<tr><td colspan="7" class="table-empty">当前商城没有匹配用户</td></tr>';
+  $("#storefrontUsersCount").textContent="当前商城用户 "+total.toLocaleString("zh-CN")+" 位";$("#storefrontUsersPrev").disabled=storefrontUserPage<=1;$("#storefrontUsersNext").disabled=storefrontUserPage>=pages;$("#storefrontUsersPageInfo").textContent="第 "+storefrontUserPage+" / "+pages+" 页";
+ }catch(e){body.innerHTML='<tr><td colspan="7" class="table-empty error-text">读取当前商城用户失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';$("#storefrontUsersCount").textContent="读取失败"}
+}
+function switchOrderView(view){document.querySelectorAll("[data-order-view]").forEach(b=>b.classList.toggle("active",b.dataset.orderView===view));document.querySelectorAll(".order-view").forEach(v=>v.hidden=v.id!=="orderView-"+view);if(view==="legacy")loadLegacyOrders();else loadStorefrontOrders()}
+function switchUserView(view){document.querySelectorAll("[data-user-view]").forEach(b=>b.classList.toggle("active",b.dataset.userView===view));document.querySelectorAll(".user-view").forEach(v=>v.hidden=v.id!=="userView-"+view);if(view==="legacy")loadUsers();else loadStorefrontUsers()}
+document.querySelectorAll("[data-order-view]").forEach(b=>b.addEventListener("click",()=>switchOrderView(b.dataset.orderView)));
+document.querySelectorAll("[data-user-view]").forEach(b=>b.addEventListener("click",()=>switchUserView(b.dataset.userView)));
+document.querySelectorAll("[data-product-tab]").forEach(b=>b.addEventListener("click",()=>switchProductTab(b.dataset.productTab)));
+$("#storefrontProductSearchBtn")?.addEventListener("click",()=>loadStorefrontProducts(true));$("#storefrontProductSearch")?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();loadStorefrontProducts(true)}});
+$("#storefrontProductsPrev")?.addEventListener("click",()=>{if(storefrontProductPage>1){storefrontProductPage--;loadStorefrontProducts(false)}});$("#storefrontProductsNext")?.addEventListener("click",()=>{storefrontProductPage++;loadStorefrontProducts(false)});
+$("#storefrontOrderSearchBtn")?.addEventListener("click",loadStorefrontOrders);$("#storefrontOrderStatus")?.addEventListener("change",loadStorefrontOrders);$("#storefrontOrderSearch")?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();loadStorefrontOrders()}});
+$("#storefrontUserSearchBtn")?.addEventListener("click",()=>loadStorefrontUsers(true));$("#storefrontUserSearch")?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();loadStorefrontUsers(true)}});
+$("#storefrontUsersPrev")?.addEventListener("click",()=>{if(storefrontUserPage>1){storefrontUserPage--;loadStorefrontUsers(false)}});$("#storefrontUsersNext")?.addEventListener("click",()=>{storefrontUserPage++;loadStorefrontUsers(false)});
+
 function switchNodeTab(tab){
  document.querySelectorAll("[data-node-tab]").forEach(b=>b.classList.toggle("active",b.dataset.nodeTab===tab));
  document.querySelectorAll(".node-view").forEach(v=>v.classList.toggle("active",v.id==="nodeView-"+tab));
