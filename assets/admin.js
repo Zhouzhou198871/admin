@@ -756,6 +756,29 @@ function renderNodeCatalog(){
   }catch(e){toast("套餐状态更新失败："+(e.message||"接口错误"));btn.disabled=false}
  }));
 }
+async function loadNodeAccounts(){
+ const body=$("#nodeAccountsBody");if(!body)return;
+ body.innerHTML='<tr><td colspan="7" class="table-empty">正在读取商城协议账号…</td></tr>';
+ try{
+  const d=await adminRequest("/api/admin/node-accounts");
+  const rows=Array.isArray(d.accounts)?d.accounts:[];
+  body.innerHTML=rows.length?rows.map(x=>{
+   const used=Number(x.traffic_used_bytes||0),limit=Number(x.traffic_limit_bytes||0);
+   const size=n=>{if(n<1024)return n+" B";if(n<1048576)return (n/1024).toFixed(1)+" KB";if(n<1073741824)return (n/1048576).toFixed(2)+" MB";return (n/1073741824).toFixed(2)+" GB"};
+   const status=x.status==="active"?"正常":x.status==="expired"?"已到期":x.status==="exhausted"?"流量用尽":x.status==="revoked"?"已停用":x.status||"未知";
+   return '<tr><td>'+escapeHtml(x.email||("用户 "+x.user_id))+'</td><td>'+escapeHtml(String(x.protocol||"").toUpperCase())+'</td><td>'+escapeHtml(x.server_ref||"—")+'</td><td>'+escapeHtml(formatAdminDate(x.expires_at))+'</td><td>'+size(used)+' / '+(limit?size(limit):"不限")+'</td><td>'+escapeHtml(status)+'</td><td>'+(x.status==="active"?'<button class="btn btn-danger btn-small" data-node-account-revoke="'+escapeHtml(x.account_id)+'">停用</button>':"—")+'</td></tr>';
+  }).join(""):'<tr><td colspan="7" class="table-empty">当前没有商城协议账号</td></tr>';
+  $("#nodeAccountsCount").textContent=rows.length+" 个账号";
+  body.querySelectorAll("[data-node-account-revoke]").forEach(btn=>btn.addEventListener("click",async()=>{
+   if(!confirm("确认立即停用该商城协议账号？"))return;
+   btn.disabled=true;
+   try{await adminRequest("/api/admin/node-accounts",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({account_id:btn.dataset.nodeAccountRevoke,action:"revoke"})});toast("账号已停用");await loadNodeAccounts()}
+   catch(e){toast("停用失败："+(e.message||"接口错误"));btn.disabled=false}
+  }));
+ }catch(e){body.innerHTML='<tr><td colspan="7" class="table-empty error-text">商城协议账号读取失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';$("#nodeAccountsCount").textContent="读取失败"}
+}
+$("#nodeAccountsRefresh")?.addEventListener("click",loadNodeAccounts);
+
 async function loadNodeCatalog(){
  const body=$("#nodeCatalogBody"),packagesBody=$("#nodePackagesBody");
  if(body)body.innerHTML='<tr><td colspan="7" class="table-empty">正在读取生产节点产品…</td></tr>';
@@ -849,7 +872,7 @@ $("#nodePackageSyncRobotBtn")?.addEventListener("click",async()=>{
 
 $("#nodeCatalogRefresh")?.addEventListener("click",async()=>{await loadNodeCatalog();await loadProtocolNodes()});
 
-async function loadNodes(){await Promise.allSettled([loadPlans(),loadNodeServers(),loadNodeHealth(),loadNodeHealthHistory(),loadNodeOrders(),loadNodeCatalog()]);await loadProtocolNodes()}
+async function loadNodes(){await Promise.allSettled([loadPlans(),loadNodeServers(),loadNodeHealth(),loadNodeHealthHistory(),loadNodeOrders(),loadNodeCatalog(),loadNodeAccounts()]);await loadProtocolNodes()}
 async function loadAiStatus(){
  try{const d=await legacyAdmin("/config/ai");$("#zhipuModel").textContent=d.model||"GLM-4-Flash";$("#zhipuStatus").textContent=d.configured?"已连接":"未配置";$("#zhipuStatus").className="tag "+(d.configured?"tag-green":"")}
  catch(e){$("#zhipuStatus").textContent="状态读取失败";$("#zhipuStatus").className="tag"}
