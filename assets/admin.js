@@ -442,7 +442,7 @@ async function loadStorefrontOrders(){
  const body=$("#storefrontOrdersBody");if(!body)return;body.innerHTML='<tr><td colspan="7" class="table-empty">正在读取当前商城订单…</td></tr>';
  const q=$("#storefrontOrderSearch")?.value.trim()||"",status=$("#storefrontOrderStatus")?.value||"";
  try{const params=new URLSearchParams({q,status,limit:"100"});const data=await adminRequest("/api/admin/orders?"+params.toString());const rows=data.orders||[];
-  body.innerHTML=rows.length?rows.map(o=>'<tr><td class="mono">'+escapeHtml(o.order_id||"—")+'</td><td>'+escapeHtml(o.email||o.user_id||"—")+'</td><td class="mono">'+escapeHtml(o.product_id||"—")+'</td><td class="money">'+formatCny(o.amount)+'</td><td>'+statusPill(o.status)+'</td><td>'+escapeHtml(formatAdminDate(o.created_at))+'</td><td>'+escapeHtml(formatAdminDate(o.updated_at))+'</td></tr>').join(""):'<tr><td colspan="7" class="table-empty">当前商城暂无符合条件的订单</td></tr>';
+  body.innerHTML=rows.length?rows.map(o=>'<tr><td class="mono">'+escapeHtml(o.order_id||"—")+'</td><td>'+escapeHtml(o.order_type||"—")+'</td><td>'+escapeHtml(o.email||o.user_id||"—")+'</td><td class="mono">'+escapeHtml(o.product_id||"—")+'</td><td class="money">'+formatCny(o.amount)+'</td><td>'+statusPill(o.status)+'</td><td>'+escapeHtml(formatAdminDate(o.created_at))+'</td><td>'+escapeHtml(formatAdminDate(o.updated_at))+'</td></tr>').join(""):'<tr><td colspan="8" class="table-empty">当前商城暂无符合条件的订单</td></tr>';
   $("#storefrontOrdersCount").textContent="当前商城订单 "+rows.length+" 条（最多显示 100 条）";
  }catch(e){body.innerHTML='<tr><td colspan="7" class="table-empty error-text">读取当前商城订单失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';$("#storefrontOrdersCount").textContent="读取失败"}
 }
