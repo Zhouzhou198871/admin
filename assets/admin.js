@@ -841,7 +841,7 @@ function robotNodePackageId(productId,gb){
 }
 $("#nodePackageSyncRobotBtn")?.addEventListener("click",async()=>{
  const btn=$("#nodePackageSyncRobotBtn"),result=$("#nodePackageSyncResult");
- if(!confirm("将读取生产节点目录，并为全部 8 个协议各创建 5 档机器人套餐（共最多 40 条）。规格为 30 天、188/288/388/488/588GB，对应 ¥38.88/48.88/58.88/68.88/78.88。已有套餐不覆盖；新套餐先全部下架，避免流量计量尚未接入时误售。继续？"))return;
+ if(!confirm("将读取生产节点目录，并为全部 8 个协议各创建 5 档机器人套餐（共最多 40 条）。规格为 30 天、188/288/388/488/588GB，对应 ¥38.88/48.88/58.88/68.88/78.88。已有套餐不覆盖；新套餐先全部下架，只有服务器开通和流量计量验证通过的协议才可上架。继续？"))return;
  btn.disabled=true;btn.textContent="正在同步…";
  let created=0,skipped=0,failed=[];
  try{
@@ -863,11 +863,11 @@ $("#nodePackageSyncRobotBtn")?.addEventListener("click",async()=>{
    }
   }
   await loadNodeCatalog();await loadProtocolNodes();
-  const summary="机器人套餐同步完成：新增 "+created+" 条，已存在跳过 "+skipped+" 条，失败 "+failed.length+" 条。新建套餐均为下架状态。";
+  const summary="套餐同步完成：新增 "+created+" 条，已存在跳过 "+skipped+" 条，失败 "+failed.length+" 条。新建套餐均为下架状态。";
   if(result){result.className="form-result "+(failed.length?"error":"success");result.textContent=summary+(failed.length?"\n"+failed.join("\n"):"")}
   toast(summary);
  }catch(error){if(result){result.className="form-result error";result.textContent=error.message||"同步失败"}toast("节点套餐同步失败："+(error.message||"接口错误"))}
- finally{btn.disabled=false;btn.textContent="同步机器人五档到 8 个协议"}
+ finally{btn.disabled=false;btn.textContent="同步五档套餐到协议商品"}
 });
 
 $("#nodeCatalogRefresh")?.addEventListener("click",async()=>{await loadNodeCatalog();await loadProtocolNodes()});
