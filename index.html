@@ -433,7 +433,7 @@
             <div class="table-foot"><span id="nodeCatalogCount">—</span><span>服务端就绪状态由服务器配置决定，后台不能强行伪造为已接入</span></div>
           </article>
           <article class="panel data-panel">
-            <div class="panel-heading"><div><h2>商城节点套餐</h2><p>统一采用两个签到机器人的五档 30 天规格；批量创建后先保持下架，待流量计量真实接入再开售</p></div><div class="table-actions"><button class="btn btn-secondary btn-small" id="nodePackageSyncRobotBtn" type="button">同步机器人五档到 8 个协议</button><button class="btn btn-primary btn-small" id="nodePackageAddBtn" type="button">＋ 新增套餐</button></div></div><p id="nodePackageSyncResult" class="field-hint" role="status">8 种主流协议统一采用机器人五档；MTProto 专属代理保持独立。</p>
+            <div class="panel-heading"><div><h2>商城节点套餐</h2><p>套餐按流量额度和有效期管理；达到额度或到期后，服务器自动停用账号</p></div><div class="table-actions"><button class="btn btn-secondary btn-small" id="nodePackageSyncRobotBtn" type="button">同步五档套餐到协议商品</button><button class="btn btn-primary btn-small" id="nodePackageAddBtn" type="button">＋ 新增套餐</button></div></div><p id="nodePackageSyncResult" class="field-hint" role="status">九种协议分别维护五档套餐；仅服务器验证通过的协议开放购买。</p>
             <article class="panel form-panel compact-form" id="nodePackageFormPanel" hidden>
               <div class="panel-heading"><div><h3 id="nodePackageFormTitle">新增节点套餐</h3><p>套餐 ID 创建后固定；下架不会删除历史订单</p></div><button class="btn btn-secondary btn-small" id="nodePackageFormClose" type="button">关闭</button></div>
               <form id="nodePackageForm" class="admin-form-grid">
@@ -442,7 +442,7 @@
                 <label>套餐名称<input id="nodePackageName" required maxlength="80" placeholder="例如：30 天"></label>
                 <label>售价（CNY）<input id="nodePackagePrice" type="number" min="0.01" max="100000" step="0.01" required></label>
                 <label>时长（天）<input id="nodePackageDays" type="number" min="1" max="3650" step="1" required value="30"></label>
-                <label>流量上限（GB）<input id="nodePackageTrafficGb" type="number" min="0" step="0.1" placeholder="当前仅支持不限流量" disabled><small class="field-hint">计量流量套餐尚未接入服务端，暂不可开通</small></label>
+                <label>流量上限（GB）<input id="nodePackageTrafficGb" type="number" min="0" step="0.1" placeholder="例如 188"><small class="field-hint">达到流量上限后自动停用账号；留空表示不限流量。</small></label>
                 <label>最大设备数<input id="nodePackageDevices" type="number" min="1" max="20" step="1" value="1" required></label>
                 <label>排序<input id="nodePackageSort" type="number" step="1" value="100"></label>
                 <label>销售状态<select id="nodePackageActive"><option value="1">上架</option><option value="0">下架</option></select></label>
