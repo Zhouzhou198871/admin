@@ -90,10 +90,10 @@
           <button type="button" class="metric-card metric-action" data-go="users"><div class="metric-top"><span>付费用户</span><span class="metric-icon purple">♙</span></div><strong id="metricPaidUsers">—</strong><small>至少有一笔已支付订单</small><span class="metric-detail">查看付费客户 →</span></button>
           <button type="button" class="metric-card metric-action" data-go="users"><div class="metric-top"><span>付费转化率</span><span class="metric-icon blue">％</span></div><strong id="metricConversion">—</strong><small>付费用户 / 全站用户</small><span class="metric-detail">经营转化指标</span></button>
           <button type="button" class="metric-card metric-action" data-go="users"><div class="metric-top"><span>实时在线用户</span><span class="metric-icon orange">◉</span></div><strong id="metricOnlineUsers">—</strong><small>最近 5 分钟活跃用户</small><span class="metric-detail">查看用户管理 →</span></button>
-          <button type="button" class="metric-card metric-action" data-go="orders"><div class="metric-top"><span>商城订单</span><span class="metric-icon blue">▤</span></div><strong id="metricOrders">—</strong><small id="metricPendingOrders">待处理 —</small><span class="metric-detail">进入订单中心 →</span></button>
-          <button type="button" class="metric-card metric-action" data-go="users"><div class="metric-top"><span>注册用户</span><span class="metric-icon purple">♙</span></div><strong id="metricUsers">—</strong><small>全站用户账户</small><span class="metric-detail">查看用户明细 →</span></button>
+          <button type="button" class="metric-card metric-action" data-go="orders"><div class="metric-top"><span>旧业务订单</span><span class="metric-icon blue">▤</span></div><strong id="metricOrders">—</strong><small id="metricPendingOrders">待处理 —</small><span class="metric-detail">进入订单中心 →</span></button>
+          <button type="button" class="metric-card metric-action" data-go="users"><div class="metric-top"><span>旧节点用户</span><span class="metric-icon purple">♙</span></div><strong id="metricUsers">—</strong><small>全站用户账户</small><span class="metric-detail">查看用户明细 →</span></button>
           <button type="button" class="metric-card metric-action" data-go="nodes" data-node-tab="orders"><div class="metric-top"><span>节点服务订单</span><span class="metric-icon blue">▤</span></div><strong id="metricNodeOrders">—</strong><small>全站套餐订购记录</small><span class="metric-detail">查看节点订单 →</span></button>
-          <button type="button" class="metric-card metric-action" data-go="products"><div class="metric-top"><span>在售商品</span><span class="metric-icon orange">◇</span></div><strong id="metricProducts">—</strong><small id="metricStock">商品库存 —</small><span class="metric-detail">管理商品与价格 →</span></button>
+          <button type="button" class="metric-card metric-action" data-go="products"><div class="metric-top"><span>旧业务商品</span><span class="metric-icon orange">◇</span></div><strong id="metricProducts">—</strong><small id="metricStock">商品库存 —</small><span class="metric-detail">管理商品与价格 →</span></button>
           <button type="button" class="metric-card metric-action" data-go="products" data-product-tab="accounts"><div class="metric-top"><span>可售账号库存</span><span class="metric-icon green">▣</span></div><strong id="metricInventory">—</strong><small id="metricSoldInventory">已售 —</small><span class="metric-detail">上传账号/卡密 →</span></button>
           <button type="button" class="metric-card metric-action" data-go="support"><div class="metric-top"><span>待处理客服</span><span class="metric-icon purple">◉</span></div><strong id="metricTickets">—</strong><small>等待人工回复</small><span class="metric-detail">进入客服工作台 →</span></button><button type="button" class="metric-card metric-action" data-go="support"><div class="metric-top"><span>客服会话</span><span class="metric-icon blue">◌</span></div><strong id="metricChatSessions">—</strong><small>当前接口返回的会话数</small><span class="metric-detail">查看并回复客户 →</span></button>
           <button type="button" class="metric-card metric-action" data-go="nodes"><div class="metric-top"><span>节点线路</span><span class="metric-icon blue">⌁</span></div><strong id="metricNodes">—</strong><small id="metricPlans">节点套餐 —</small><span class="metric-detail">管理节点与套餐 →</span></button>
@@ -130,7 +130,7 @@
           </article>
         </div>
         <article class="panel data-panel overview-recent">
-          <div class="panel-heading"><div><h2>最近订单</h2><p>最新业务订单，点击查看完整订单列表</p></div><button class="btn btn-secondary" data-go="orders">全部订单 →</button></div>
+          <div class="panel-heading"><div><h2>最近旧业务订单</h2><p>旧节点业务订单；当前商城订单请查看上方实时数据模块</p></div><button class="btn btn-secondary" data-go="orders">全部订单 →</button></div>
           <div class="table-wrap"><table class="data-table"><thead><tr><th>订单号</th><th>客户</th><th>商品</th><th>金额</th><th>状态</th><th>创建时间</th></tr></thead><tbody id="overviewOrdersBody"><tr><td colspan="6" class="table-empty">正在读取业务数据…</td></tr></tbody></table></div>
         </article>
         <div class="section-title"><div><h2>系统运行状态</h2><p>根据现有服务接口实时汇总，不显示模拟状态</p></div><span class="live-label"><i></i>服务监测</span></div>
@@ -267,7 +267,7 @@
         </article>
       </div>
       <section class="page" id="page-products">
-        <div class="page-heading"><div><p class="eyebrow">PRODUCT & INVENTORY</p><h1>商品与库存</h1><p class="subheading">商品上架、价格库存、账号卡密批量导入与库存状态</p></div><button class="btn btn-secondary" id="productsRefresh">↻ 刷新数据</button></div>
+        <div class="page-heading"><div><p class="eyebrow">PRODUCT & INVENTORY</p><h1>商品与库存</h1><p class="subheading">当前商城目录核对、旧业务商品与账号卡密库存分开管理</p></div><button class="btn btn-secondary" id="productsRefresh">↻ 刷新数据</button></div>
         <div class="tab-bar" id="productTabs"><button class="tab-button active" data-product-tab="storefront">当前商城目录</button><button class="tab-button" data-product-tab="legacy">旧业务商品</button><button class="tab-button" data-product-tab="accounts">账号 / 卡密库存</button></div>
         <div class="product-view active" id="productView-storefront">
           <article class="panel data-panel">
