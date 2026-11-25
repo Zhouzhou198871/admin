@@ -471,7 +471,7 @@ function switchNodeTab(tab){
  document.querySelectorAll(".node-view").forEach(v=>v.classList.toggle("active",v.id==="nodeView-"+tab));
  if(tab==="servers")loadNodeServers();else if(tab==="protocols")loadProtocolNodes();else if(tab==="orders")loadNodeOrders();else loadPlans();
 }
-document.querySelectorAll("[data-product-tab]").forEach(b=>b.addEventListener("click",()=>switchProductTab(b.dataset.productTab)));
+
 document.querySelectorAll("[data-node-tab]").forEach(b=>b.addEventListener("click",()=>switchNodeTab(b.dataset.nodeTab)));
 function editProduct(p){
  $("#productId").value=p.id||"";$("#productTitle").value=p.title||p.name||"";$("#productCategory").value=p.category||"";
