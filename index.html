@@ -452,6 +452,11 @@
             <div class="table-wrap"><table class="data-table"><thead><tr><th>产品</th><th>套餐</th><th>售价</th><th>时长</th><th>流量</th><th>设备</th><th>状态</th><th>操作</th></tr></thead><tbody id="nodePackagesBody"><tr><td colspan="8" class="table-empty">等待读取节点套餐</td></tr></tbody></table></div>
             <div class="table-foot"><span id="nodePackagesCount">—</span><span>价格与上架状态会影响新订单，不改动已生成订单</span></div>
           </article>
+          <article class="panel data-panel">
+            <div class="panel-heading"><div><h2>商城用户协议账号</h2><p>独立显示商城订单开通的账号、有效期和服务器统计流量</p></div><button class="btn btn-secondary btn-small" id="nodeAccountsRefresh" type="button">刷新账号</button></div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>用户</th><th>协议</th><th>节点</th><th>到期时间</th><th>已用 / 限额</th><th>状态</th><th>操作</th></tr></thead><tbody id="nodeAccountsBody"><tr><td colspan="7" class="table-empty">等待读取商城账号</td></tr></tbody></table></div>
+            <div class="table-foot"><span id="nodeAccountsCount">—</span><span>流量统计来自节点服务器独立账号计数器</span></div>
+          </article>
           <article class="panel form-panel compact-form" id="protocolNodeFormPanel" hidden>
             <div class="panel-heading"><div><h2 id="protocolNodeFormTitle">新增协议节点</h2><p>写入真实订阅节点配置；域名和端口必须能连通</p></div><button type="button" class="btn btn-secondary" id="protocolNodeFormClose">关闭</button></div>
             <form id="protocolNodeForm" class="admin-form-grid">
