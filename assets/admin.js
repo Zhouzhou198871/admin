@@ -461,7 +461,26 @@ async function loadStorefrontUsers(resetPage=true){
   $("#storefrontUsersCount").textContent="当前商城用户 "+total.toLocaleString("zh-CN")+" 位";$("#storefrontUsersPrev").disabled=storefrontUserPage<=1;$("#storefrontUsersNext").disabled=storefrontUserPage>=pages;$("#storefrontUsersPageInfo").textContent="第 "+storefrontUserPage+" / "+pages+" 页";
  }catch(e){body.innerHTML='<tr><td colspan="7" class="table-empty error-text">读取当前商城用户失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';$("#storefrontUsersCount").textContent="读取失败"}
 }
-function switchOrderView(view){document.querySelectorAll("[data-order-view]").forEach(b=>b.classList.toggle("active",b.dataset.orderView===view));document.querySelectorAll(".order-view").forEach(v=>v.hidden=v.id!=="orderView-"+view);if(view==="legacy")loadLegacyOrders();else loadStorefrontOrders()}
+async function loadStorefrontSupplierOrders(){
+ const body=$("#supplierOrdersBody");if(!body)return;
+ body.innerHTML='<tr><td colspan="8" class="table-empty">正在读取供应商待核对订单…</td></tr>';
+ const status=$("#supplierOrderStatus")?.value||"pending";
+ try{
+  const data=await adminRequest("/api/admin/supplier-orders?"+new URLSearchParams({status,limit:"100"}).toString());
+  const rows=data.orders||[];
+  body.innerHTML=rows.length?rows.map(o=>'<tr><td class="mono">'+escapeHtml(o.order_id||"—")+'</td><td>'+escapeHtml(o.email||o.user_id||"—")+'</td><td>'+escapeHtml(o.product_name||o.product_id||"—")+'<small class="muted-inline">'+escapeHtml(o.product_id||"")+'</small></td><td class="mono">'+escapeHtml(o.supplier_order_id||"尚未取得")+'</td><td>'+statusPill(o.supplier_status||"unknown")+'</td><td>'+escapeHtml(o.error_code||"—")+'</td><td>'+escapeHtml(formatAdminDate(o.updated_at))+'</td><td>'+(["pending","processing"].includes(o.supplier_status)?'<button class="btn btn-secondary btn-small" data-supplier-reconcile="'+escapeHtml(o.order_id)+'">核对 / 补发</button>':'—')+'</td></tr>').join(""):'<tr><td colspan="8" class="table-empty">当前没有符合条件的供应商订单</td></tr>';
+  $("#supplierOrdersCount").textContent="供应商订单 "+rows.length+" 条（最多显示 100 条）";
+  body.querySelectorAll("[data-supplier-reconcile]").forEach(btn=>btn.addEventListener("click",()=>{
+   const order=rows.find(x=>x.order_id===btn.dataset.supplierReconcile);if(!order)return;
+   const modal=$("#supplierReconcileModal");modal.dataset.orderId=order.order_id;
+   $("#supplierReconcileMeta").textContent="商城订单 "+order.order_id+" · "+(order.email||order.user_id||"客户未知")+" · "+(order.product_name||order.product_id||"商品未知");
+   $("#supplierReconcileOrderId").value=order.supplier_order_id||"";
+   $("#supplierReconcileContent").value="";$("#supplierReconcileConfirmed").checked=false;$("#supplierReconcileResult").textContent="";
+   modal.hidden=false;
+  }));
+ }catch(e){body.innerHTML='<tr><td colspan="8" class="table-empty error-text">读取供应商订单失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';$("#supplierOrdersCount").textContent="读取失败"}
+}
+function switchOrderView(view){document.querySelectorAll("[data-order-view]").forEach(b=>b.classList.toggle("active",b.dataset.orderView===view));document.querySelectorAll(".order-view").forEach(v=>v.hidden=v.id!=="orderView-"+view);if(view==="legacy")loadLegacyOrders();else if(view==="supplier")loadStorefrontSupplierOrders();else loadStorefrontOrders()}
 function switchUserView(view){document.querySelectorAll("[data-user-view]").forEach(b=>b.classList.toggle("active",b.dataset.userView===view));document.querySelectorAll(".user-view").forEach(v=>v.hidden=v.id!=="userView-"+view);if(view==="legacy")loadUsers();else loadStorefrontUsers()}
 document.querySelectorAll("[data-order-view]").forEach(b=>b.addEventListener("click",()=>switchOrderView(b.dataset.orderView)));
 document.querySelectorAll("[data-user-view]").forEach(b=>b.addEventListener("click",()=>switchUserView(b.dataset.userView)));
@@ -469,6 +488,21 @@ document.querySelectorAll("[data-product-tab]").forEach(b=>b.addEventListener("c
 $("#storefrontProductSearchBtn")?.addEventListener("click",()=>loadStorefrontProducts(true));$("#storefrontProductSearch")?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();loadStorefrontProducts(true)}});
 $("#storefrontProductsPrev")?.addEventListener("click",()=>{if(storefrontProductPage>1){storefrontProductPage--;loadStorefrontProducts(false)}});$("#storefrontProductsNext")?.addEventListener("click",()=>{storefrontProductPage++;loadStorefrontProducts(false)});
 $("#storefrontOrderSearchBtn")?.addEventListener("click",loadStorefrontOrders);$("#storefrontOrderStatus")?.addEventListener("change",loadStorefrontOrders);$("#storefrontOrderSearch")?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();loadStorefrontOrders()}});
+$("#supplierOrdersRefresh")?.addEventListener("click",loadStorefrontSupplierOrders);$("#supplierOrderStatus")?.addEventListener("change",loadStorefrontSupplierOrders);
+$("#supplierReconcileClose")?.addEventListener("click",()=>{$("#supplierReconcileModal").hidden=true});
+$("#supplierReconcileSubmit")?.addEventListener("click",async()=>{
+ const modal=$("#supplierReconcileModal"),orderId=modal.dataset.orderId||"",content=$("#supplierReconcileContent").value.trim(),supplier_order_id=$("#supplierReconcileOrderId").value.trim(),confirmed=$("#supplierReconcileConfirmed").checked,btn=$("#supplierReconcileSubmit");
+ if(!orderId||!content){$("#supplierReconcileResult").textContent="请填写真实交付内容";return}
+ if(!confirmed){$("#supplierReconcileResult").textContent="请先确认已在供应商后台核实订单和卡密";return}
+ if(!confirm("确认将这份已核实的上游交付内容写入商城订单？系统不会再次采购。"))return;
+ btn.disabled=true;$("#supplierReconcileResult").textContent="正在加密保存并补发…";
+ try{
+  const result=await adminRequest("/api/admin/supplier-orders/"+encodeURIComponent(orderId)+"/deliver",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({content,supplier_order_id,confirmed:true})});
+  $("#supplierReconcileResult").textContent=result.already_delivered?"该订单此前已交付，未覆盖原卡密。":"交付内容已安全保存，商城订单已更新为已交付。";
+  toast("供应商订单核对完成");modal.hidden=true;await loadStorefrontSupplierOrders();await loadStorefrontOrders();
+ }catch(e){$("#supplierReconcileResult").textContent=e.message||"写入失败"}
+ finally{btn.disabled=false}
+});
 $("#storefrontUserSearchBtn")?.addEventListener("click",()=>loadStorefrontUsers(true));$("#storefrontUserSearch")?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();loadStorefrontUsers(true)}});
 $("#storefrontUsersPrev")?.addEventListener("click",()=>{if(storefrontUserPage>1){storefrontUserPage--;loadStorefrontUsers(false)}});$("#storefrontUsersNext")?.addEventListener("click",()=>{storefrontUserPage++;loadStorefrontUsers(false)});
 
