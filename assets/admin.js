@@ -799,8 +799,9 @@ async function loadNodeAccounts(){
   body.innerHTML=rows.length?rows.map(x=>{
    const used=Number(x.traffic_used_bytes||0),limit=Number(x.traffic_limit_bytes||0);
    const size=n=>{if(n<1024)return n+" B";if(n<1048576)return (n/1024).toFixed(1)+" KB";if(n<1073741824)return (n/1048576).toFixed(2)+" MB";return (n/1073741824).toFixed(2)+" GB"};
+   const usage=d.traffic_usage_available?size(used)+" / "+(limit?size(limit):"不限"):"未接入统计 / "+(limit?size(limit):"不限");
    const status=x.status==="active"?"正常":x.status==="expired"?"已到期":x.status==="exhausted"?"流量用尽":x.status==="revoked"?"已停用":x.status||"未知";
-   return '<tr><td>'+escapeHtml(x.email||("用户 "+x.user_id))+'</td><td>'+escapeHtml(String(x.protocol||"").toUpperCase())+'</td><td>'+escapeHtml(x.server_ref||"—")+'</td><td>'+escapeHtml(formatAdminDate(x.expires_at))+'</td><td>'+size(used)+' / '+(limit?size(limit):"不限")+'</td><td>'+escapeHtml(status)+'</td><td>'+(x.status==="active"?'<button class="btn btn-danger btn-small" data-node-account-revoke="'+escapeHtml(x.account_id)+'">停用</button>':"—")+'</td></tr>';
+   return '<tr><td>'+escapeHtml(x.email||("用户 "+x.user_id))+'</td><td>'+escapeHtml(String(x.protocol||"").toUpperCase())+'</td><td>'+escapeHtml(x.server_ref||"—")+'</td><td>'+escapeHtml(formatAdminDate(x.expires_at))+'</td><td>'+escapeHtml(usage)+'</td><td>'+escapeHtml(status)+'</td><td>'+(x.status==="active"?'<button class="btn btn-danger btn-small" data-node-account-revoke="'+escapeHtml(x.account_id)+'">停用</button>':"—")+'</td></tr>';
   }).join(""):'<tr><td colspan="7" class="table-empty">当前没有商城协议账号</td></tr>';
   $("#nodeAccountsCount").textContent=rows.length+" 个账号";
   body.querySelectorAll("[data-node-account-revoke]").forEach(btn=>btn.addEventListener("click",async()=>{
