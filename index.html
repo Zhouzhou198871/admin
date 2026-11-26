@@ -198,12 +198,19 @@
 
       <section class="page" id="page-orders">
         <div class="page-heading"><div><p class="eyebrow">ORDER CENTER</p><h1>订单管理</h1><p class="subheading">当前商城订单与旧节点业务订单分开展示，避免跨系统混淆</p></div><button class="btn btn-secondary" id="ordersRefresh">↻ 刷新</button></div>
-        <div class="tab-bar" id="orderTabs"><button class="tab-button active" data-order-view="storefront">当前商城订单</button><button class="tab-button" data-order-view="legacy">旧业务订单</button></div>
+        <div class="tab-bar" id="orderTabs"><button class="tab-button active" data-order-view="storefront">当前商城订单</button><button class="tab-button" data-order-view="supplier">供应商待核对</button><button class="tab-button" data-order-view="legacy">旧业务订单</button></div>
         <div class="order-view" id="orderView-storefront">
           <article class="panel data-panel">
             <div class="table-toolbar"><input id="storefrontOrderSearch" type="search" placeholder="搜索商城订单号、用户邮箱或商品 ID"><select id="storefrontOrderStatus"><option value="">全部状态</option><option value="pending">待处理</option><option value="processing">处理中</option><option value="paid">已支付</option><option value="delivered">已交付</option><option value="failed">失败</option><option value="refunded">已退款</option></select><button class="btn btn-primary" id="storefrontOrderSearchBtn">查询</button></div>
             <div class="table-wrap"><table class="data-table"><thead><tr><th>订单号</th><th>类型</th><th>用户</th><th>商品 ID</th><th>金额</th><th>状态</th><th>创建时间</th><th>更新时间</th></tr></thead><tbody id="storefrontOrdersBody"><tr><td colspan="8" class="table-empty">登录后加载当前商城订单</td></tr></tbody></table></div>
             <div class="table-foot"><span id="storefrontOrdersCount">—</span><span>来源：当前商城生产数据库 web_purchases / node_orders</span></div>
+          </article>
+        </div>
+        <div class="order-view" id="orderView-supplier" hidden>
+          <article class="panel data-panel">
+            <div class="table-toolbar"><select id="supplierOrderStatus"><option value="pending">待核对</option><option value="processing">处理中</option><option value="all">全部状态</option></select><button class="btn btn-primary" id="supplierOrdersRefresh">刷新待核对订单</button></div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>商城订单号</th><th>客户</th><th>商品</th><th>上游订单号</th><th>供应商状态</th><th>异常原因</th><th>更新时间</th><th>操作</th></tr></thead><tbody id="supplierOrdersBody"><tr><td colspan="8" class="table-empty">登录后加载供应商订单</td></tr></tbody></table></div>
+            <div class="table-foot"><span id="supplierOrdersCount">—</span><span>仅人工核对与补发，不会自动再次采购；提交前必须确认上游已实际交付</span></div>
           </article>
         </div>
         <div class="order-view" id="orderView-legacy" hidden>
@@ -228,6 +235,18 @@
           </div>
           <div class="form-actions"><button class="btn btn-secondary" id="orderStatusSave" type="button">保存订单状态</button><button class="btn btn-secondary" id="orderDeliverBtn" type="button">上传并交付</button><button class="btn btn-primary" id="orderShipBtn" type="button">确认发货</button></div>
           <div class="form-result" id="orderModalResult" role="status"></div>
+        </article>
+      </div>
+      <div class="modal-overlay" id="supplierReconcileModal" hidden>
+        <article class="panel modal-card">
+          <div class="panel-heading"><div><h2>供应商订单核对与补发</h2><p id="supplierReconcileMeta">仅录入已在上游后台核实的交付内容</p></div><button class="btn btn-secondary" type="button" id="supplierReconcileClose">关闭</button></div>
+          <div class="admin-form-grid">
+            <label class="span-two">上游订单号（可留空）<input id="supplierReconcileOrderId" maxlength="128" placeholder="填写供应商后台显示的订单号"></label>
+            <label class="span-two">上游已交付的卡密 / 账号内容<textarea id="supplierReconcileContent" rows="6" maxlength="20000" placeholder="粘贴从供应商订单详情核实的真实交付内容"></textarea><small class="field-hint">系统会加密保存，并同步商城订单为已交付。不会重新提交采购。</small></label>
+            <label class="span-two"><input type="checkbox" id="supplierReconcileConfirmed"> 我已在供应商后台核实该订单购买成功，且以上内容属于此订单</label>
+          </div>
+          <div class="form-actions"><button class="btn btn-primary" id="supplierReconcileSubmit" type="button">确认写入并补发</button></div>
+          <div class="form-result" id="supplierReconcileResult" role="status"></div>
         </article>
       </div>
       <section class="page" id="page-users">
