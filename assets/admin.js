@@ -698,8 +698,8 @@ async function loadNodeOrders(){
 $("#nodeOrdersRefresh")?.addEventListener("click",loadNodeOrders);
 function editProtocolNode(n={}){
  const cfg=typeof n.config_json==="string"?(()=>{try{return JSON.parse(n.config_json)}catch{return {}}})():(n.config_json||{});
- $("#protocolNodeId").value=n.id||"";$("#protocolNodeName").value=n.name||"";$("#protocolNodeType").value=n.protocol||"vless";$("#protocolNodePort").value=n.port||443;$("#protocolNodeRegion").value=cfg.region||"";
- $("#protocolNodeDomains").value=(cfg.domains||[]).join("\n");$("#protocolNodeSni").value=cfg.sni||"";$("#protocolNodeNetwork").value=cfg.network||"tcp";$("#protocolNodePublicKey").value=cfg.reality_public_key||"";$("#protocolNodeShortId").value=cfg.short_id||"";$("#protocolNodeWsPath").value=cfg.ws_path||"/";$("#protocolNodeMethod").value=cfg.method||"aes-256-gcm";$("#protocolNodeObfsPassword").value=cfg.obfs_password||"";$("#protocolNodeSort").value=n.sort??100;$("#protocolNodeEnabled").value=String(n.enabled??1);$("#protocolNodeFormTitle").textContent=n.id?"编辑协议节点":"新增协议节点";$("#protocolNodeFormResult").textContent="";$("#protocolNodeFormPanel").hidden=false;$("#protocolNodeFormPanel").scrollIntoView({behavior:"smooth",block:"start"});
+ $("#protocolNodeId").value=n.id||"";$("#protocolNodeConfigOriginal").value=JSON.stringify(cfg);$("#protocolNodeName").value=n.name||"";$("#protocolNodeType").value=n.protocol||"vless";$("#protocolNodePort").value=n.port||443;$("#protocolNodeRegion").value=cfg.region||"";
+ $("#protocolNodeDomains").value=(cfg.domains||[]).join("\n");$("#protocolNodeSni").value=cfg.sni||"";$("#protocolNodeNetwork").value=cfg.network||"tcp";$("#protocolNodePublicKey").value=cfg.reality_public_key||"";$("#protocolNodeShortId").value=cfg.short_id||"";$("#protocolNodeWsPath").value=cfg.ws_path||"/";$("#protocolNodeMethod").value=cfg.method||(n.protocol==="ssr"?"aes-128-ctr":"aes-256-gcm");$("#protocolNodeObfsPassword").value=cfg.obfs_password||"";$("#protocolNodeSort").value=n.sort??100;$("#protocolNodeEnabled").value=String(n.enabled??1);$("#protocolNodeFormTitle").textContent=n.id?"编辑协议节点":"新增协议节点";$("#protocolNodeFormResult").textContent="";$("#protocolNodeFormPanel").hidden=false;$("#protocolNodeFormPanel").scrollIntoView({behavior:"smooth",block:"start"});
 }
 $("#protocolNodeAddBtn")?.addEventListener("click",()=>editProtocolNode({}));
 $("#protocolNodeFormClose")?.addEventListener("click",()=>$("#protocolNodeFormPanel").hidden=true);
@@ -715,7 +715,7 @@ async function loadProtocolNodes(){
   }).join(""):'<tr><td colspan="7" class="table-empty">暂无传统协议线路节点；商城协议产品状态见上方产品表</td></tr>';
   $("#protocolNodesCount").textContent="共 "+nodes.length+" 个线路节点 · "+nodes.filter(x=>Number(x.enabled)).length+" 个启用";
   const products=nodeCatalogCache.products||[],packages=nodeCatalogCache.packages||[];
-  const productIds={vless:"vless",vmess:"vmess",trojan:"trojan",hysteria2:"hysteria2",ss:"shadowsocks",socks5:"socks5",mtproto:"mtproto",ss2022:"shadowsocks-2022",http:"http-connect"};
+  const productIds={trojan:"trojan",shadowsocks:"shadowsocks",mtproto:"mtproto",vless:"vless",vmess:"vmess",hysteria2:"hysteria2",tuic:"tuic",anytls:"anytls",ssr:"ssr"};
   document.querySelectorAll("[data-proto-cap]").forEach(card=>{
    const proto=card.dataset.protoCap,product=products.find(p=>p.product_id===productIds[proto]);
    const status=card.querySelector("span"),detail=card.querySelector("small");
@@ -743,7 +743,7 @@ $("#protocolNodeForm")?.addEventListener("submit",async e=>{
  e.preventDefault();const btn=$("#protocolNodeSaveBtn"),res=$("#protocolNodeFormResult");btn.disabled=true;res.textContent="正在保存真实节点配置…";
  const proto=$("#protocolNodeType").value,domains=$("#protocolNodeDomains").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
  if(!domains.length){res.textContent="至少填写一个节点域名";btn.disabled=false;return}
- const cfg={domains,region:$("#protocolNodeRegion").value.trim(),sni:$("#protocolNodeSni").value.trim(),network:$("#protocolNodeNetwork").value,ws_path:$("#protocolNodeWsPath").value.trim()||"/",reality_public_key:$("#protocolNodePublicKey").value.trim(),short_id:$("#protocolNodeShortId").value.trim(),fingerprint:"chrome",tls:true,skip_cert_verify:true,method:$("#protocolNodeMethod").value,obfs:proto==="hysteria2"?"salamander":"",obfs_password:$("#protocolNodeObfsPassword").value};
+ let original={};try{original=JSON.parse($("#protocolNodeConfigOriginal").value||"{}")}catch{}const cfg={...original,domains,region:$("#protocolNodeRegion").value.trim(),sni:$("#protocolNodeSni").value.trim(),network:$("#protocolNodeNetwork").value,ws_path:$("#protocolNodeWsPath").value.trim()||"/",reality_public_key:$("#protocolNodePublicKey").value.trim(),short_id:$("#protocolNodeShortId").value.trim(),fingerprint:original.fingerprint||"chrome",tls:original.tls??true,skip_cert_verify:original.skip_cert_verify??true,method:$("#protocolNodeMethod").value,obfs_password:$("#protocolNodeObfsPassword").value};if(proto==="hysteria2")cfg.obfs="salamander";if(proto==="ssr"){cfg.protocol=cfg.protocol||"auth_aes128_md5";cfg.obfs=cfg.obfs||"tls1.2_ticket_auth_compatible";}
  const payload={id:Number($("#protocolNodeId").value)||undefined,name:$("#protocolNodeName").value.trim(),protocol:proto,port:Number($("#protocolNodePort").value),enabled:Number($("#protocolNodeEnabled").value),sort:Number($("#protocolNodeSort").value||100),config_json:cfg};
  try{await legacyAdmin("/nodes/save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});res.className="form-result success";res.textContent="节点协议配置已保存。订阅端会按用户自动生成独立凭证。";toast("协议节点保存成功");$("#protocolNodeFormPanel").hidden=true;await loadProtocolNodes()}
  catch(e){res.className="form-result error";res.textContent=e.message||"保存失败"}
