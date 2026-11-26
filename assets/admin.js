@@ -668,17 +668,30 @@ $("#nodeAddBtn")?.addEventListener("click",()=>editNode({}));$("#nodeFormClose")
 $("#nodeForm")?.addEventListener("submit",async e=>{e.preventDefault();const res=$("#nodeFormResult"),btn=$("#nodeSaveBtn");btn.disabled=true;try{await legacyAdmin("/servers/save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:Number($("#nodeId").value)||undefined,name:$("#nodeName").value.trim(),ip:$("#nodeIp").value.trim(),domain:$("#nodeDomain").value.trim(),region:$("#nodeRegion").value.trim(),region_name:$("#nodeRegionName").value.trim(),api_port:Number($("#nodeApiPort").value),admin_port:Number($("#nodeAdminPort").value),sort:Number($("#nodeSort").value||0),enabled:Number($("#nodeEnabled").value)})});res.className="form-result success";res.textContent="节点服务器配置已保存";toast("节点服务器已保存");$("#nodeFormPanel").hidden=true;loadNodeServers()}catch(e){res.className="form-result error";res.textContent=e.message||"保存失败"}finally{btn.disabled=false}});
 async function loadNodeOrders(){
  const body=$("#nodeAdminOrdersBody");if(!body)return;
- body.innerHTML='<tr><td colspan="6" class="table-empty">正在读取全站节点订单…</td></tr>';
+ body.innerHTML='<tr><td colspan="7" class="table-empty">正在读取商城节点商品订单…</td></tr>';
  try{
-  const d=await legacyAdmin("/orders"),orders=dataList(d);
-  body.innerHTML=orders.length?orders.slice(0,200).map(o=>{
-   const amount=Number(o.total_amount??o.amount??0)/100;
-   const status=Number(o.status)===0?"待支付":Number(o.status)===1?"已支付":Number(o.refunded)===1?"已退款":String(o.status??"未知");
-   return '<tr><td class="mono">'+escapeHtml(o.trade_no||o.order_no||o.id||"—")+'</td><td>'+escapeHtml(o.user_email||o.email||o.user_id||"—")+'</td><td>'+escapeHtml(o.plan_name||("套餐 #"+(o.plan_id||"—")))+'</td><td class="money">'+formatCny(amount)+'</td><td>'+statusPill(status)+'</td><td>'+escapeHtml(formatAdminDate(o.created_at))+'</td></tr>';
-  }).join(""):'<tr><td colspan="6" class="table-empty">暂无节点服务订单</td></tr>';
-  $("#nodeAdminOrdersCount").textContent="共 "+orders.length.toLocaleString("zh-CN")+" 条节点订单";
+  const d=await adminRequest("/api/admin/node-orders?limit=200"),orders=d.orders||[];
+  body.innerHTML=orders.length?orders.map(o=>{
+   const statusMap={fulfilled:"已交付",provisioning:"开通待核对",refunded:"已退款"};
+   const status=statusMap[o.status]||String(o.status||"未知");
+   const detail=o.error_code?'<small class="muted-inline">'+escapeHtml(o.error_code)+'</small>':"";
+   const action=o.status==="provisioning"?'<button class="btn btn-secondary btn-small" data-node-order-retry="'+escapeHtml(o.order_id)+'">重试开通</button>':'—';
+   return '<tr><td class="mono">'+escapeHtml(o.order_id||"—")+'</td><td>'+escapeHtml(o.email||o.user_id||"—")+'</td><td>'+escapeHtml(o.package_name||o.product_name||o.product_id||"—")+'<small class="muted-inline">'+escapeHtml(String(o.protocol||"").toUpperCase())+' · '+escapeHtml(o.server_ref==="sg"?"新加坡":"美国")+'</small></td><td class="money">'+formatCny(Number(o.amount_cny||0))+'</td><td>'+statusPill(status)+detail+'</td><td>'+escapeHtml(formatAdminDate(o.created_at))+'</td><td>'+action+'</td></tr>';
+  }).join(""):'<tr><td colspan="7" class="table-empty">暂无商城节点商品订单</td></tr>';
+  $("#nodeAdminOrdersCount").textContent="共 "+orders.length.toLocaleString("zh-CN")+" 条商城节点商品订单";
+  body.querySelectorAll("[data-node-order-retry]").forEach(btn=>btn.addEventListener("click",async()=>{
+   const orderId=btn.dataset.nodeOrderRetry;
+   if(!confirm("将使用原订单号幂等恢复开通，不会再次扣款。确认继续？"))return;
+   btn.disabled=true;
+   try{
+    const result=await adminRequest("/api/admin/node-orders",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"retry",order_id:orderId,confirmed:true})});
+    toast(result.status==="fulfilled"?"节点订单恢复并交付成功":"节点仍在核对中，未重复扣款");
+    await loadNodeOrders();await loadNodeAccounts();
+   }catch(e){toast("节点订单恢复失败："+(e.message||"接口错误"))}
+   finally{btn.disabled=false}
+  }));
  }catch(e){
-  body.innerHTML='<tr><td colspan="6" class="table-empty error-text">节点订单读取失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';
+  body.innerHTML='<tr><td colspan="7" class="table-empty error-text">节点商品订单读取失败：'+escapeHtml(e.message||"接口错误")+'</td></tr>';
   $("#nodeAdminOrdersCount").textContent="读取失败";
  }
 }
