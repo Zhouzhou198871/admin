@@ -8,7 +8,7 @@
   <link rel="icon" href="https://shop.lynli.me/logo.jpg" type="image/jpeg">
   <link rel="stylesheet" href="./assets/admin.css?v=20261122-05">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0,0">
-  <script src="./assets/admin.js?v=20261126-supplier-reconcile-02" defer></script>
+  <script src="./assets/admin.js?v=node-usage-honesty-20261126-v1" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -452,7 +452,7 @@
             <div class="table-foot"><span id="nodeCatalogCount">—</span><span>服务端就绪状态由服务器配置决定，后台不能强行伪造为已接入</span></div>
           </article>
           <article class="panel data-panel">
-            <div class="panel-heading"><div><h2>商城节点套餐</h2><p>套餐按流量额度和有效期管理；达到额度或到期后，服务器自动停用账号</p></div><div class="table-actions"><button class="btn btn-secondary btn-small" id="nodePackageSyncRobotBtn" type="button">同步五档套餐到协议商品</button><button class="btn btn-primary btn-small" id="nodePackageAddBtn" type="button">＋ 新增套餐</button></div></div><p id="nodePackageSyncResult" class="field-hint" role="status">九种协议分别维护五档套餐；仅服务器验证通过的协议开放购买。</p>
+            <div class="panel-heading"><div><h2>商城节点套餐</h2><p>套餐按流量额度和有效期配置；实时流量统计与自动停用状态以节点服务器实际接口验证结果为准</p></div><div class="table-actions"><button class="btn btn-secondary btn-small" id="nodePackageSyncRobotBtn" type="button">同步五档套餐到协议商品</button><button class="btn btn-primary btn-small" id="nodePackageAddBtn" type="button">＋ 新增套餐</button></div></div><p id="nodePackageSyncResult" class="field-hint" role="status">九种协议分别维护五档套餐；仅服务器验证通过的协议开放购买。</p>
             <article class="panel form-panel compact-form" id="nodePackageFormPanel" hidden>
               <div class="panel-heading"><div><h3 id="nodePackageFormTitle">新增节点套餐</h3><p>套餐 ID 创建后固定；下架不会删除历史订单</p></div><button class="btn btn-secondary btn-small" id="nodePackageFormClose" type="button">关闭</button></div>
               <form id="nodePackageForm" class="admin-form-grid">
@@ -472,9 +472,9 @@
             <div class="table-foot"><span id="nodePackagesCount">—</span><span>价格与上架状态会影响新订单，不改动已生成订单</span></div>
           </article>
           <article class="panel data-panel">
-            <div class="panel-heading"><div><h2>商城用户协议账号</h2><p>独立显示商城订单开通的账号、有效期和服务器统计流量</p></div><button class="btn btn-secondary btn-small" id="nodeAccountsRefresh" type="button">刷新账号</button></div>
+            <div class="panel-heading"><div><h2>商城用户协议账号</h2><p>独立显示商城订单开通的账号与有效期；实时已用流量尚未接入统计</p></div><button class="btn btn-secondary btn-small" id="nodeAccountsRefresh" type="button">刷新账号</button></div>
             <div class="table-wrap"><table class="data-table"><thead><tr><th>用户</th><th>协议</th><th>节点</th><th>到期时间</th><th>已用 / 限额</th><th>状态</th><th>操作</th></tr></thead><tbody id="nodeAccountsBody"><tr><td colspan="7" class="table-empty">等待读取商城账号</td></tr></tbody></table></div>
-            <div class="table-foot"><span id="nodeAccountsCount">—</span><span>流量统计来自节点服务器独立账号计数器</span></div>
+            <div class="table-foot"><span id="nodeAccountsCount">—</span><span>当前节点服务器未提供用量查询接口，后台不显示虚假的已用流量</span></div>
           </article>
           <article class="panel form-panel compact-form" id="protocolNodeFormPanel" hidden>
             <div class="panel-heading"><div><h2 id="protocolNodeFormTitle">新增协议节点</h2><p>写入真实订阅节点配置；域名和端口必须能连通</p></div><button type="button" class="btn btn-secondary" id="protocolNodeFormClose">关闭</button></div>
