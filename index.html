@@ -8,7 +8,7 @@
   <link rel="icon" href="https://shop.lynli.me/logo.jpg" type="image/jpeg">
   <link rel="stylesheet" href="./assets/admin.css?v=20261122-05">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0,0">
-  <script src="./assets/admin.js?v=node-traffic-sync-20261126-v2" defer></script>
+  <script src="./assets/admin.js?v=node-products-nine-20261126-v1" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -436,15 +436,15 @@
             <div><small>Telegram MTProto</small><b id="protocolMtprotoState">读取中</b></div>
           </div>
           <div class="protocol-capability-grid" id="protocolCapabilityGrid">
-            <div class="protocol-capability" data-proto-cap="vless"><b>VLESS</b><span>订阅支持</span><small>检测中</small></div>
-            <div class="protocol-capability" data-proto-cap="vmess"><b>VMess</b><span>订阅支持</span><small>检测中</small></div>
-            <div class="protocol-capability" data-proto-cap="trojan"><b>Trojan</b><span>可配置</span><small>尚无启用节点</small></div>
-            <div class="protocol-capability" data-proto-cap="hysteria2"><b>Hysteria2</b><span>已接入</span><small>美国节点 · UDP 443</small></div>
-            <div class="protocol-capability" data-proto-cap="ss"><b>Shadowsocks</b><span>已接入</span><small>新加坡节点 · 8446</small></div>
-            <div class="protocol-capability" data-proto-cap="socks5"><b>SOCKS5</b><span>已接入</span><small>新加坡节点 · 8447</small></div>
-            <div class="protocol-capability" data-proto-cap="mtproto"><b>MTProto</b><span>已接入</span><small>美国节点 · Telegram 代理</small></div>
-            <div class="protocol-capability" data-proto-cap="ss2022"><b>Shadowsocks 2022</b><span>已接入</span><small>新加坡节点 · 8449</small></div>
-            <div class="protocol-capability" data-proto-cap="http"><b>HTTP / HTTPS</b><span>已接入</span><small>新加坡节点 · HTTP 8450 / HTTPS 8451</small></div>
+            <div class="protocol-capability" data-proto-cap="trojan"><b>Trojan</b><span>读取中</span><small>新加坡节点 · TLS</small></div>
+            <div class="protocol-capability" data-proto-cap="shadowsocks"><b>Shadowsocks</b><span>读取中</span><small>新加坡节点 · TCP / UDP</small></div>
+            <div class="protocol-capability" data-proto-cap="mtproto"><b>Telegram MTProto</b><span>读取中</span><small>美国节点 · Telegram 专用</small></div>
+            <div class="protocol-capability" data-proto-cap="vless"><b>VLESS Reality</b><span>读取中</span><small>美国节点 · Reality</small></div>
+            <div class="protocol-capability" data-proto-cap="vmess"><b>VMess WebSocket</b><span>读取中</span><small>美国节点 · WebSocket</small></div>
+            <div class="protocol-capability" data-proto-cap="hysteria2"><b>Hysteria2</b><span>读取中</span><small>美国节点 · QUIC / UDP</small></div>
+            <div class="protocol-capability" data-proto-cap="tuic"><b>TUIC</b><span>读取中</span><small>新加坡节点 · QUIC / UDP</small></div>
+            <div class="protocol-capability" data-proto-cap="anytls"><b>AnyTLS</b><span>读取中</span><small>新加坡节点 · TLS</small></div>
+            <div class="protocol-capability" data-proto-cap="ssr"><b>ShadowsocksR</b><span>读取中</span><small>新加坡节点 · TCP / UDP</small></div>
           </div>
           <article class="panel data-panel">
             <div class="panel-heading"><div><h2>商城节点产品状态</h2><p>读取生产 node_products；服务器未部署或配置未就绪的产品不能开售</p></div><button class="btn btn-secondary btn-small" id="nodeCatalogRefresh" type="button">刷新产品</button></div>
@@ -479,9 +479,9 @@
           <article class="panel form-panel compact-form" id="protocolNodeFormPanel" hidden>
             <div class="panel-heading"><div><h2 id="protocolNodeFormTitle">新增协议节点</h2><p>写入真实订阅节点配置；域名和端口必须能连通</p></div><button type="button" class="btn btn-secondary" id="protocolNodeFormClose">关闭</button></div>
             <form id="protocolNodeForm" class="admin-form-grid">
-              <input id="protocolNodeId" type="hidden">
+              <input id="protocolNodeId" type="hidden"><input id="protocolNodeConfigOriginal" type="hidden">
               <label>节点名称<input id="protocolNodeName" required placeholder="例如：美西 VLESS Reality"></label>
-              <label>协议<select id="protocolNodeType"><option value="vless">VLESS</option><option value="vmess">VMess</option><option value="trojan">Trojan</option><option value="hysteria2">Hysteria2</option><option value="ss">Shadowsocks</option></select></label>
+              <label>协议<select id="protocolNodeType"><option value="trojan">Trojan</option><option value="shadowsocks">Shadowsocks</option><option value="mtproto">MTProto</option><option value="vless">VLESS</option><option value="vmess">VMess</option><option value="hysteria2">Hysteria2</option><option value="tuic">TUIC</option><option value="anytls">AnyTLS</option><option value="ssr">SSR</option></select></label>
               <label>端口<input id="protocolNodePort" type="number" min="1" max="65535" required value="443"></label>
               <label>地区<input id="protocolNodeRegion" required placeholder="美国·洛杉矶"></label>
               <label class="span-two">域名列表（每行一个）<textarea id="protocolNodeDomains" rows="3" required placeholder="us1.example.com"></textarea></label>
@@ -503,7 +503,7 @@
         </div>
         <div class="node-view" id="nodeView-orders">
           <article class="panel data-panel"><div class="panel-heading"><div><h2>节点服务订单</h2><p>全站套餐订购记录，不只显示当前管理员自己的订单</p></div><button class="btn btn-secondary" id="nodeOrdersRefresh">↻ 刷新</button></div>
-            <div class="table-wrap"><table class="data-table"><thead><tr><th>订单号</th><th>客户</th><th>套餐</th><th>金额</th><th>状态</th><th>创建时间</th></tr></thead><tbody id="nodeAdminOrdersBody"><tr><td colspan="6" class="table-empty">等待加载节点订单</td></tr></tbody></table></div><div class="table-foot"><span id="nodeAdminOrdersCount">—</span><span>全站节点服务订单</span></div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>订单号</th><th>客户</th><th>套餐</th><th>金额</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead><tbody id="nodeAdminOrdersBody"><tr><td colspan="7" class="table-empty">等待加载商城节点商品订单</td></tr></tbody></table></div><div class="table-foot"><span id="nodeAdminOrdersCount">—</span><span>节点商品订单；恢复开通使用原订单号，不会重复扣款</span></div>
           </article>
         </div>
       </section>
